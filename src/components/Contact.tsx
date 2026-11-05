@@ -1,5 +1,6 @@
 import React, { useState, forwardRef, useImperativeHandle } from 'react';
-import { Mail, MessageSquare, Linkedin, Send, Copy, Check, Clock, Globe, AlertCircle } from 'lucide-react';
+import { Mail, MessageSquare, Linkedin, Send, Copy, Check, Clock, Globe, AlertCircle, Database, CheckCircle2 } from 'lucide-react';
+import { submitProjectInquiry, isSupabaseConfigured } from '../lib/supabase.ts';
 
 export interface ContactRef {
   setService: (serviceName: string) => void;
@@ -8,6 +9,7 @@ export interface ContactRef {
 
 interface ContactProps {
   initialService?: string;
+  onOpenSupabaseModal?: () => void;
 }
 
 interface FormErrors {
@@ -17,7 +19,7 @@ interface FormErrors {
   message?: string;
 }
 
-export const Contact = forwardRef<ContactRef, ContactProps>(({ initialService = '' }, ref) => {
+export const Contact = forwardRef<ContactRef, ContactProps>(({ initialService = '', onOpenSupabaseModal }, ref) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -33,6 +35,9 @@ export const Contact = forwardRef<ContactRef, ContactProps>(({ initialService = 
   const [copiedEmail, setCopiedEmail] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [supabaseSynced, setSupabaseSynced] = useState<boolean>(false);
+
+  const isSupabaseReady = isSupabaseConfigured();
 
   useImperativeHandle(ref, () => ({
     setService: (serviceName: string) => {
@@ -130,17 +135,32 @@ export const Contact = forwardRef<ContactRef, ContactProps>(({ initialService = 
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
 
     setIsSubmitting(true);
 
-    // Simulate fast dispatch
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      const result = await submitProjectInquiry({
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        brandName: formData.brandName.trim(),
+        websiteUrl: formData.websiteUrl.trim(),
+        industry: formData.industry,
+        budget: formData.budget,
+        selectedServices: formData.selectedServices,
+        message: formData.message.trim(),
+      });
+
+      setSupabaseSynced(result.syncedWithSupabase);
       setIsSubmitted(true);
-    }, 700);
+    } catch (err) {
+      console.error('Error submitting inquiry:', err);
+      setIsSubmitted(true);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleReset = () => {
@@ -269,15 +289,39 @@ export const Contact = forwardRef<ContactRef, ContactProps>(({ initialService = 
               </div>
             </div>
 
-            {/* Global Capabilities Notice */}
-            <div className="bg-[#171C19] border border-[#2A332B] rounded-xl p-5 sm:p-6 space-y-3.5">
-              <div className="flex items-center gap-2 text-xs font-bold text-[#F5F5F0]">
-                <Globe className="w-4 h-4 text-[#C7F36B]" />
-                <span>Global Brand Partnerships</span>
+            {/* Supabase Integration & Global Capabilities Card */}
+            <div className="bg-[#171C19] border border-[#2A332B] rounded-xl p-5 sm:p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs font-bold text-[#F5F5F0]">
+                  <Database className="w-4 h-4 text-[#C7F36B]" />
+                  <span>Supabase Lead Engine</span>
+                </div>
+
+                <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${
+                  isSupabaseReady
+                    ? 'bg-[#C7F36B]/15 text-[#C7F36B] border-[#C7F36B]/30'
+                    : 'bg-[#111514] text-[#A0A89F] border-[#2A332B]'
+                }`}>
+                  {isSupabaseReady ? 'CONNECTED' : 'LOCAL BACKUP READY'}
+                </span>
               </div>
+
               <p className="text-xs text-[#A0A89F] leading-relaxed">
-                Seamless remote workflow catering to brands across North America, Europe, Australia, and the Middle East. Contracts and invoicing accepted in USD, GBP, EUR, and AED.
+                {isSupabaseReady
+                  ? 'Client inquiries are saved directly to your Supabase project_inquiries database in real time.'
+                  : 'Inquiries are safely captured with resilient offline storage. Connect your Supabase project URL and key anytime.'}
               </p>
+
+              {onOpenSupabaseModal && (
+                <button
+                  type="button"
+                  onClick={onOpenSupabaseModal}
+                  className="text-xs font-semibold text-[#C7F36B] hover:underline cursor-pointer flex items-center gap-1 pt-1"
+                >
+                  <span>View Supabase Setup & Leads</span>
+                  <span>→</span>
+                </button>
+              )}
 
               <div className="pt-3 border-t border-[#2A332B] flex flex-wrap items-center justify-between gap-2 text-[10px] sm:text-[11px] text-[#A0A89F] font-mono">
                 <span className="flex items-center gap-1.5">
@@ -310,6 +354,13 @@ export const Contact = forwardRef<ContactRef, ContactProps>(({ initialService = 
                       <span className="text-[#C7F36B]">{formData.email}</span> within 6 hours with initial creative angles.
                     </p>
                   </div>
+
+                  {supabaseSynced && (
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#C7F36B]/10 border border-[#C7F36B]/30 text-[#C7F36B] text-xs font-mono">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>Saved directly to Supabase project_inquiries</span>
+                    </div>
+                  )}
 
                   <div className="p-4 rounded-xl bg-[#111514] border border-[#2A332B] max-w-md mx-auto text-left text-xs space-y-2">
                     <div className="text-[10px] font-mono text-[#A0A89F] uppercase">Brief Summary:</div>
@@ -347,13 +398,20 @@ export const Contact = forwardRef<ContactRef, ContactProps>(({ initialService = 
               ) : (
                 <form onSubmit={handleSubmit} noValidate className="space-y-5 sm:space-y-6">
                   
-                  <div className="border-b border-[#2A332B] pb-3 sm:pb-4">
-                    <h3 className="text-lg sm:text-xl font-bold font-heading text-[#F5F5F0]">
-                      Brand & Project Brief
-                    </h3>
-                    <p className="text-xs text-[#A0A89F] mt-1">
-                      Fill out the key details below to help me prepare tailored creative concepts.
-                    </p>
+                  <div className="border-b border-[#2A332B] pb-3 sm:pb-4 flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg sm:text-xl font-bold font-heading text-[#F5F5F0]">
+                        Brand & Project Brief
+                      </h3>
+                      <p className="text-xs text-[#A0A89F] mt-1">
+                        Fill out the key details below to help me prepare tailored creative concepts.
+                      </p>
+                    </div>
+
+                    <div className="hidden sm:flex items-center gap-1.5 text-[11px] font-mono text-[#A0A89F]">
+                      <span className={`w-2 h-2 rounded-full ${isSupabaseReady ? 'bg-[#C7F36B]' : 'bg-amber-400'}`} />
+                      <span>{isSupabaseReady ? 'Supabase Live' : 'Local Capture'}</span>
+                    </div>
                   </div>
 
                   {/* Name & Work Email */}
@@ -552,7 +610,7 @@ export const Contact = forwardRef<ContactRef, ContactProps>(({ initialService = 
                       {isSubmitting ? (
                         <>
                           <span className="w-4 h-4 border-2 border-[#090A0B] border-t-transparent rounded-full animate-spin" />
-                          <span>Processing Inquiry...</span>
+                          <span>Dispatching to Database...</span>
                         </>
                       ) : (
                         <>

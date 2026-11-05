@@ -1,25 +1,29 @@
-import React, { useState, useEffect } from 'react';
-import { X, Play, Pause, Volume2, VolumeX, CheckCircle2, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Play, Pause, Volume2, VolumeX, CheckCircle2, ArrowRight, Maximize2 } from 'lucide-react';
 
 export interface PortfolioItem {
   id: string;
   title: string;
-  category: 'Beauty & Skincare' | 'Fashion & Lifestyle' | 'Gadgets & Technology' | 'Product Demonstrations' | 'AI UGC Creator Videos';
+  category: 'Beauty & Skincare' | 'Fashion & Lifestyle' | 'Gadgets & Technology' | 'Product Demonstration' | 'AI UGC Ads' | 'Product Demonstrations' | 'AI UGC Creator Videos';
   duration: string;
   format: string;
   thumbnail: string;
+  videoUrl?: string;
+  video_url?: string;
+  brandName?: string;
+  brand_name?: string;
   hook: string;
   angle: string;
   overview: string;
   isConcept: boolean;
-  scriptBreakdown: {
+  scriptBreakdown?: {
     hook: string;
     agitation: string;
     demonstration: string;
     cta: string;
   };
-  keyFeatures: string[];
-  targetMarket: string;
+  keyFeatures?: string[];
+  targetMarket?: string;
 }
 
 interface VideoModalProps {
@@ -36,6 +40,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
   const [progress, setProgress] = useState(25);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   // Lock body scroll while modal is active
   useEffect(() => {
@@ -56,15 +61,54 @@ export const VideoModal: React.FC<VideoModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
+  const videoSrc = item?.video_url || item?.videoUrl;
+  const hasRealVideo = Boolean(videoSrc);
+
+  // Simulated fallback progress timer if no native video
   useEffect(() => {
-    if (!isPlaying) return;
-    const interval = setInterval(() => {
-      setProgress((prev) => (prev >= 100 ? 0 : prev + 1.5));
-    }, 200);
-    return () => clearInterval(interval);
-  }, [isPlaying]);
+    if (!videoSrc) {
+      if (!isPlaying) return;
+      const interval = setInterval(() => {
+        setProgress((prev) => (prev >= 100 ? 0 : prev + 1.5));
+      }, 200);
+      return () => clearInterval(interval);
+    }
+  }, [isPlaying, videoSrc]);
 
   if (!item) return null;
+
+  const togglePlay = () => {
+    if (videoRef.current) {
+      if (videoRef.current.paused) {
+        videoRef.current.play();
+        setIsPlaying(true);
+      } else {
+        videoRef.current.pause();
+        setIsPlaying(false);
+      }
+    } else {
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
+    } else {
+      setIsMuted(!isMuted);
+    }
+  };
+
+  const toggleFullscreen = () => {
+    if (videoRef.current) {
+      if (videoRef.current.requestFullscreen) {
+        videoRef.current.requestFullscreen();
+      }
+    }
+  };
+
+  const brandDisplayName = item.brand_name || item.brandName;
 
   return (
     <div
@@ -84,11 +128,19 @@ export const VideoModal: React.FC<VideoModalProps> = ({
               {item.category}
             </span>
             <span aria-hidden="true" className="text-[#2A332B]">·</span>
-            <span className="text-[10px] sm:text-xs text-[#A0A89F] font-mono">{item.format}</span>
+            <span className="text-[10px] sm:text-xs text-[#A0A89F] font-mono">{item.format || '9:16 Vertical Video'}</span>
             <span aria-hidden="true" className="text-[#2A332B]">·</span>
             <span className="text-[9px] sm:text-[10px] font-mono text-[#A0A89F] bg-[#171C19] border border-[#2A332B] px-1.5 py-0.5 rounded">
-              Spec Concept
+              {item.isConcept ? 'Spec Concept' : 'Client Campaign'}
             </span>
+            {brandDisplayName && (
+              <>
+                <span aria-hidden="true" className="text-[#2A332B]">·</span>
+                <span className="text-[10px] sm:text-xs text-[#C7F36B] font-mono">
+                  {brandDisplayName}
+                </span>
+              </>
+            )}
           </div>
 
           <button
@@ -103,62 +155,81 @@ export const VideoModal: React.FC<VideoModalProps> = ({
         {/* Modal Body: Split Media + Strategic Blueprint */}
         <div className="grid grid-cols-1 lg:grid-cols-12 overflow-y-auto flex-1">
           
-          {/* Left Column: Interactive Video Player Simulation */}
+          {/* Left Column: Video Player Container */}
           <div className="lg:col-span-5 bg-[#090A0B] p-4 sm:p-6 flex flex-col items-center justify-center border-b lg:border-b-0 lg:border-r border-[#2A332B]">
-            <div className="relative w-full max-w-[240px] sm:max-w-[270px] aspect-[9/16] rounded-xl overflow-hidden border border-[#2A332B] shadow-lg group">
-              <img
-                src={item.thumbnail}
-                alt={item.title}
-                loading="eager"
-                referrerPolicy="no-referrer"
-                className="w-full h-full object-cover"
-              />
-
-              {/* Scrim Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/30 pointer-events-none" />
-
-              {/* Top Controls */}
-              <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between pointer-events-auto">
-                <span className="text-[9px] sm:text-[10px] font-mono px-2 py-0.5 bg-black/75 rounded text-[#C7F36B] border border-white/10">
-                  {item.duration} · 4K 60FPS
-                </span>
-                <button
-                  onClick={() => setIsMuted(!isMuted)}
-                  className="p-1.5 bg-black/75 rounded-full text-white hover:bg-black transition-colors min-w-[32px] min-h-[32px] flex items-center justify-center"
-                  aria-label={isMuted ? 'Unmute' : 'Mute'}
-                >
-                  {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
-                </button>
-              </div>
-
-              {/* Center Play/Pause Overlay */}
-              <button
-                onClick={() => setIsPlaying(!isPlaying)}
-                className="absolute inset-0 flex items-center justify-center focus:outline-none cursor-pointer"
-                aria-label={isPlaying ? 'Pause' : 'Play'}
-              >
-                <div className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-sm border border-white/20 text-white flex items-center justify-center group-hover:scale-110 transition-transform">
-                  {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5 fill-current" />}
-                </div>
-              </button>
-
-              {/* Bottom Captions & Scrubber */}
-              <div className="absolute bottom-2.5 left-2.5 right-2.5 space-y-1.5 pointer-events-none">
-                <div className="bg-black/85 p-2 rounded text-[10px] sm:text-[11px] text-[#F5F5F0] border border-white/10">
-                  <p className="font-medium line-clamp-2">&ldquo;{item.hook}&rdquo;</p>
-                </div>
-                <div className="w-full bg-white/20 h-1 rounded-full overflow-hidden">
-                  <div
-                    className="bg-[#C7F36B] h-full transition-all duration-200"
-                    style={{ width: `${progress}%` }}
+            <div className="relative w-full max-w-[260px] sm:max-w-[280px] aspect-[9/16] rounded-xl overflow-hidden border border-[#2A332B] shadow-lg group bg-black flex items-center justify-center">
+              
+              {hasRealVideo ? (
+                /* REAL HTML5 VIDEO PLAYER WITH CONTROLS */
+                <video
+                  ref={videoRef}
+                  src={videoSrc}
+                  poster={item.thumbnail}
+                  controls
+                  autoPlay
+                  playsInline
+                  className="w-full h-full object-cover"
+                  onPlay={() => setIsPlaying(true)}
+                  onPause={() => setIsPlaying(false)}
+                />
+              ) : (
+                /* SIMULATED FRAME FOR BENCHMARKS */
+                <>
+                  <img
+                    src={item.thumbnail}
+                    alt={item.title}
+                    loading="eager"
+                    referrerPolicy="no-referrer"
+                    className="w-full h-full object-cover"
                   />
-                </div>
-              </div>
+
+                  {/* Scrim Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/30 pointer-events-none" />
+
+                  {/* Top Controls */}
+                  <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between pointer-events-auto">
+                    <span className="text-[9px] sm:text-[10px] font-mono px-2 py-0.5 bg-black/75 rounded text-[#C7F36B] border border-white/10">
+                      {item.duration} · 4K 60FPS
+                    </span>
+                    <button
+                      onClick={toggleMute}
+                      className="p-1.5 bg-black/75 rounded-full text-white hover:bg-black transition-colors min-w-[32px] min-h-[32px] flex items-center justify-center"
+                      aria-label={isMuted ? 'Unmute' : 'Mute'}
+                    >
+                      {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+
+                  {/* Center Play/Pause Overlay */}
+                  <button
+                    onClick={togglePlay}
+                    className="absolute inset-0 flex items-center justify-center focus:outline-none cursor-pointer"
+                    aria-label={isPlaying ? 'Pause' : 'Play'}
+                  >
+                    <div className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-sm border border-white/20 text-white flex items-center justify-center group-hover:scale-110 transition-transform">
+                      {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5 fill-current" />}
+                    </div>
+                  </button>
+
+                  {/* Bottom Captions & Scrubber */}
+                  <div className="absolute bottom-2.5 left-2.5 right-2.5 space-y-1.5 pointer-events-none">
+                    <div className="bg-black/85 p-2 rounded text-[10px] sm:text-[11px] text-[#F5F5F0] border border-white/10">
+                      <p className="font-medium line-clamp-2">&ldquo;{item.hook}&rdquo;</p>
+                    </div>
+                    <div className="w-full bg-white/20 h-1 rounded-full overflow-hidden">
+                      <div
+                        className="bg-[#C7F36B] h-full transition-all duration-200"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="mt-3 text-center">
               <span className="text-[10px] sm:text-[11px] text-[#A0A89F] font-mono block">
-                FORMAT: {item.format} · ANGLE: {item.angle}
+                FORMAT: {item.format || '9:16 Vertical'} · ANGLE: {item.angle || 'Direct Response'}
               </span>
             </div>
           </div>
@@ -170,7 +241,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
                 <h2 id="modal-title" className="text-xl sm:text-2xl font-bold font-heading text-[#F5F5F0]">
                   {item.title}
                 </h2>
-                <p className="text-xs sm:text-sm text-[#A0A89F] mt-1 leading-relaxed">{item.overview}</p>
+                <p className="text-xs sm:text-sm text-[#A0A89F] mt-1.5 leading-relaxed">{item.overview}</p>
               </div>
 
               {/* Script & Retention Architecture */}
@@ -184,28 +255,36 @@ export const VideoModal: React.FC<VideoModalProps> = ({
                     <span className="text-[10px] font-mono text-[#C7F36B] uppercase font-bold block mb-1">
                       01. The Hook (0:00 - 0:03)
                     </span>
-                    <p className="text-[#F5F5F0]">{item.scriptBreakdown.hook}</p>
+                    <p className="text-[#F5F5F0]">
+                      {item.scriptBreakdown?.hook || item.hook || 'Opening pattern interrupt designed for high retention.'}
+                    </p>
                   </div>
 
                   <div className="bg-[#171C19] p-3 rounded-lg border border-[#2A332B]">
                     <span className="text-[10px] font-mono text-[#A0A89F] uppercase font-bold block mb-1">
-                      02. Agitation & Pain Point (0:03 - 0:10)
+                      02. Agitation & Problem (0:03 - 0:10)
                     </span>
-                    <p className="text-[#A0A89F]">{item.scriptBreakdown.agitation}</p>
+                    <p className="text-[#A0A89F]">
+                      {item.scriptBreakdown?.agitation || 'Relatable viewer frustration and industry pain point agitation.'}
+                    </p>
                   </div>
 
                   <div className="bg-[#171C19] p-3 rounded-lg border border-[#2A332B]">
                     <span className="text-[10px] font-mono text-[#A0A89F] uppercase font-bold block mb-1">
-                      03. Demonstration & Sensory Proof (0:10 - 0:22)
+                      03. Demonstration & Proof (0:10 - 0:22)
                     </span>
-                    <p className="text-[#A0A89F]">{item.scriptBreakdown.demonstration}</p>
+                    <p className="text-[#A0A89F]">
+                      {item.scriptBreakdown?.demonstration || 'Visceral product demonstration with authentic AI creator persona.'}
+                    </p>
                   </div>
 
                   <div className="bg-[#171C19] p-3 rounded-lg border border-[#2A332B]">
                     <span className="text-[10px] font-mono text-[#C7F36B] uppercase font-bold block mb-1">
                       04. Direct Response CTA (0:22 - 0:28)
                     </span>
-                    <p className="text-[#F5F5F0]">{item.scriptBreakdown.cta}</p>
+                    <p className="text-[#F5F5F0]">
+                      {item.scriptBreakdown?.cta || 'Limited offer incentive with direct link in bio prompt.'}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -216,7 +295,12 @@ export const VideoModal: React.FC<VideoModalProps> = ({
                   Production Assets Included
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-[#F5F5F0]">
-                  {item.keyFeatures.map((feat) => (
+                  {(item.keyFeatures || [
+                    '3 Alternative Hook Openings',
+                    'Burned-in Dynamic Captions',
+                    'TikTok & Reels Sound Mix',
+                    '4K 60FPS Master Deliverables',
+                  ]).map((feat) => (
                     <div key={feat} className="flex items-center gap-2">
                       <CheckCircle2 className="w-3.5 h-3.5 text-[#C7F36B] shrink-0" />
                       <span>{feat}</span>
@@ -229,7 +313,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
             {/* Bottom Actions */}
             <div className="pt-5 border-t border-[#2A332B] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
               <div className="text-xs text-[#A0A89F]">
-                Target Markets: <span className="text-[#F5F5F0] font-medium">{item.targetMarket}</span>
+                Target Markets: <span className="text-[#F5F5F0] font-medium">{item.targetMarket || 'USA, UK, UAE & Europe'}</span>
               </div>
 
               <button

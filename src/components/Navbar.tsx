@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Logo } from './Logo.tsx';
-import { Menu, X, ArrowUpRight } from 'lucide-react';
+import { Menu, X, ArrowUpRight, Lock } from 'lucide-react';
 
 interface NavbarProps {
   onOpenInquiry?: (serviceName?: string) => void;
+  onOpenAdmin?: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ onOpenInquiry }) => {
+export const Navbar: React.FC<NavbarProps> = ({ onOpenInquiry, onOpenAdmin }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -56,6 +57,11 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenInquiry }) => {
     }
   };
 
+  const handleAdminClick = () => {
+    setMobileMenuOpen(false);
+    if (onOpenAdmin) onOpenAdmin();
+  };
+
   return (
     <>
       <header
@@ -87,8 +93,19 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenInquiry }) => {
               ))}
             </nav>
 
-            {/* Zone 3: 1 Primary Action */}
+            {/* Zone 3: 1 Primary Action + Quick Admin link */}
             <div className="hidden sm:flex items-center gap-3 shrink-0">
+              {onOpenAdmin && (
+                <button
+                  onClick={handleAdminClick}
+                  className="px-2.5 py-1.5 text-[11px] font-mono text-[#A0A89F] hover:text-[#C7F36B] border border-[#2A332B] hover:border-[#C7F36B]/40 rounded-md transition-colors flex items-center gap-1 cursor-pointer"
+                  title="Open Admin Video Manager"
+                >
+                  <Lock className="w-3 h-3" />
+                  <span>Admin</span>
+                </button>
+              )}
+
               <button
                 onClick={handleCtaClick}
                 className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold font-heading uppercase tracking-wider text-[#090A0B] bg-[#C7F36B] hover:bg-[#d6ff7d] active:scale-[0.98] rounded-md transition-all duration-200 shadow-sm shadow-[#C7F36B]/20 whitespace-nowrap cursor-pointer min-h-[36px]"
@@ -99,7 +116,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenInquiry }) => {
             </div>
 
             {/* Mobile Menu Button - min touch target 44px */}
-            <div className="flex sm:hidden items-center">
+            <div className="flex sm:hidden items-center gap-2">
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
@@ -127,6 +144,19 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenInquiry }) => {
                 <ArrowUpRight className="w-4 h-4 text-[#A0A89F]" />
               </a>
             ))}
+
+            {onOpenAdmin && (
+              <button
+                onClick={handleAdminClick}
+                className="text-base font-heading font-semibold text-[#C7F36B] py-3 border-b border-[#2A332B]/60 transition-colors flex items-center justify-between text-left cursor-pointer"
+              >
+                <span className="flex items-center gap-2">
+                  <Lock className="w-4 h-4" />
+                  <span>Admin Video Manager</span>
+                </span>
+                <ArrowUpRight className="w-4 h-4 text-[#C7F36B]" />
+              </button>
+            )}
           </nav>
 
           <div className="pt-6 space-y-4">

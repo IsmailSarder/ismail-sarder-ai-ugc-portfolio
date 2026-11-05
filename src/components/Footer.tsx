@@ -1,8 +1,12 @@
 import React from 'react';
 import { Logo } from './Logo.tsx';
-import { Mail, MessageSquare, Linkedin, ArrowUp } from 'lucide-react';
+import { Mail, MessageSquare, Linkedin, ArrowUp, Lock } from 'lucide-react';
 
-export const Footer: React.FC = () => {
+interface FooterProps {
+  onOpenAdmin?: () => void;
+}
+
+export const Footer: React.FC<FooterProps> = ({ onOpenAdmin }) => {
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -83,6 +87,17 @@ export const Footer: React.FC = () => {
                   </a>
                 </li>
               ))}
+              {onOpenAdmin && (
+                <li>
+                  <button
+                    onClick={onOpenAdmin}
+                    className="text-[#C7F36B] hover:underline underline-offset-4 py-0.5 inline-flex items-center gap-1 cursor-pointer font-mono text-[11px]"
+                  >
+                    <Lock className="w-3 h-3" />
+                    <span>Admin Video Upload</span>
+                  </button>
+                </li>
+              )}
             </ul>
           </div>
 
@@ -145,13 +160,19 @@ export const Footer: React.FC = () => {
         {/* Bottom Bar: Copyright & Back to Top */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
           <p className="text-[#A0A89F] text-center sm:text-left">
-            © {new Date().getFullYear()} Ismail Sarder. AI UGC Creative Studio. Spec demonstration portfolio.
+            © {new Date().getFullYear()} Ismail Sarder. AI UGC Creative Studio.
           </p>
 
           <div className="flex items-center gap-6">
-            <span className="text-[11px] font-mono text-[#A0A89F] hidden md:inline">
-              SERVICING USA · UK · UAE · CA · AU · EU
-            </span>
+            {onOpenAdmin && (
+              <button
+                onClick={onOpenAdmin}
+                className="text-[11px] font-mono text-[#A0A89F] hover:text-[#C7F36B] flex items-center gap-1 cursor-pointer"
+              >
+                <Lock className="w-3 h-3 text-[#C7F36B]" />
+                <span>Admin Portal</span>
+              </button>
+            )}
 
             <button
               onClick={scrollToTop}

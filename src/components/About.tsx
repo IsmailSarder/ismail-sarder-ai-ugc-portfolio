@@ -1,5 +1,6 @@
 import React from 'react';
 import { Target, Compass, Sparkles, TrendingUp, CheckCircle, Mail, MessageSquare } from 'lucide-react';
+import { aboutIsmail } from '../assets/images.ts';
 
 interface AboutProps {
   onOpenInquiry: () => void;
@@ -56,8 +57,10 @@ export const About: React.FC<AboutProps> = ({ onOpenInquiry }) => {
           <div className="lg:col-span-5 space-y-6">
             <div className="relative rounded-2xl overflow-hidden border border-[#2A332B] bg-[#171C19] shadow-2xl group">
               <img
-                src="/src/assets/images/about_ismail_creative_director_1793804791326.jpg"
+                src={aboutIsmail}
                 alt="Ismail Sarder - AI UGC Ad Creator & Creative Strategist"
+                loading="lazy"
+                decoding="async"
                 referrerPolicy="no-referrer"
                 className="w-full aspect-square object-cover object-top transition-transform duration-500 group-hover:scale-102"
               />

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Play, Pause, Volume2, VolumeX, Sparkles, ArrowRight } from 'lucide-react';
+import { heroUgcBeauty } from '../assets/images.ts';
 
 interface HeroProps {
   onOpenInquiry: () => void;
@@ -118,7 +119,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenInquiry }) => {
                 {/* Video Container */}
                 <div className="relative aspect-[9/16] rounded-xl sm:rounded-2xl overflow-hidden bg-[#090A0B] border border-[#2A332B]/80">
                   <img
-                    src="/src/assets/images/hero_ugc_beauty_showcase_1793804788830.jpg"
+                    src={heroUgcBeauty}
                     alt="AI UGC Skincare Concept Ad Demonstration"
                     loading="eager"
                     decoding="async"

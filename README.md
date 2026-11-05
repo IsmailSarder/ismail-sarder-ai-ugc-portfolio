@@ -28,7 +28,6 @@ A high-performance, international-standard personal portfolio website for **Isma
 
 ## 📁 Project File Structure
 
-```
 ├── .env.example              # Environment variables template
 ├── index.html                # HTML5 entry with SEO, OpenGraph, JSON-LD Schema & SVG favicon
 ├── metadata.json             # AI Studio applet metadata & permissions
@@ -37,10 +36,16 @@ A high-performance, international-standard personal portfolio website for **Isma
 ├── README.md                 # Project documentation & deployment manual
 ├── tsconfig.json             # TypeScript compiler configuration
 ├── vite.config.ts            # Vite bundler plugins and path aliases
+├── supabase/
+│   └── schema.sql            # Supabase SQL table, RLS policies & storage setup
 └── src/
     ├── main.tsx              # React DOM entry point
     ├── App.tsx               # Root application layout & state orchestrator
     ├── index.css             # Tailwind v4 theme, fonts, custom scrollbars
+    ├── lib/
+    │   └── supabase.ts       # Supabase client & dynamic configuration
+    ├── services/
+    │   └── portfolioService.ts # Portfolio CRUD operations & media storage
     ├── assets/
     │   └── images/           # High-resolution portfolio thumbnails & portraits
     └── components/
@@ -55,7 +60,10 @@ A high-performance, international-standard personal portfolio website for **Isma
         ├── WhyWorkWithMe.tsx # 6 strategic pillars and competitive advantages
         ├── FAQ.tsx           # Interactive FAQ accordion with truthful disclosures
         ├── Contact.tsx       # Direct channels & validated project inquiry form
-        └── Footer.tsx        # Quick navigation, social links, and copyright
+        ├── Footer.tsx        # Quick navigation, social links, and Studio CMS button
+        └── admin/
+            ├── AdminLoginModal.tsx # Admin sign-in & Supabase setup modal
+            └── AdminDashboard.tsx  # Add, edit, delete portfolio projects & uploads
 ```
 
 ---

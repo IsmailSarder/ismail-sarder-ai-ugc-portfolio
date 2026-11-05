@@ -1,12 +1,20 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Play, ArrowUpRight, Search, X, Sparkles } from 'lucide-react';
 import { VideoModal, PortfolioItem } from './VideoModal.tsx';
+import { portfolioService } from '../lib/portfolioService.ts';
+import {
+  heroUgcBeauty,
+  portfolioSkincare,
+  portfolioTech,
+  portfolioFashion,
+} from '../assets/images.ts';
 
 interface PortfolioProps {
   onOpenInquiryWithProject?: (projectTitle: string) => void;
+  refreshTrigger?: number;
 }
 
-export const Portfolio: React.FC<PortfolioProps> = ({ onOpenInquiryWithProject }) => {
+export const Portfolio: React.FC<PortfolioProps> = ({ onOpenInquiryWithProject, refreshTrigger }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('All Projects');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [activeModalItem, setActiveModalItem] = useState<PortfolioItem | null>(null);
@@ -20,14 +28,14 @@ export const Portfolio: React.FC<PortfolioProps> = ({ onOpenInquiryWithProject }
     'AI UGC Creator Videos',
   ];
 
-  const projects: PortfolioItem[] = [
+  const INITIAL_PROJECTS: PortfolioItem[] = [
     {
       id: 'aurelia-serum',
       title: 'Aurelia Botanica — Dewy Skin Viral Hook',
       category: 'Beauty & Skincare',
       duration: '0:28',
       format: '9:16 Vertical Video',
-      thumbnail: '/src/assets/images/hero_ugc_beauty_showcase_1793804788830.jpg',
+      thumbnail: heroUgcBeauty,
       hook: 'Wait, this glow without a 10-step routine? Honestly obsessed...',
       angle: 'Relatable Problem-to-Solution',
       isConcept: true,
@@ -52,7 +60,7 @@ export const Portfolio: React.FC<PortfolioProps> = ({ onOpenInquiryWithProject }
       category: 'Product Demonstrations',
       duration: '0:22',
       format: '4:5 Feed & 9:16 Story',
-      thumbnail: '/src/assets/images/portfolio_skincare_glow_1793804789975.jpg',
+      thumbnail: portfolioSkincare,
       hook: 'Watch what happens when cold-pressed botanicals touch dehydrated skin...',
       angle: 'Sensory ASMR & Texture Proof',
       isConcept: true,
@@ -77,7 +85,7 @@ export const Portfolio: React.FC<PortfolioProps> = ({ onOpenInquiryWithProject }
       category: 'Gadgets & Technology',
       duration: '0:34',
       format: '9:16 Vertical Video',
-      thumbnail: '/src/assets/images/portfolio_tech_audio_1793804790153.jpg',
+      thumbnail: portfolioTech,
       hook: 'I tested these on the London Tube and my entire brain went quiet...',
       angle: 'Real-World Commute Stress Test',
       isConcept: true,
@@ -102,7 +110,7 @@ export const Portfolio: React.FC<PortfolioProps> = ({ onOpenInquiryWithProject }
       category: 'Fashion & Lifestyle',
       duration: '0:25',
       format: '9:16 TikTok / Reels',
-      thumbnail: '/src/assets/images/portfolio_fashion_street_1793804790905.jpg',
+      thumbnail: portfolioFashion,
       hook: 'Styling the one coat you will actually wear all week in 3 different ways...',
       angle: 'Capsule Wardrobe Utility & Fit',
       isConcept: true,
@@ -127,7 +135,7 @@ export const Portfolio: React.FC<PortfolioProps> = ({ onOpenInquiryWithProject }
       category: 'AI UGC Creator Videos',
       duration: '0:30',
       format: '9:16 Vertical & 1:1 Feed',
-      thumbnail: '/src/assets/images/hero_ugc_beauty_showcase_1793804788830.jpg',
+      thumbnail: heroUgcBeauty,
       hook: 'Big skincare brands lied about why your pores stay enlarged...',
       angle: 'Contrarian Industry Whistleblower',
       isConcept: true,
@@ -152,7 +160,7 @@ export const Portfolio: React.FC<PortfolioProps> = ({ onOpenInquiryWithProject }
       category: 'Gadgets & Technology',
       duration: '0:26',
       format: '9:16 Vertical Video',
-      thumbnail: '/src/assets/images/portfolio_tech_audio_1793804790153.jpg',
+      thumbnail: portfolioTech,
       hook: 'Why I threw away my smart watch and switched to this titanium ring...',
       angle: 'Lifestyle Replacement & Freedom',
       isConcept: true,
@@ -173,20 +181,61 @@ export const Portfolio: React.FC<PortfolioProps> = ({ onOpenInquiryWithProject }
     },
   ];
 
+  const [projects, setProjects] = useState<PortfolioItem[]>(INITIAL_PROJECTS);
+
+  // Load published projects from Supabase whenever mounted or refreshed
+  useEffect(() => {
+    let isCurrent = true;
+    portfolioService.getPublishedProjects().then(({ data }) => {
+      if (isCurrent && data && data.length > 0) {
+        const mappedItems: PortfolioItem[] = data.map((p) => ({
+          id: p.id,
+          title: p.title,
+          category: p.category,
+          duration: p.duration || '0:30',
+          format: p.format || '9:16 Vertical Video',
+          thumbnail: p.thumbnail_url,
+          video_url: p.video_url,
+          videoUrl: p.video_url,
+          brand_name: p.brand_name,
+          brandName: p.brand_name,
+          hook: p.hook || p.title,
+          angle: p.angle || p.category,
+          overview: p.description,
+          isConcept: !p.brand_name,
+          targetMarket: 'USA & Global',
+          keyFeatures: [
+            '4K 60FPS Master Deliverable',
+            'High-Converting UGC Hook',
+            'Dynamic Kinetic Captions',
+          ],
+        }));
+        setProjects(mappedItems);
+      }
+    });
+    return () => {
+      isCurrent = false;
+    };
+  }, [refreshTrigger]);
+
   // Search & Category Filtering
   const filteredProjects = useMemo(() => {
     return projects.filter((project) => {
       const matchesCategory =
-        selectedCategory === 'All Projects' || project.category === selectedCategory;
+        selectedCategory === 'All Projects' ||
+        project.category === selectedCategory ||
+        (selectedCategory === 'Product Demonstrations' && project.category === 'Product Demonstration') ||
+        (selectedCategory === 'AI UGC Creator Videos' && project.category === 'AI UGC Ads');
 
       const q = searchQuery.toLowerCase().trim();
       const matchesSearch =
         q === '' ||
         project.title.toLowerCase().includes(q) ||
         project.category.toLowerCase().includes(q) ||
-        project.hook.toLowerCase().includes(q) ||
-        project.angle.toLowerCase().includes(q) ||
-        project.overview.toLowerCase().includes(q);
+        (project.brandName || project.brand_name || '').toLowerCase().includes(q) ||
+        (project.hook || '').toLowerCase().includes(q) ||
+        (project.angle || '').toLowerCase().includes(q) ||
+        (project.overview || '').toLowerCase().includes(q);
 
       return matchesCategory && matchesSearch;
     });
