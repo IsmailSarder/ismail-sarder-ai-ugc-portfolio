@@ -966,7 +966,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToHome }) 
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px] text-[#A0A89F] font-mono border-y border-[#2A332B] py-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-[11px] text-[#A0A89F] font-mono border-y border-[#2A332B] py-2">
                           <div>
                             <span className="text-[#A0A89F]">Contact:</span>{' '}
                             <span className="text-[#F5F5F0]">{inq.name}</span> (
@@ -976,12 +976,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToHome }) 
                             )
                           </div>
                           <div>
-                            <span className="text-[#A0A89F]">Industry:</span>{' '}
-                            <span className="text-[#F5F5F0]">{inq.industry}</span>
+                            <span className="text-[#A0A89F]">Package:</span>{' '}
+                            <span className="text-[#C7F36B] font-semibold">
+                              {inq.selectedPackage || inq.selected_package || 'Standard Inquiry'}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-[#A0A89F]">Scope:</span>{' '}
+                            <span className="text-[#F5F5F0]">
+                              {inq.videoCount || inq.video_count || inq.industry || '1-2 Videos'}
+                              {inq.timeline ? ` · ${inq.timeline}` : ''}
+                            </span>
                           </div>
                           <div>
                             <span className="text-[#A0A89F]">Budget:</span>{' '}
-                            <span className="text-[#F5F5F0]">{inq.budget}</span>
+                            <span className="text-[#F5F5F0] font-medium">{inq.budget}</span>
                           </div>
                         </div>
 

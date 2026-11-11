@@ -35,6 +35,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenInquiry, onOpenAdmin }) =>
     { label: 'Home', href: '#home' },
     { label: 'Portfolio', href: '#portfolio' },
     { label: 'Services', href: '#services' },
+    { label: 'Pricing', href: '#pricing' },
     { label: 'About', href: '#about' },
     { label: 'Process', href: '#process' },
     { label: 'FAQ', href: '#faq' },

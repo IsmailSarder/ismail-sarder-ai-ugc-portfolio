@@ -124,6 +124,11 @@ export interface StoredInquiry {
   website_url?: string;
   industry: string;
   budget: string;
+  selectedPackage?: string;
+  selected_package?: string;
+  videoCount?: string;
+  video_count?: string;
+  timeline?: string;
   selectedServices?: string[];
   selected_services?: string[];
   message: string;
@@ -145,9 +150,23 @@ export async function submitProjectInquiry(inquiryData: {
   websiteUrl?: string;
   industry: string;
   budget: string;
+  selectedPackage?: string;
+  videoCount?: string;
+  timeline?: string;
   selectedServices: string[];
   message: string;
 }): Promise<{ success: boolean; syncedWithSupabase: boolean; id?: string }> {
+  const structuredPrefix = [
+    inquiryData.selectedPackage ? `Package: ${inquiryData.selectedPackage}` : '',
+    inquiryData.videoCount ? `Videos: ${inquiryData.videoCount}` : '',
+    inquiryData.timeline ? `Timeline: ${inquiryData.timeline}` : '',
+    inquiryData.budget ? `Budget: ${inquiryData.budget}` : '',
+  ].filter(Boolean).join(' · ');
+
+  const enrichedMessage = structuredPrefix
+    ? `[${structuredPrefix}]\n\n${inquiryData.message}`
+    : inquiryData.message;
+
   const newInquiry: StoredInquiry = {
     id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `inq_${Date.now()}`,
     name: inquiryData.name,
@@ -158,9 +177,14 @@ export async function submitProjectInquiry(inquiryData: {
     website_url: inquiryData.websiteUrl,
     industry: inquiryData.industry,
     budget: inquiryData.budget,
+    selectedPackage: inquiryData.selectedPackage,
+    selected_package: inquiryData.selectedPackage,
+    videoCount: inquiryData.videoCount,
+    video_count: inquiryData.videoCount,
+    timeline: inquiryData.timeline,
     selectedServices: inquiryData.selectedServices,
     selected_services: inquiryData.selectedServices,
-    message: inquiryData.message,
+    message: enrichedMessage,
     created_at: new Date().toISOString(),
     status: 'new',
   };
@@ -189,7 +213,7 @@ export async function submitProjectInquiry(inquiryData: {
             industry: inquiryData.industry,
             budget: inquiryData.budget,
             selected_services: inquiryData.selectedServices,
-            message: inquiryData.message,
+            message: enrichedMessage,
             status: 'new',
           },
         ])

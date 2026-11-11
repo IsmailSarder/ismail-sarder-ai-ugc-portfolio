@@ -8,6 +8,7 @@ import { Navbar } from './components/Navbar.tsx';
 import { Hero } from './components/Hero.tsx';
 import { Portfolio } from './components/Portfolio.tsx';
 import { Services } from './components/Services.tsx';
+import { Pricing } from './components/Pricing.tsx';
 import { About } from './components/About.tsx';
 import { Process } from './components/Process.tsx';
 import { WhyWorkWithMe } from './components/WhyWorkWithMe.tsx';
@@ -41,6 +42,17 @@ function MainApp() {
   const handleOpenInquiry = (serviceName?: string) => {
     if (serviceName && contactRef.current) {
       contactRef.current.setService(serviceName);
+    } else {
+      const contactEl = document.getElementById('contact');
+      if (contactEl) {
+        contactEl.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  };
+
+  const handleOpenInquiryWithPackage = (packageName: string, isNegotiation?: boolean) => {
+    if (contactRef.current) {
+      contactRef.current.setPackageInterest(packageName, isNegotiation);
     } else {
       const contactEl = document.getElementById('contact');
       if (contactEl) {
@@ -101,6 +113,9 @@ function MainApp() {
 
         {/* Services Suite Section */}
         <Services onSelectService={(srv) => handleOpenInquiry(srv)} />
+
+        {/* Performance Pricing & Custom Negotiation Section */}
+        <Pricing onSelectPackage={handleOpenInquiryWithPackage} />
 
         {/* About Ismail Sarder Section */}
         <About onOpenInquiry={() => handleOpenInquiry()} />
