@@ -69,7 +69,6 @@ export const Process: React.FC = () => {
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
           <div>
             <div className="flex items-center gap-2 text-xs font-semibold tracking-wider text-[#A0A89F] uppercase mb-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#C7F36B]" />
               <span>The Production System</span>
             </div>
             <h2 className="text-3xl sm:text-4xl font-extrabold font-heading text-[#F5F5F0] tracking-tight">

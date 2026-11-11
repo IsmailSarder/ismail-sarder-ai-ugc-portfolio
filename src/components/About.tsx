@@ -1,12 +1,14 @@
 import React from 'react';
 import { Target, Compass, Sparkles, TrendingUp, CheckCircle, Mail, MessageSquare } from 'lucide-react';
 import { aboutIsmail } from '../assets/images.ts';
+import { useProfile } from '../context/ProfileContext.tsx';
 
 interface AboutProps {
   onOpenInquiry: () => void;
 }
 
 export const About: React.FC<AboutProps> = ({ onOpenInquiry }) => {
+  const { effectiveProfileImage } = useProfile();
   const approaches = [
     {
       title: 'Creative Storytelling',
@@ -57,7 +59,7 @@ export const About: React.FC<AboutProps> = ({ onOpenInquiry }) => {
           <div className="lg:col-span-5 space-y-6">
             <div className="relative rounded-2xl overflow-hidden border border-[#2A332B] bg-[#171C19] shadow-2xl group">
               <img
-                src={aboutIsmail}
+                src={effectiveProfileImage}
                 alt="Ismail Sarder - AI UGC Ad Creator & Creative Strategist"
                 loading="lazy"
                 decoding="async"

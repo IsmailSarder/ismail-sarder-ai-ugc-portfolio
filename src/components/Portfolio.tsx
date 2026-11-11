@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Play, ArrowUpRight, Search, X, Sparkles } from 'lucide-react';
 import { VideoModal, PortfolioItem } from './VideoModal.tsx';
+import { ProjectCard3D } from './ProjectCard3D.tsx';
+import { FeaturedShowcase } from './FeaturedShowcase.tsx';
 import { portfolioService } from '../lib/portfolioService.ts';
 import {
   heroUgcBeauty,
@@ -36,6 +38,13 @@ export const Portfolio: React.FC<PortfolioProps> = ({ onOpenInquiryWithProject, 
       duration: '0:28',
       format: '9:16 Vertical Video',
       thumbnail: heroUgcBeauty,
+      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+      video_url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+      aspect_ratio: '9:16',
+      aspectRatio: '9:16',
+      video_width: 1080,
+      video_height: 1920,
+      video_mime_type: 'video/mp4',
       hook: 'Wait, this glow without a 10-step routine? Honestly obsessed...',
       angle: 'Relatable Problem-to-Solution',
       isConcept: true,
@@ -61,6 +70,13 @@ export const Portfolio: React.FC<PortfolioProps> = ({ onOpenInquiryWithProject, 
       duration: '0:22',
       format: '4:5 Feed & 9:16 Story',
       thumbnail: portfolioSkincare,
+      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+      video_url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+      aspect_ratio: '4:5',
+      aspectRatio: '4:5',
+      video_width: 1080,
+      video_height: 1350,
+      video_mime_type: 'video/mp4',
       hook: 'Watch what happens when cold-pressed botanicals touch dehydrated skin...',
       angle: 'Sensory ASMR & Texture Proof',
       isConcept: true,
@@ -84,8 +100,15 @@ export const Portfolio: React.FC<PortfolioProps> = ({ onOpenInquiryWithProject, 
       title: 'Elara ANC Pro — Commuter Noise-Cancellation Demo',
       category: 'Gadgets & Technology',
       duration: '0:34',
-      format: '9:16 Vertical Video',
+      format: '16:9 Landscape & 9:16 Feed',
       thumbnail: portfolioTech,
+      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
+      video_url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
+      aspect_ratio: '16:9',
+      aspectRatio: '16:9',
+      video_width: 1920,
+      video_height: 1080,
+      video_mime_type: 'video/mp4',
       hook: 'I tested these on the London Tube and my entire brain went quiet...',
       angle: 'Real-World Commute Stress Test',
       isConcept: true,
@@ -111,6 +134,13 @@ export const Portfolio: React.FC<PortfolioProps> = ({ onOpenInquiryWithProject, 
       duration: '0:25',
       format: '9:16 TikTok / Reels',
       thumbnail: portfolioFashion,
+      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyBlazes.mp4',
+      video_url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyBlazes.mp4',
+      aspect_ratio: '9:16',
+      aspectRatio: '9:16',
+      video_width: 1080,
+      video_height: 1920,
+      video_mime_type: 'video/mp4',
       hook: 'Styling the one coat you will actually wear all week in 3 different ways...',
       angle: 'Capsule Wardrobe Utility & Fit',
       isConcept: true,
@@ -134,8 +164,15 @@ export const Portfolio: React.FC<PortfolioProps> = ({ onOpenInquiryWithProject, 
       title: 'Founder Direct-to-Camera — E-Com Brand Story Ad',
       category: 'AI UGC Creator Videos',
       duration: '0:30',
-      format: '9:16 Vertical & 1:1 Feed',
+      format: '1:1 Square & 9:16 Feed',
       thumbnail: heroUgcBeauty,
+      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4',
+      video_url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4',
+      aspect_ratio: '1:1',
+      aspectRatio: '1:1',
+      video_width: 1080,
+      video_height: 1080,
+      video_mime_type: 'video/mp4',
       hook: 'Big skincare brands lied about why your pores stay enlarged...',
       angle: 'Contrarian Industry Whistleblower',
       isConcept: true,
@@ -159,8 +196,15 @@ export const Portfolio: React.FC<PortfolioProps> = ({ onOpenInquiryWithProject, 
       title: 'Kinetic Pulse — Sleep & Recovery Tracker Ad',
       category: 'Gadgets & Technology',
       duration: '0:26',
-      format: '9:16 Vertical Video',
+      format: '3:4 Portrait Video',
       thumbnail: portfolioTech,
+      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WhatCarCanYouGetForAGrand.mp4',
+      video_url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WhatCarCanYouGetForAGrand.mp4',
+      aspect_ratio: '3:4',
+      aspectRatio: '3:4',
+      video_width: 1080,
+      video_height: 1440,
+      video_mime_type: 'video/mp4',
       hook: 'Why I threw away my smart watch and switched to this titanium ring...',
       angle: 'Lifestyle Replacement & Freedom',
       isConcept: true,
@@ -197,6 +241,14 @@ export const Portfolio: React.FC<PortfolioProps> = ({ onOpenInquiryWithProject, 
           thumbnail: p.thumbnail_url,
           video_url: p.video_url,
           videoUrl: p.video_url,
+          aspect_ratio: p.aspect_ratio || 'auto',
+          aspectRatio: p.aspect_ratio || 'auto',
+          video_width: p.video_width,
+          videoWidth: p.video_width,
+          video_height: p.video_height,
+          videoHeight: p.video_height,
+          video_mime_type: p.video_mime_type,
+          videoMimeType: p.video_mime_type,
           brand_name: p.brand_name,
           brandName: p.brand_name,
           hook: p.hook || p.title,
@@ -265,7 +317,6 @@ export const Portfolio: React.FC<PortfolioProps> = ({ onOpenInquiryWithProject, 
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 sm:mb-12 gap-6">
           <div>
             <div className="flex items-center gap-2 text-xs font-semibold tracking-wider text-[#A0A89F] uppercase mb-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#C7F36B]" />
               <span>Concept Benchmarks & Creative Formats</span>
             </div>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-heading text-[#F5F5F0] tracking-tight">
@@ -282,6 +333,13 @@ export const Portfolio: React.FC<PortfolioProps> = ({ onOpenInquiryWithProject, 
             </span>
           </div>
         </div>
+
+        {/* 3D Animated Featured Showcase Carousel */}
+        <FeaturedShowcase
+          projects={projects}
+          onSelectProject={(p) => setActiveModalItem(p)}
+          onOrderSimilar={handleOrderSimilar}
+        />
 
         {/* Search Bar & Category Controls Row */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8 sm:mb-10">
@@ -348,77 +406,15 @@ export const Portfolio: React.FC<PortfolioProps> = ({ onOpenInquiryWithProject, 
             </button>
           </div>
         ) : (
-          /* Portfolio Bento Grid */
+          /* 3D Interactive Portfolio Bento Grid */
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
-            {filteredProjects.map((project) => (
-              <div
+            {filteredProjects.map((project, index) => (
+              <ProjectCard3D
                 key={project.id}
-                onClick={() => setActiveModalItem(project)}
-                className="group bg-[#171C19] border border-[#2A332B] rounded-xl overflow-hidden hover:border-[#C7F36B]/60 transition-all duration-300 flex flex-col justify-between cursor-pointer shadow-lg hover:shadow-black/60"
-              >
-                {/* Media Thumbnail Container */}
-                <div className="relative aspect-[4/3] bg-[#090A0B] overflow-hidden">
-                  <img
-                    src={project.thumbnail}
-                    alt={project.title}
-                    loading="lazy"
-                    decoding="async"
-                    referrerPolicy="no-referrer"
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-
-                  {/* Scrim Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-
-                  {/* Unboxed Metadata (Zero-Pill discipline) */}
-                  <div className="absolute top-2.5 sm:top-3 left-2.5 sm:left-3 right-2.5 sm:right-3 flex items-center justify-between text-[10px] sm:text-[11px] font-mono text-[#F5F5F0]">
-                    <span className="text-[#C7F36B] font-semibold">{project.duration}</span>
-                    <span className="text-[10px] font-mono text-[#A0A89F] bg-black/70 px-2 py-0.5 rounded border border-white/10">
-                      SPEC CONCEPT
-                    </span>
-                  </div>
-
-                  {/* Hover Play Prompt Button */}
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/40 backdrop-blur-[2px]">
-                    <div className="w-12 h-12 rounded-full bg-[#C7F36B] text-[#090A0B] flex items-center justify-center shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-transform">
-                      <Play className="w-5 h-5 ml-0.5 fill-current" />
-                    </div>
-                  </div>
-
-                  {/* Angle Tag Bottom Left */}
-                  <div className="absolute bottom-2.5 sm:bottom-3 left-2.5 sm:left-3 right-2.5 sm:right-3">
-                    <span className="text-[9px] sm:text-[10px] uppercase font-mono tracking-wider text-[#A0A89F] block">
-                      ANGLE: {project.angle}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Card Body */}
-                <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between">
-                  <div>
-                    {/* Clean unboxed category header */}
-                    <div className="flex items-center gap-2 text-xs text-[#A0A89F] mb-1.5 font-medium">
-                      <span>{project.category}</span>
-                      <span aria-hidden="true" className="text-[#2A332B]">·</span>
-                      <span>{project.format}</span>
-                    </div>
-
-                    <h3 className="text-sm sm:text-base font-bold font-heading text-[#F5F5F0] group-hover:text-[#C7F36B] transition-colors leading-snug">
-                      {project.title}
-                    </h3>
-
-                    <p className="text-xs text-[#A0A89F] mt-2 line-clamp-2 leading-relaxed">
-                      &ldquo;{project.hook}&rdquo;
-                    </p>
-                  </div>
-
-                  {/* Bottom View Details Action */}
-                  <div className="mt-4 pt-3 border-t border-[#2A332B] flex items-center justify-between text-xs font-semibold text-[#A0A89F] group-hover:text-[#F5F5F0]">
-                    <span>Watch & View Strategy</span>
-                    <ArrowUpRight className="w-4 h-4 text-[#C7F36B] transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                  </div>
-                </div>
-              </div>
+                project={project}
+                index={index}
+                onSelect={(p) => setActiveModalItem(p)}
+              />
             ))}
           </div>
         )}

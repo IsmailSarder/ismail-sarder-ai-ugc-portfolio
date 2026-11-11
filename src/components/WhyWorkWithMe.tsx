@@ -48,7 +48,6 @@ export const WhyWorkWithMe: React.FC = () => {
         {/* Section Header */}
         <div className="max-w-3xl mb-16">
           <div className="flex items-center gap-2 text-xs font-semibold tracking-wider text-[#A0A89F] uppercase mb-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#C7F36B]" />
             <span>The Competitive Advantage</span>
           </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold font-heading text-[#F5F5F0] tracking-tight mb-4">

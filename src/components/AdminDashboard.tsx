@@ -14,6 +14,13 @@ import {
   deleteProject,
 } from '../lib/projectService.ts';
 import {
+  ASPECT_RATIO_OPTIONS,
+  AspectRatioOption,
+  calculateDetectedRatio,
+  extractVideoDimensions,
+  getPresentationAspectRatio,
+} from '../lib/videoAspectRatios.ts';
+import {
   X,
   Upload,
   Film,
@@ -74,6 +81,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [formHook, setFormHook] = useState('');
   const [formDuration, setFormDuration] = useState('0:30');
   const [formFormat, setFormFormat] = useState('9:16 Vertical Video');
+  const [formAspectRatio, setFormAspectRatio] = useState<AspectRatioOption>('auto');
+  const [detectedDimensions, setDetectedDimensions] = useState<{
+    width: number;
+    height: number;
+    ratioLabel: string;
+  } | null>(null);
+  const [videoMimeType, setVideoMimeType] = useState<string>('video/mp4');
   const [formIsFeatured, setFormIsFeatured] = useState(false);
   const [formIsPublished, setFormIsPublished] = useState(true);
 
@@ -176,20 +190,47 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setSession(null);
   };
 
-  // Video file selection
-  const handleVideoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Video file selection with automatic dimension and ratio detection
+  const handleVideoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (!file.type.startsWith('video/')) {
-      setFormError('Please select a valid video file (.mp4, .mov, etc).');
+      setFormError('Please select a valid video file (.mp4, .mov, .webm, etc).');
       return;
     }
 
     setVideoFile(file);
     const url = URL.createObjectURL(file);
     setVideoPreviewUrl(url);
+    setVideoMimeType(file.type || 'video/mp4');
     setFormError(null);
+
+    // Extract original dimensions and detect aspect ratio
+    try {
+      const meta = await extractVideoDimensions(file);
+      const ratioInfo = calculateDetectedRatio(meta.width, meta.height);
+      setDetectedDimensions({
+        width: meta.width,
+        height: meta.height,
+        ratioLabel: ratioInfo.label,
+      });
+      setVideoMimeType(meta.mimeType);
+
+      // Auto-set duration if available and currently default
+      if (meta.duration && (!formDuration || formDuration === '0:30')) {
+        const mins = Math.floor(meta.duration / 60);
+        const secs = Math.floor(meta.duration % 60);
+        setFormDuration(`${mins}:${secs < 10 ? '0' : ''}${secs}`);
+      }
+
+      // If format was default, suggest matching label
+      if (formFormat === '9:16 Vertical Video' && ratioInfo.detectedRatio !== '9:16') {
+        setFormFormat(`${ratioInfo.detectedRatio} Video`);
+      }
+    } catch (err) {
+      console.warn('Video dimension detection note:', err);
+    }
   };
 
   // Thumbnail file selection
@@ -221,6 +262,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setFormHook('');
     setFormDuration('0:30');
     setFormFormat('9:16 Vertical Video');
+    setFormAspectRatio('auto');
+    setDetectedDimensions(null);
+    setVideoMimeType('video/mp4');
     setFormIsFeatured(false);
     setFormIsPublished(true);
     setFormError(null);
@@ -241,6 +285,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setFormHook(p.hook || '');
     setFormDuration(p.duration || '0:30');
     setFormFormat(p.format || '9:16 Vertical Video');
+    setFormAspectRatio((p.aspect_ratio as AspectRatioOption) || 'auto');
+    if (p.video_width && p.video_height) {
+      const ratioInfo = calculateDetectedRatio(p.video_width, p.video_height);
+      setDetectedDimensions({
+        width: p.video_width,
+        height: p.video_height,
+        ratioLabel: ratioInfo.label,
+      });
+    } else {
+      setDetectedDimensions(null);
+    }
+    setVideoMimeType(p.video_mime_type || 'video/mp4');
     setFormIsFeatured(Boolean(p.is_featured));
     setFormIsPublished(Boolean(p.is_published));
     setFormError(null);
@@ -318,6 +374,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         hook: formHook.trim(),
         duration: formDuration.trim() || '0:30',
         format: formFormat.trim() || '9:16 Vertical Video',
+        aspect_ratio: formAspectRatio,
+        video_width: detectedDimensions?.width || undefined,
+        video_height: detectedDimensions?.height || undefined,
+        video_mime_type: videoMimeType,
         is_featured: formIsFeatured,
         is_published: formIsPublished,
         video_url: finalVideoUrl,
@@ -674,9 +734,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             </div>
 
                             <div className="pt-3 mt-3 border-t border-[#2A332B] flex items-center justify-between">
-                              <span className="text-[10px] text-[#A0A89F] font-mono">
-                                {p.format || '9:16 Vertical'}
-                              </span>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="text-[10px] text-[#A0A89F] font-mono">
+                                  {p.format || '9:16 Vertical'}
+                                </span>
+                                {p.aspect_ratio && (
+                                  <span className="text-[9px] font-mono font-bold text-[#C7F36B] bg-[#111514] px-1.5 py-0.5 rounded border border-[#2A332B]">
+                                    {p.aspect_ratio}
+                                  </span>
+                                )}
+                              </div>
 
                               <div className="flex items-center gap-1.5">
                                 <button
@@ -765,13 +832,43 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                       {videoPreviewUrl ? (
                         <div className="space-y-3">
-                          <div className="relative aspect-[9/16] max-w-[200px] mx-auto rounded-lg overflow-hidden bg-black border border-[#2A332B]">
+                          <div
+                            className="relative max-w-[260px] mx-auto rounded-xl overflow-hidden bg-black border border-[#2A332B] shadow-inner flex items-center justify-center"
+                            style={{
+                              aspectRatio: getPresentationAspectRatio(
+                                formAspectRatio,
+                                detectedDimensions?.width,
+                                detectedDimensions?.height
+                              ),
+                              maxHeight: '320px',
+                            }}
+                          >
                             <video
                               src={videoPreviewUrl}
                               controls
-                              className="w-full h-full object-cover"
+                              playsInline
+                              className="w-full h-full object-contain bg-black"
                             />
                           </div>
+
+                          {/* Detected Dimensions Banner */}
+                          {detectedDimensions && (
+                            <div className="p-2.5 rounded-lg bg-[#111514] border border-[#2A332B] text-[11px] font-mono space-y-1 text-center">
+                              <div className="flex items-center justify-between text-[#A0A89F]">
+                                <span>Detected Dimensions:</span>
+                                <span className="text-[#C7F36B] font-bold">
+                                  {detectedDimensions.width} × {detectedDimensions.height} px
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between text-[#A0A89F]">
+                                <span>Detected Ratio:</span>
+                                <span className="text-[#F5F5F0] font-bold">
+                                  {detectedDimensions.ratioLabel}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+
                           <div className="flex items-center justify-center gap-2">
                             <button
                               type="button"
@@ -890,7 +987,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                       <div>
                         <label className="block text-xs font-medium text-[#F5F5F0] mb-1.5">
                           Category <span className="text-[#C7F36B]">*</span>
@@ -932,6 +1029,48 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           placeholder="e.g. 9:16 Vertical Video"
                           className="w-full px-3.5 py-2.5 rounded-lg bg-[#111514] border border-[#2A332B] text-xs sm:text-sm text-[#F5F5F0] focus:outline-none focus:border-[#C7F36B]"
                         />
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <label className="block text-xs font-medium text-[#F5F5F0]">
+                            Display Ratio <span className="text-[#C7F36B]">*</span>
+                          </label>
+                          {detectedDimensions && (
+                            <span className="text-[10px] font-mono text-[#C7F36B]">
+                              Auto: {detectedDimensions.ratioLabel}
+                            </span>
+                          )}
+                        </div>
+                        <select
+                          value={formAspectRatio}
+                          onChange={(e) => setFormAspectRatio(e.target.value as AspectRatioOption)}
+                          className="w-full px-3.5 py-2.5 rounded-lg bg-[#111514] border border-[#2A332B] text-xs sm:text-sm text-[#F5F5F0] focus:outline-none focus:border-[#C7F36B]"
+                        >
+                          {ASPECT_RATIO_OPTIONS.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Display ratio help note */}
+                    <div className="p-3 rounded-lg bg-[#111514] border border-[#2A332B] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-[#A0A89F]">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[#C7F36B] font-mono font-bold">Playback Rule:</span>
+                        <span>Full original video always preserved with object-fit: contain (zero stretching or cropping).</span>
+                      </div>
+                      <div className="flex items-center gap-2 font-mono text-[11px] shrink-0">
+                        <span>Active Ratio:</span>
+                        <span className="text-[#F5F5F0] bg-[#171C19] px-2 py-0.5 rounded border border-[#2A332B] font-bold">
+                          {formAspectRatio === 'auto'
+                            ? `Auto Detect (${detectedDimensions?.ratioLabel || 'Original'})`
+                            : formAspectRatio === 'original'
+                            ? 'Native Original'
+                            : formAspectRatio}
+                        </span>
                       </div>
                     </div>
 
@@ -1060,23 +1199,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           onClick={() => setPreviewingVideoUrl(null)}
         >
           <div
-            className="relative max-w-sm w-full bg-[#111514] border border-[#2A332B] rounded-2xl overflow-hidden p-2"
+            className="relative max-w-2xl w-full bg-[#111514] border border-[#2A332B] rounded-2xl overflow-hidden p-3 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex justify-end p-1">
+            <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#2A332B]">
+              <span className="text-xs font-mono text-[#A0A89F]">Admin Video Preview</span>
               <button
                 onClick={() => setPreviewingVideoUrl(null)}
-                className="p-1 text-[#A0A89F] hover:text-[#F5F5F0]"
+                className="p-1 text-[#A0A89F] hover:text-[#F5F5F0] rounded cursor-pointer"
+                aria-label="Close Preview"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <video
-              src={previewingVideoUrl}
-              controls
-              autoPlay
-              className="w-full aspect-[9/16] rounded-xl object-cover bg-black"
-            />
+            <div className="relative w-full max-h-[75vh] flex items-center justify-center bg-black rounded-xl overflow-hidden">
+              <video
+                src={previewingVideoUrl}
+                controls
+                autoPlay
+                playsInline
+                className="max-h-[75vh] w-auto h-auto object-contain bg-black"
+              />
+            </div>
           </div>
         </div>
       )}

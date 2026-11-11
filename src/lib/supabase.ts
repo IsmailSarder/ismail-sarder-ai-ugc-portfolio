@@ -67,12 +67,15 @@ export function clearSupabaseCredentials() {
 // Storage Buckets & Table Constants
 export const BUCKET_VIDEOS = 'portfolio-videos';
 export const BUCKET_THUMBNAILS = 'portfolio-thumbnails';
+export const BUCKET_PROFILE_IMAGES = 'profile-images';
 export const TABLE_PROJECTS = 'portfolio_projects';
 export const TABLE_INQUIRIES = 'project_inquiries';
+export const TABLE_PROFILE_SETTINGS = 'profile_settings';
 
 export const STORAGE_BUCKETS = {
   VIDEOS: BUCKET_VIDEOS,
   THUMBNAILS: BUCKET_THUMBNAILS,
+  PROFILE_IMAGES: BUCKET_PROFILE_IMAGES,
 } as const;
 
 export type ProjectCategory =
@@ -103,6 +106,10 @@ export interface SupabaseProject {
   format?: string;
   hook?: string;
   angle?: string;
+  aspect_ratio?: string;
+  video_width?: number;
+  video_height?: number;
+  video_mime_type?: string;
 }
 
 export type PortfolioProject = SupabaseProject;
@@ -274,8 +281,19 @@ CREATE TABLE IF NOT EXISTS public.portfolio_projects (
   duration TEXT DEFAULT '0:30',
   format TEXT DEFAULT '9:16 Vertical Video',
   hook TEXT DEFAULT '',
-  angle TEXT DEFAULT 'Direct Response'
+  angle TEXT DEFAULT 'Direct Response',
+  aspect_ratio TEXT DEFAULT 'auto',
+  video_width INTEGER DEFAULT NULL,
+  video_height INTEGER DEFAULT NULL,
+  video_mime_type TEXT DEFAULT 'video/mp4'
 );
+
+-- Safe migration for existing tables (Adds columns if not present without deleting data)
+ALTER TABLE public.portfolio_projects
+  ADD COLUMN IF NOT EXISTS aspect_ratio TEXT DEFAULT 'auto',
+  ADD COLUMN IF NOT EXISTS video_width INTEGER DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS video_height INTEGER DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS video_mime_type TEXT DEFAULT 'video/mp4';
 
 -- 2. Create project_inquiries table
 CREATE TABLE IF NOT EXISTS public.project_inquiries (

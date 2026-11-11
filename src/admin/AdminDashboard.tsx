@@ -5,6 +5,8 @@ import { portfolioService } from '../lib/portfolioService.ts';
 import { ProjectFormModal } from './ProjectFormModal.tsx';
 import { SUPABASE_SETUP_SQL } from '../lib/schemaSql.ts';
 import { Logo } from '../components/Logo.tsx';
+import { ProfilePictureManager } from './ProfilePictureManager.tsx';
+import { useProfile } from '../context/ProfileContext.tsx';
 import {
   LayoutDashboard,
   Film,
@@ -29,6 +31,7 @@ import {
   ArrowDown,
   RefreshCw,
   Play,
+  Camera,
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -41,11 +44,13 @@ type TabType =
   | 'add-project'
   | 'categories'
   | 'inquiries'
+  | 'profile'
   | 'sql-setup'
   | 'settings';
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToHome }) => {
   const { user, signOut } = useAuth();
+  const { effectiveProfileImage } = useProfile();
 
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [projects, setProjects] = useState<PortfolioProject[]>([]);
@@ -300,6 +305,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToHome }) 
             </button>
 
             <button
+              onClick={() => setActiveTab('profile')}
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                activeTab === 'profile'
+                  ? 'bg-[#C7F36B] text-[#090A0B]'
+                  : 'text-[#A0A89F] hover:text-[#F5F5F0] hover:bg-[#171C19]'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <Camera className="w-4 h-4" />
+                <span>Profile Settings</span>
+              </div>
+              <span className="text-[9px] font-mono text-[#C7F36B] bg-[#C7F36B]/10 px-1.5 py-0.5 rounded">
+                Picture
+              </span>
+            </button>
+
+            <button
               onClick={() => setActiveTab('sql-setup')}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
                 activeTab === 'sql-setup'
@@ -334,11 +356,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToHome }) 
 
         {/* User Profile & Actions Footer */}
         <div className="p-4 border-t border-[#2A332B] space-y-3">
-          <div className="flex items-center justify-between text-xs">
-            <div className="min-w-0 pr-2">
+          <div className="flex items-center gap-3 text-xs">
+            <div className="w-9 h-9 rounded-full overflow-hidden border border-[#2A332B] shrink-0 bg-[#090A0B]">
+              <img
+                src={effectiveProfileImage}
+                alt="Ismail Sarder Profile"
+                className="w-full h-full object-cover object-top"
+              />
+            </div>
+            <div className="min-w-0 pr-1 flex-1">
               <span className="text-[10px] font-mono text-[#A0A89F] block">SIGNED IN AS</span>
               <span className="text-xs font-semibold text-[#F5F5F0] truncate block">
-                {user?.email || 'Admin'}
+                {user?.email || 'Ismail Sarder'}
               </span>
             </div>
           </div>
@@ -374,6 +403,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToHome }) 
               {activeTab === 'projects' && 'Portfolio Video Management'}
               {activeTab === 'categories' && 'Creative Categories & Taxonomy'}
               {activeTab === 'inquiries' && 'Client Leads & Inquiries'}
+              {activeTab === 'profile' && 'Profile Picture & Identity Settings'}
               {activeTab === 'sql-setup' && 'Supabase Schema & Storage Configuration'}
               {activeTab === 'settings' && 'System Configuration & Security'}
             </h1>
@@ -589,6 +619,40 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToHome }) 
                       ))}
                     </div>
                   )}
+                </div>
+
+                {/* Profile Picture Quick Card */}
+                <div className="lg:col-span-12 bg-[#111514] border border-[#2A332B] rounded-xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-[#C7F36B] shrink-0 bg-[#090A0B] shadow-md">
+                      <img
+                        src={effectiveProfileImage}
+                        alt="Active Profile Headshot"
+                        className="w-full h-full object-cover object-top"
+                      />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-sm font-bold font-heading text-[#F5F5F0]">
+                          Official Studio Headshot
+                        </h4>
+                        <span className="text-[10px] font-mono text-[#C7F36B] bg-[#171C19] border border-[#2A332B] px-1.5 py-0.2 rounded">
+                          LIVE
+                        </span>
+                      </div>
+                      <p className="text-xs text-[#A0A89F] mt-0.5">
+                        Active headshot displayed across Homepage Hero and About sections.
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => setActiveTab('profile')}
+                    className="px-4 py-2 text-xs font-semibold text-[#090A0B] bg-[#C7F36B] hover:bg-[#d6ff7d] rounded-lg transition-colors flex items-center gap-2 cursor-pointer shrink-0"
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                    <span>Manage Picture</span>
+                  </button>
                 </div>
 
               </div>
@@ -948,6 +1012,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToHome }) 
                 </div>
               )}
             </div>
+          )}
+
+          {/* TAB: PROFILE SETTINGS */}
+          {activeTab === 'profile' && (
+            <ProfilePictureManager />
           )}
 
           {/* TAB 5: SQL SETUP */}

@@ -9,7 +9,7 @@ export const Services: React.FC<ServicesProps> = ({ onSelectService }) => {
   const servicesList = [
     {
       index: '01',
-      title: 'AI UGC Creator Videos',
+      title: 'AI UGC Video Ads',
       description: 'Hyper-realistic digital creator ads that look and feel like organic user-generated content. Built with native smartphone camera pacing, authentic speaking cadences, and zero uncanny valley.',
       deliverables: ['9:16 Vertical Master', 'Burned-in Dynamic Captions', '2-3 Hook Variations', 'Raw Footage Export'],
       platforms: 'TikTok · Reels · Shorts',
@@ -17,7 +17,7 @@ export const Services: React.FC<ServicesProps> = ({ onSelectService }) => {
     },
     {
       index: '02',
-      title: 'AI Spokesperson Ads',
+      title: 'AI Spokesperson Videos',
       description: 'Charismatic, articulate brand advocates and founder-led explainers. Tailored with custom demographics, regional accents (US, UK, Australian, European), and high-authority product endorsements.',
       deliverables: ['Direct-to-Camera Delivery', 'Custom Wardrobe & Backdrop', 'Multi-Language Dubbing Option', 'Voice Tone Calibration'],
       platforms: 'Meta Ads · YouTube · Landing Pages',
@@ -33,7 +33,7 @@ export const Services: React.FC<ServicesProps> = ({ onSelectService }) => {
     },
     {
       index: '04',
-      title: 'E-commerce Video Ads',
+      title: 'E-commerce Video Creatives',
       description: 'High-velocity direct-response creatives formulated specifically for customer acquisition. Calibrated for paid social channels to maximize return on ad spend (ROAS) and lower CPA.',
       deliverables: ['Direct Response CTA Cards', 'Offer Overlay Animations', 'Problem-Agitation-Solution Flow', 'A/B Testing Ready'],
       platforms: 'Meta Ads · Pinterest · Google Demand Gen',
@@ -41,7 +41,7 @@ export const Services: React.FC<ServicesProps> = ({ onSelectService }) => {
     },
     {
       index: '05',
-      title: 'Hook & Script Development',
+      title: 'Ad Hooks & Scriptwriting',
       description: 'Psychology-backed direct response copywriting. We construct the critical first 3-second pattern interrupts, relatable audience tension points, and bulletproof closing CTAs.',
       deliverables: ['5 Tested Hook Frameworks', 'Word-for-Word Voiceover Script', 'Visual Storyboard & Shotlist', 'Competitor Angle Matrix'],
       platforms: 'Cross-Platform Creative Strategy',
@@ -49,6 +49,14 @@ export const Services: React.FC<ServicesProps> = ({ onSelectService }) => {
     },
     {
       index: '06',
+      title: 'Multiple Creative Variations',
+      description: 'Rapid multivariate creative testing at scale. We generate multiple hooks, pacing speeds, spokesperson personas, and music tracks to identify winning ad combinations fast.',
+      deliverables: ['Batch Matrix (3 Hooks × 2 Bodies × 2 CTAs)', 'Rapid Creative Refresh Batches', 'Fatigue-Prevention Iterations', 'Naming Convention for Media Buyers'],
+      platforms: 'High-Spend Ad Accounts ($10k-$100k+/mo)',
+      icon: SlidersHorizontal,
+    },
+    {
+      index: '07',
       title: 'Product B-roll & Lifestyle Videos',
       description: 'Cinematic contextual footage placing your product inside aspirational real-world environments—from sunlit modern loft interiors to architectural outdoor urban settings.',
       deliverables: ['Rich Ambient Environmental Cuts', 'Organic Hands-On Interaction', 'Color Graded 4K Master', 'Seamless Looping Formats'],
@@ -56,19 +64,11 @@ export const Services: React.FC<ServicesProps> = ({ onSelectService }) => {
       icon: Film,
     },
     {
-      index: '07',
+      index: '08',
       title: 'Social Media Ad Creatives',
       description: 'Platform-native visual assets engineered for modern algorithmic feeds. Fast cuts, punchy text kinetic motion, and trends mapped directly to your product positioning.',
       deliverables: ['Platform Native Pacing', 'Sound-Trend Synchronization', 'Dynamic Aspect Ratios (9:16 / 4:5)', 'High-Retention Visual Loops'],
       platforms: 'TikTok · Instagram · Snapchat',
-      icon: SlidersHorizontal,
-    },
-    {
-      index: '08',
-      title: 'Multiple Creative Variations',
-      description: 'Rapid multivariate creative testing at scale. We generate multiple hooks, pacing speeds, spokesperson personas, and music tracks to identify winning ad combinations fast.',
-      deliverables: ['Batch Matrix (3 Hooks × 2 Bodies × 2 CTAs)', 'Rapid Creative Refresh Batches', 'Fatigue-Prevention Iterations', 'Naming Convention for Media Buyers'],
-      platforms: 'High-Spend Ad Accounts ($10k-$100k+/mo)',
       icon: SlidersHorizontal,
     },
   ];
@@ -81,7 +81,6 @@ export const Services: React.FC<ServicesProps> = ({ onSelectService }) => {
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
           <div>
             <div className="flex items-center gap-2 text-xs font-semibold tracking-wider text-[#A0A89F] uppercase mb-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#C7F36B]" />
               <span>Full-Stack Creative Capabilities</span>
             </div>
             <h2 className="text-3xl sm:text-4xl font-extrabold font-heading text-[#F5F5F0] tracking-tight">
@@ -128,8 +127,8 @@ export const Services: React.FC<ServicesProps> = ({ onSelectService }) => {
                       Included Deliverables
                     </span>
                     {service.deliverables.map((item) => (
-                      <div key={item} className="text-xs text-[#F5F5F0] flex items-center gap-1.5">
-                        <span className="w-1 h-1 rounded-full bg-[#C7F36B]" />
+                      <div key={item} className="text-xs text-[#F5F5F0] flex items-center gap-2">
+                        <span aria-hidden="true" className="text-[#C7F36B] font-mono text-[10px]">·</span>
                         <span>{item}</span>
                       </div>
                     ))}

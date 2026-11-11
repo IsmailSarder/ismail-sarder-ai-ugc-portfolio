@@ -1,15 +1,52 @@
-import React, { useState, useEffect } from 'react';
-import { Play, Pause, Volume2, VolumeX, Sparkles, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { motion } from 'motion/react';
+import { Play, Pause, Volume2, VolumeX, Sparkles, ArrowRight, Film, X } from 'lucide-react';
 import { heroUgcBeauty } from '../assets/images.ts';
+import { useProfile } from '../context/ProfileContext.tsx';
+import { VideoModal, PortfolioItem } from './VideoModal.tsx';
 
 interface HeroProps {
   onOpenInquiry: () => void;
 }
 
 export const Hero: React.FC<HeroProps> = ({ onOpenInquiry }) => {
+  const { effectiveProfileImage } = useProfile();
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
   const [progress, setProgress] = useState(38);
+  const [isShowreelOpen, setIsShowreelOpen] = useState(false);
+
+  // 3D tilt tracking for phone mockup
+  const phoneRef = useRef<HTMLDivElement>(null);
+  const [phoneTilt, setPhoneTilt] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [isHoveringPhone, setIsHoveringPhone] = useState(false);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+
+  useEffect(() => {
+    setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
+  }, []);
+
+  const handlePhoneMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (isTouchDevice || !phoneRef.current) return;
+      const rect = phoneRef.current.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+
+      const maxTilt = 10;
+      const rotateX = ((mouseY - centerY) / centerY) * -maxTilt;
+      const rotateY = ((mouseX - centerX) / centerX) * maxTilt;
+      setPhoneTilt({ x: rotateX, y: rotateY });
+    },
+    [isTouchDevice]
+  );
+
+  const handlePhoneMouseLeave = () => {
+    setIsHoveringPhone(false);
+    setPhoneTilt({ x: 0, y: 0 });
+  };
 
   // Simulated video playback timer
   useEffect(() => {
@@ -29,57 +66,140 @@ export const Hero: React.FC<HeroProps> = ({ onOpenInquiry }) => {
     'European Union',
   ];
 
+  const masterShowreelItem: PortfolioItem = {
+    id: 'master-showreel-2026',
+    title: 'Ismail Sarder — 2026 AI UGC Master Showreel',
+    category: 'AI UGC Creator Videos',
+    duration: '1:15',
+    format: '9:16 & 16:9 Master Reel',
+    thumbnail: heroUgcBeauty,
+    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+    video_url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+    hook: 'Halting thumbs, beating creative ad fatigue, and scaling direct-response e-commerce ads with photorealistic AI UGC creators.',
+    angle: '2026 Creative Director & AI Pipeline Showreel',
+    overview: 'Full creative showreel demonstrating realistic multi-demographic AI creators, high-converting product demonstrations, dynamic macro b-roll, and multivariate hook testing formulated for brands in the USA, UK, UAE, Canada, Australia, and Europe.',
+    isConcept: false,
+    keyFeatures: [
+      'Photorealistic AI Creator Personas',
+      'Native TikTok & Reels Pacing & Sound',
+      'Macro Product Staging & ASMR Audio',
+      '4K 60FPS High-Bitrate Master Deliverables',
+    ],
+    targetMarket: 'USA, UK, UAE, Canada, Australia & Europe',
+  };
+
   return (
     <section id="home" className="relative pt-24 pb-14 sm:pt-28 sm:pb-16 lg:pt-36 lg:pb-24 overflow-hidden">
-      {/* Subtle Studio Backdrop Elements */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[300px] sm:w-[500px] lg:w-[700px] h-[300px] sm:h-[400px] bg-[#C7F36B]/5 blur-[100px] sm:blur-[140px] pointer-events-none rounded-full" />
-      <div className="absolute top-10 right-10 w-72 sm:w-96 h-72 sm:h-96 bg-[#171C19] blur-[80px] sm:blur-[100px] pointer-events-none -z-10" />
+      {/* Subtle Studio Backdrop Elements with Continuous Ambient Drift */}
+      <motion.div
+        animate={{
+          scale: [1, 1.15, 1],
+          opacity: [0.05, 0.09, 0.05],
+        }}
+        transition={{
+          repeat: Infinity,
+          duration: 9,
+          ease: 'easeInOut',
+        }}
+        className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[300px] sm:w-[500px] lg:w-[700px] h-[300px] sm:h-[400px] bg-[#C7F36B] blur-[100px] sm:blur-[140px] pointer-events-none rounded-full"
+      />
+      <motion.div
+        animate={{
+          x: [-15, 15, -15],
+          y: [-10, 10, -10],
+        }}
+        transition={{
+          repeat: Infinity,
+          duration: 12,
+          ease: 'easeInOut',
+        }}
+        className="absolute top-10 right-10 w-72 sm:w-96 h-72 sm:h-96 bg-[#171C19] blur-[80px] sm:blur-[100px] pointer-events-none -z-10"
+      />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Main 2-Column Editorial Split */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
           
-          {/* Left Column: Typographic Hierarchy */}
+          {/* Left Column: Typographic Hierarchy with Staggered Entrance */}
           <div className="lg:col-span-7 flex flex-col justify-center text-left">
             
-            {/* Editorial Lead Kicker */}
-            <div className="flex flex-wrap items-center gap-2 text-xs font-semibold tracking-wider text-[#A0A89F] uppercase mb-4 sm:mb-5">
-              <span className="inline-block w-2 h-2 rounded-full bg-[#C7F36B] shrink-0" />
-              <span>Ismail Sarder</span>
+            {/* Editorial Lead Kicker with Creator Avatar */}
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              className="flex flex-wrap items-center gap-2.5 text-xs font-semibold tracking-wider text-[#A0A89F] uppercase mb-4 sm:mb-5"
+            >
+              <div className="relative shrink-0">
+                <img
+                  src={effectiveProfileImage}
+                  alt="Ismail Sarder Profile"
+                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover object-top border border-[#C7F36B]/60 shadow-sm shadow-[#C7F36B]/20"
+                />
+              </div>
+              <span className="text-[#F5F5F0] font-bold">Ismail Sarder</span>
               <span aria-hidden="true" className="text-[#2A332B]">/</span>
-              <span className="text-[#F5F5F0]">AI UGC Ad Creator & Creative Strategist</span>
-            </div>
+              <span className="text-[#A0A89F]">AI UGC Ad Creator & Creative Strategist</span>
+            </motion.div>
 
             {/* Display Headline */}
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold font-heading text-[#F5F5F0] tracking-tight leading-[1.1] sm:leading-[1.08] mb-5 sm:mb-6 [text-wrap:balance]">
-              MAKE YOUR BRAND <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F5F5F0] via-[#F5F5F0] to-[#C7F36B]">IMPOSSIBLE</span> TO SCROLL PAST.
-            </h1>
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+              className="text-3xl sm:text-5xl lg:text-6xl font-extrabold font-heading text-[#F5F5F0] tracking-tight leading-[1.1] sm:leading-[1.08] mb-5 sm:mb-6 [text-wrap:balance]"
+            >
+              REALISTIC AI UGC ADS THAT <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F5F5F0] via-[#F5F5F0] to-[#C7F36B]">HALT THE FEED</span> & SCALE BRANDS.
+            </motion.h1>
 
             {/* Supporting Text */}
-            <p className="text-sm sm:text-base lg:text-lg text-[#A0A89F] leading-relaxed max-w-2xl mb-6 sm:mb-8 font-sans">
-              I create scroll-stopping AI-powered UGC video ads, product demonstrations, and creative content that help e-commerce brands connect with their audience.
-            </p>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              className="text-sm sm:text-base lg:text-lg text-[#A0A89F] leading-relaxed max-w-2xl mb-6 sm:mb-8 font-sans"
+            >
+              I help e-commerce brands create photorealistic AI-powered UGC video ads, product demonstrations, spokesperson explainers, and performance creative concepts formulated for rapid scaling across the USA, UK, UAE, Canada, Australia, and European markets.
+            </motion.p>
 
-            {/* Action Buttons - 320px responsive */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 mb-8 sm:mb-10">
+            {/* Action Buttons - Prominent Hire Me, View My Work, and Watch Showreel */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 mb-8 sm:mb-10 flex-wrap"
+            >
               <button
                 onClick={onOpenInquiry}
-                className="w-full sm:w-auto px-6 py-3.5 text-xs sm:text-sm font-bold font-heading uppercase tracking-wider text-[#090A0B] bg-[#C7F36B] hover:bg-[#d6ff7d] active:scale-[0.98] rounded-md transition-all duration-200 shadow-lg shadow-[#C7F36B]/20 flex items-center justify-center gap-2 cursor-pointer"
+                className="group relative px-6 py-3.5 text-xs sm:text-sm font-bold font-heading uppercase tracking-wider text-[#090A0B] bg-[#C7F36B] hover:bg-[#d6ff7d] active:scale-[0.98] rounded-md transition-all duration-200 shadow-lg shadow-[#C7F36B]/20 flex items-center justify-center gap-2 cursor-pointer overflow-hidden min-h-[46px]"
               >
-                Let&apos;s Work Together
-                <ArrowRight className="w-4 h-4" />
+                <span>Hire Me</span>
+                <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
               </button>
 
               <a
                 href="#portfolio"
-                className="w-full sm:w-auto px-6 py-3.5 text-xs sm:text-sm font-semibold font-heading tracking-wider text-[#F5F5F0] hover:text-[#C7F36B] bg-[#171C19] hover:bg-[#1e2521] border border-[#2A332B] rounded-md transition-all duration-200 flex items-center justify-center gap-2 text-center"
+                className="px-6 py-3.5 text-xs sm:text-sm font-semibold font-heading tracking-wider text-[#F5F5F0] hover:text-[#C7F36B] bg-[#171C19] hover:bg-[#1e2521] border border-[#2A332B] hover:border-[#C7F36B]/40 rounded-md transition-all duration-200 flex items-center justify-center gap-2 text-center min-h-[46px]"
               >
-                Explore My Work
+                View My Work
               </a>
-            </div>
+
+              <button
+                onClick={() => setIsShowreelOpen(true)}
+                className="px-5 py-3.5 text-xs sm:text-sm font-mono tracking-wider text-[#C7F36B] hover:text-[#090A0B] bg-[#C7F36B]/10 hover:bg-[#C7F36B] border border-[#C7F36B]/30 rounded-md transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer min-h-[46px]"
+              >
+                <Film className="w-4 h-4" />
+                <span>Watch 2026 Showreel</span>
+              </button>
+            </motion.div>
 
             {/* Target Markets Line - Clean Unboxed Typography */}
-            <div className="pt-5 sm:pt-6 border-t border-[#2A332B]">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="pt-5 sm:pt-6 border-t border-[#2A332B]"
+            >
               <span className="text-[11px] sm:text-xs uppercase tracking-wider text-[#A0A89F] block mb-2 font-medium">
                 Target Markets Served
               </span>
@@ -93,24 +213,53 @@ export const Hero: React.FC<HeroProps> = ({ onOpenInquiry }) => {
                   </React.Fragment>
                 ))}
               </div>
-            </div>
+            </motion.div>
 
           </div>
 
-          {/* Right Column: Layered Creative Showcase Reel */}
+          {/* Right Column: Layered Creative Showcase Reel with 3D Float & Tilt */}
           <div className="lg:col-span-5 flex justify-center lg:justify-end">
-            <div className="relative w-full max-w-[310px] sm:max-w-[360px] group">
-              
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 25 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              className="relative w-full max-w-[310px] sm:max-w-[360px] group perspective-1000"
+            >
               {/* Outer Glow & Architectural Framing */}
               <div className="absolute -inset-1.5 bg-gradient-to-b from-[#C7F36B]/20 via-[#2A332B]/40 to-transparent rounded-3xl blur-md -z-10" />
 
-              {/* Mobile Phone Mockup Device Frame */}
-              <div className="relative bg-[#111514] border border-[#2A332B] rounded-[24px] sm:rounded-[28px] p-2.5 sm:p-3 shadow-2xl overflow-hidden">
+              {/* Mobile Phone Mockup Device Frame with 3D Mouse Parallax & Gentle Idle Float */}
+              <motion.div
+                ref={phoneRef}
+                onMouseMove={handlePhoneMouseMove}
+                onMouseEnter={() => setIsHoveringPhone(true)}
+                onMouseLeave={handlePhoneMouseLeave}
+                animate={
+                  !isHoveringPhone && !isTouchDevice
+                    ? { y: [-4, 4, -4] }
+                    : undefined
+                }
+                transition={
+                  !isHoveringPhone && !isTouchDevice
+                    ? { repeat: Infinity, duration: 6, ease: 'easeInOut' }
+                    : undefined
+                }
+                style={{
+                  transform:
+                    !isTouchDevice && isHoveringPhone
+                      ? `perspective(1000px) rotateX(${phoneTilt.x}deg) rotateY(${phoneTilt.y}deg) scale3d(1.02, 1.02, 1)`
+                      : undefined,
+                  transformStyle: 'preserve-3d',
+                  transition: isHoveringPhone
+                    ? 'transform 0.1s ease-out'
+                    : 'transform 0.5s cubic-bezier(0.23, 1, 0.32, 1)',
+                }}
+                className="relative bg-[#111514] border border-[#2A332B] rounded-[24px] sm:rounded-[28px] p-2.5 sm:p-3 shadow-2xl overflow-hidden hover:border-[#C7F36B]/60 transition-colors"
+              >
                 
                 {/* Screen Top Status bar */}
                 <div className="flex items-center justify-between px-2.5 py-1.5 text-[10px] sm:text-[11px] text-[#A0A89F] font-mono border-b border-[#2A332B]/60 mb-2">
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#C7F36B]" />
+                  <span className="font-semibold text-[#F5F5F0]">
                     AI UGC REEL · 4K 60FPS
                   </span>
                   <span>9:16 VERTICAL</span>
@@ -130,7 +279,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenInquiry }) => {
                   {/* Scrim Overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/30 pointer-events-none" />
 
-                  {/* Top Badges - Truthful Concept Identification */}
+                  {/* Top Badges */}
                   <div className="absolute top-2.5 sm:top-3 left-2.5 sm:left-3 right-2.5 sm:right-3 flex items-center justify-between">
                     <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#090A0B] bg-[#C7F36B] px-2 py-0.5 sm:py-1 rounded font-mono">
                       Spec Concept Demo
@@ -151,7 +300,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenInquiry }) => {
                     className="absolute inset-0 flex items-center justify-center group/btn focus:outline-none cursor-pointer"
                     aria-label={isPlaying ? 'Pause video preview' : 'Play video preview'}
                   >
-                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-black/60 backdrop-blur-sm border border-white/30 text-white flex items-center justify-center transition-all duration-300 group-hover/btn:scale-110 group-hover/btn:bg-[#C7F36B] group-hover/btn:text-[#090A0B] group-hover/btn:border-[#C7F36B]">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-black/60 backdrop-blur-sm border border-white/30 text-white flex items-center justify-center transition-all duration-300 group-hover/btn:scale-110 group-hover/btn:bg-[#C7F36B] group-hover/btn:text-[#090A0B] group-hover/btn:border-[#C7F36B] shadow-lg">
                       {isPlaying ? <Pause className="w-5 h-5 sm:w-6 sm:h-6" /> : <Play className="w-5 h-5 sm:w-6 sm:h-6 ml-0.5 fill-current" />}
                     </div>
                   </button>
@@ -188,8 +337,8 @@ export const Hero: React.FC<HeroProps> = ({ onOpenInquiry }) => {
                   </span>
                 </div>
 
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           </div>
 
         </div>
@@ -232,8 +381,19 @@ export const Hero: React.FC<HeroProps> = ({ onOpenInquiry }) => {
             </p>
           </div>
         </div>
-
       </div>
+
+      {/* Featured Master Showreel Lightbox Modal */}
+      {isShowreelOpen && (
+        <VideoModal
+          item={masterShowreelItem}
+          onClose={() => setIsShowreelOpen(false)}
+          onOrderSimilar={() => {
+            setIsShowreelOpen(false);
+            onOpenInquiry();
+          }}
+        />
+      )}
     </section>
   );
 };

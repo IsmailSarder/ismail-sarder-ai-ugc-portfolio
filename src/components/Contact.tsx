@@ -76,14 +76,14 @@ export const Contact = forwardRef<ContactRef, ContactProps>(({ initialService = 
   ];
 
   const availableServices = [
-    'AI UGC Creator Videos',
-    'AI Spokesperson Ads',
+    'AI UGC Video Ads',
+    'AI Spokesperson Videos',
     'Product Demonstration Videos',
-    'E-commerce Video Ads',
-    'Hook & Script Development',
+    'E-commerce Video Creatives',
+    'Ad Hooks & Scriptwriting',
+    'Multiple Creative Variations',
     'Product B-roll & Lifestyle',
     'Social Media Ad Creatives',
-    'Multiple Creative Variations',
   ];
 
   const handleCopyEmail = () => {
@@ -190,7 +190,6 @@ export const Contact = forwardRef<ContactRef, ContactProps>(({ initialService = 
         {/* Section Header */}
         <div className="max-w-3xl mb-12 sm:mb-16">
           <div className="flex items-center gap-2 text-xs font-semibold tracking-wider text-[#A0A89F] uppercase mb-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#C7F36B]" />
             <span>Project Inquiries & Collaborations</span>
           </div>
           <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold font-heading text-[#F5F5F0] tracking-tight mb-3 sm:mb-4 [text-wrap:balance]">

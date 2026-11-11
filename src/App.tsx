@@ -14,7 +14,9 @@ import { WhyWorkWithMe } from './components/WhyWorkWithMe.tsx';
 import { FAQ } from './components/FAQ.tsx';
 import { Contact, ContactRef } from './components/Contact.tsx';
 import { Footer } from './components/Footer.tsx';
+import { WhatsAppButton } from './components/WhatsAppButton.tsx';
 import { AuthProvider, useAuth } from './context/AuthContext.tsx';
+import { ProfileProvider } from './context/ProfileContext.tsx';
 import { AdminDashboard } from './admin/AdminDashboard.tsx';
 import { AdminLogin } from './admin/AdminLogin.tsx';
 
@@ -116,6 +118,9 @@ function MainApp() {
         <Contact ref={contactRef} />
       </main>
 
+      {/* Floating Direct WhatsApp Action */}
+      <WhatsAppButton />
+
       {/* Footer with Admin Portal trigger */}
       <Footer onOpenAdmin={handleOpenAdmin} />
     </div>
@@ -125,7 +130,9 @@ function MainApp() {
 export default function App() {
   return (
     <AuthProvider>
-      <MainApp />
+      <ProfileProvider>
+        <MainApp />
+      </ProfileProvider>
     </AuthProvider>
   );
 }

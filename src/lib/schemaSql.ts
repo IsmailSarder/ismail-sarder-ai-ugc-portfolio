@@ -165,4 +165,66 @@ CREATE POLICY "Admins can delete portfolio thumbnails"
     ON storage.objects
     FOR DELETE
     TO authenticated
-    USING (bucket_id = 'portfolio-thumbnails');`;
+    USING (bucket_id = 'portfolio-thumbnails');
+
+-- 4. Create Profile Settings Table
+CREATE TABLE IF NOT EXISTS public.profile_settings (
+    id TEXT PRIMARY KEY DEFAULT 'primary_profile',
+    full_name TEXT DEFAULT 'Ismail Sarder',
+    title TEXT DEFAULT 'AI UGC Ad Creator & Creative Strategist',
+    profile_image_url TEXT,
+    profile_image_path TEXT,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Enable RLS for Profile Settings
+ALTER TABLE public.profile_settings ENABLE ROW LEVEL SECURITY;
+
+-- Public can view profile settings
+DROP POLICY IF EXISTS "Public can view profile settings" ON public.profile_settings;
+CREATE POLICY "Public can view profile settings"
+    ON public.profile_settings
+    FOR SELECT
+    USING (true);
+
+-- Authenticated admins can manage profile settings
+DROP POLICY IF EXISTS "Admins can manage profile settings" ON public.profile_settings;
+CREATE POLICY "Admins can manage profile settings"
+    ON public.profile_settings
+    FOR ALL
+    TO authenticated
+    USING (true)
+    WITH CHECK (true);
+
+-- Insert Storage Bucket: profile-images
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('profile-images', 'profile-images', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+-- Profile Images Storage Policies
+DROP POLICY IF EXISTS "Public can view profile images" ON storage.objects;
+CREATE POLICY "Public can view profile images"
+    ON storage.objects
+    FOR SELECT
+    USING (bucket_id = 'profile-images');
+
+DROP POLICY IF EXISTS "Admins can upload profile images" ON storage.objects;
+CREATE POLICY "Admins can upload profile images"
+    ON storage.objects
+    FOR INSERT
+    TO authenticated
+    WITH CHECK (bucket_id = 'profile-images');
+
+DROP POLICY IF EXISTS "Admins can update profile images" ON storage.objects;
+CREATE POLICY "Admins can update profile images"
+    ON storage.objects
+    FOR UPDATE
+    TO authenticated
+    USING (bucket_id = 'profile-images');
+
+DROP POLICY IF EXISTS "Admins can delete profile images" ON storage.objects;
+CREATE POLICY "Admins can delete profile images"
+    ON storage.objects
+    FOR DELETE
+    TO authenticated
+    USING (bucket_id = 'profile-images');`;

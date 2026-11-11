@@ -110,7 +110,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenInquiry, onOpenAdmin }) =>
                 onClick={handleCtaClick}
                 className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold font-heading uppercase tracking-wider text-[#090A0B] bg-[#C7F36B] hover:bg-[#d6ff7d] active:scale-[0.98] rounded-md transition-all duration-200 shadow-sm shadow-[#C7F36B]/20 whitespace-nowrap cursor-pointer min-h-[36px]"
               >
-                <span>Let&apos;s Work Together</span>
+                <span>Hire Me</span>
                 <ArrowUpRight className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -164,7 +164,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenInquiry, onOpenAdmin }) =>
               onClick={handleCtaClick}
               className="w-full py-3.5 text-center text-xs font-bold font-heading uppercase tracking-wider text-[#090A0B] bg-[#C7F36B] hover:bg-[#d6ff7d] rounded-md shadow-md flex items-center justify-center gap-2 cursor-pointer min-h-[44px]"
             >
-              <span>Let&apos;s Work Together</span>
+              <span>Hire Me</span>
               <ArrowUpRight className="w-4 h-4" />
             </button>
             <div className="text-xs text-[#A0A89F] text-center space-y-1.5 pt-2">
