@@ -28,8 +28,11 @@ export interface PortfolioItem {
     | 'Gadgets & Technology'
     | 'Product Demonstration'
     | 'AI UGC Ads'
+    | 'AI Video Ads'
     | 'Product Demonstrations'
     | 'AI UGC Creator Videos';
+  serviceType?: 'AI UGC Ads' | 'AI Video Ads';
+  isPlaceholder?: boolean;
   duration: string;
   format: string;
   thumbnail: string;

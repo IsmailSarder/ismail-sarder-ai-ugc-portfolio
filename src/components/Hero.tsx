@@ -139,7 +139,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenInquiry }) => {
               </div>
               <span className="text-[#F5F5F0] font-bold">Ismail Sarder</span>
               <span aria-hidden="true" className="text-[#2A332B]">/</span>
-              <span className="text-[#A0A89F]">AI UGC Ad Creator & Creative Strategist</span>
+              <span className="text-[#C7F36B]">AI UGC &amp; Video Ad Creative Specialist</span>
             </motion.div>
 
             {/* Display Headline */}
@@ -149,7 +149,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenInquiry }) => {
               transition={{ duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
               className="text-3xl sm:text-5xl lg:text-6xl font-extrabold font-heading text-[#F5F5F0] tracking-tight leading-[1.1] sm:leading-[1.08] mb-5 sm:mb-6 [text-wrap:balance]"
             >
-              REALISTIC AI UGC ADS THAT <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F5F5F0] via-[#F5F5F0] to-[#C7F36B]">HALT THE FEED</span> & SCALE BRANDS.
+              AI UGC &amp; VIDEO ADS THAT <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F5F5F0] via-[#F5F5F0] to-[#C7F36B]">HALT THE FEED</span> &amp; SCALE BRANDS.
             </motion.h1>
 
             {/* Supporting Text */}
@@ -159,30 +159,30 @@ export const Hero: React.FC<HeroProps> = ({ onOpenInquiry }) => {
               transition={{ duration: 0.6, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
               className="text-sm sm:text-base lg:text-lg text-[#A0A89F] leading-relaxed max-w-2xl mb-6 sm:mb-8 font-sans"
             >
-              I help e-commerce brands create photorealistic AI-powered UGC video ads, product demonstrations, spokesperson explainers, and performance creative concepts formulated for rapid scaling across the USA, UK, UAE, Canada, Australia, and European markets.
+              I create AI-powered UGC videos and cinematic video advertisements for e-commerce brands, beauty, fashion, and digital businesses.
             </motion.p>
 
-            {/* Action Buttons - Prominent Hire Me, View My Work, and Watch Showreel */}
+            {/* Action Buttons - Primary: View My Work, Secondary: Let's Work Together, Showreel */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
               className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 mb-8 sm:mb-10 flex-wrap"
             >
-              <button
-                onClick={onOpenInquiry}
-                className="group relative px-6 py-3.5 text-xs sm:text-sm font-bold font-heading uppercase tracking-wider text-[#090A0B] bg-[#C7F36B] hover:bg-[#d6ff7d] active:scale-[0.98] rounded-md transition-all duration-200 shadow-lg shadow-[#C7F36B]/20 flex items-center justify-center gap-2 cursor-pointer overflow-hidden min-h-[46px]"
-              >
-                <span>Hire Me</span>
-                <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
-              </button>
-
               <a
                 href="#portfolio"
-                className="px-6 py-3.5 text-xs sm:text-sm font-semibold font-heading tracking-wider text-[#F5F5F0] hover:text-[#C7F36B] bg-[#171C19] hover:bg-[#1e2521] border border-[#2A332B] hover:border-[#C7F36B]/40 rounded-md transition-all duration-200 flex items-center justify-center gap-2 text-center min-h-[46px]"
+                className="group relative px-6 py-3.5 text-xs sm:text-sm font-bold font-heading uppercase tracking-wider text-[#090A0B] bg-[#C7F36B] hover:bg-[#d6ff7d] active:scale-[0.98] rounded-md transition-all duration-200 shadow-lg shadow-[#C7F36B]/20 flex items-center justify-center gap-2 cursor-pointer overflow-hidden min-h-[46px]"
               >
-                View My Work
+                <span>View My Work</span>
+                <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
               </a>
+
+              <button
+                onClick={onOpenInquiry}
+                className="px-6 py-3.5 text-xs sm:text-sm font-semibold font-heading tracking-wider text-[#F5F5F0] hover:text-[#C7F36B] bg-[#171C19] hover:bg-[#1e2521] border border-[#2A332B] hover:border-[#C7F36B]/40 rounded-md transition-all duration-200 flex items-center justify-center gap-2 text-center cursor-pointer min-h-[46px]"
+              >
+                <span>Let&apos;s Work Together</span>
+              </button>
 
               <button
                 onClick={() => setIsShowreelOpen(true)}

@@ -84,6 +84,7 @@ export type ProjectCategory =
   | 'Gadgets & Technology'
   | 'Product Demonstration'
   | 'AI UGC Ads'
+  | 'AI Video Ads'
   | 'Product Demonstrations'
   | 'AI UGC Creator Videos';
 

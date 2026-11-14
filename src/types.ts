@@ -1,5 +1,7 @@
 export type ProductCategory =
   | 'All Projects'
+  | 'AI UGC Ads'
+  | 'AI Video Ads'
   | 'Beauty & Skincare'
   | 'Fashion & Lifestyle'
   | 'Gadgets & Technology'

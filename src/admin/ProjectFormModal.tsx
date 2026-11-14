@@ -17,11 +17,12 @@ export const ProjectFormModal: React.FC<ProjectFormModalProps> = ({
   const isEditing = Boolean(project);
 
   const categories = [
+    'AI UGC Ads',
+    'AI Video Ads',
     'Beauty & Skincare',
     'Fashion & Lifestyle',
     'Gadgets & Technology',
     'Product Demonstration',
-    'AI UGC Ads',
   ];
 
   // Form State

@@ -163,7 +163,11 @@ export const ProjectCard3D: React.FC<ProjectCard3DProps> = ({ project, index, on
               )}
             </div>
 
-            {project.isConcept ? (
+            {project.isPlaceholder ? (
+              <span className="text-[9px] font-mono text-amber-300 bg-amber-500/15 backdrop-blur-md px-2 py-1 rounded-md border border-amber-400/40 uppercase tracking-wider font-bold">
+                PLACEHOLDER SLOT
+              </span>
+            ) : project.isConcept ? (
               <span className="text-[9px] font-mono text-[#A0A89F] bg-black/80 backdrop-blur-md px-2 py-1 rounded-md border border-white/10 uppercase tracking-wider">
                 SPEC CONCEPT
               </span>
@@ -210,15 +214,25 @@ export const ProjectCard3D: React.FC<ProjectCard3DProps> = ({ project, index, on
           style={{ transform: 'translateZ(22px)' }}
         >
           <div className="space-y-2">
-            {/* Category & Brand Metadata */}
+            {/* Category & Service Type Metadata (Clean unboxed typography) */}
             <div className="flex items-center gap-2 text-xs text-[#A0A89F] font-medium flex-wrap">
               <span className="text-[#C7F36B] font-semibold">{project.category}</span>
+              {project.serviceType && project.serviceType !== project.category && (
+                <>
+                  <span aria-hidden="true" className="text-[#2A332B]">
+                    ·
+                  </span>
+                  <span className="text-[#F5F5F0] text-[11px] font-mono">
+                    {project.serviceType}
+                  </span>
+                </>
+              )}
               {brandDisplayName && (
                 <>
                   <span aria-hidden="true" className="text-[#2A332B]">
                     ·
                   </span>
-                  <span className="text-[#F5F5F0] font-mono text-[11px] bg-[#111514] px-1.5 py-0.5 rounded border border-[#2A332B]">
+                  <span className="text-[#A0A89F] font-mono text-[11px]">
                     {brandDisplayName}
                   </span>
                 </>
@@ -230,9 +244,9 @@ export const ProjectCard3D: React.FC<ProjectCard3DProps> = ({ project, index, on
               {project.title}
             </h3>
 
-            {/* Hook Quote Line */}
-            <p className="text-xs text-[#A0A89F] leading-relaxed line-clamp-2 italic">
-              &ldquo;{project.hook}&rdquo;
+            {/* Short Project Description */}
+            <p className="text-xs text-[#A0A89F] leading-relaxed line-clamp-2">
+              {project.overview || project.hook}
             </p>
           </div>
 
@@ -240,7 +254,7 @@ export const ProjectCard3D: React.FC<ProjectCard3DProps> = ({ project, index, on
           <div className="pt-3 border-t border-[#2A332B] flex items-center justify-between text-xs font-semibold text-[#A0A89F] group-hover:text-[#F5F5F0] transition-colors">
             <span className="flex items-center gap-1.5">
               <Video className="w-3.5 h-3.5 text-[#C7F36B]" />
-              <span>Watch Concept & Strategy</span>
+              <span>{project.isPlaceholder ? 'Preview Placeholder Slot' : 'Play Video & Strategy'}</span>
             </span>
             <div className="p-1 rounded bg-[#111514] border border-[#2A332B] group-hover:border-[#C7F36B] group-hover:bg-[#C7F36B] group-hover:text-[#090A0B] transition-all duration-200">
               <ArrowUpRight className="w-3.5 h-3.5 transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />

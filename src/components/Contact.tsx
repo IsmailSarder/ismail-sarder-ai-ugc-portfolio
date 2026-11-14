@@ -194,6 +194,8 @@ export const Contact = forwardRef<ContactRef, ContactProps>(({ initialService = 
   ];
 
   const availableServices = [
+    'AI UGC Ads Creation',
+    'AI Video Ads Creation',
     'AI UGC Video Ads',
     'AI Spokesperson Videos',
     'Product Demonstration Videos',
@@ -346,14 +348,25 @@ export const Contact = forwardRef<ContactRef, ContactProps>(({ initialService = 
         <div className="max-w-3xl mb-12 sm:mb-16">
           <div className="flex items-center gap-2 text-xs font-semibold tracking-wider text-[#A0A89F] uppercase mb-2">
             <span className="w-2 h-2 rounded-full bg-[#C7F36B]" />
-            <span>Project Inquiries &amp; Custom Budget Discussion</span>
+            <span>Project Inquiries &amp; Hiring</span>
           </div>
           <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold font-heading text-[#F5F5F0] tracking-tight mb-3 sm:mb-4 [text-wrap:balance]">
-            LET&apos;S MAKE YOUR NEXT AD IMPOSSIBLE TO IGNORE.
+            Need AI UGC videos or creative AI video advertisements for your brand?
           </h2>
-          <p className="text-xs sm:text-base text-[#A0A89F] leading-relaxed">
-            Choose a fixed package or negotiate custom pricing based on your video volume, delivery timeline, and budget. Every inquiry receives personalized creative concepts within 6 hours.
+          <p className="text-xs sm:text-base text-[#A0A89F] leading-relaxed mb-5">
+            Let&apos;s discuss your project and create video ads that match your brand&apos;s goals.
           </p>
+          <a
+            href="#contact-form-panel"
+            onClick={(e) => {
+              e.preventDefault();
+              document.getElementById('contact-name')?.focus();
+            }}
+            className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold font-heading uppercase tracking-wider text-[#090A0B] bg-[#C7F36B] hover:bg-[#d6ff7d] rounded-md transition-all shadow-md shadow-[#C7F36B]/15 min-h-[40px]"
+          >
+            <span>Start a Project</span>
+            <Send className="w-3.5 h-3.5" />
+          </a>
         </div>
 
         {/* 2-Column Split: Direct Channels + Project Inquiry Form */}
@@ -910,7 +923,7 @@ export const Contact = forwardRef<ContactRef, ContactProps>(({ initialService = 
                   </div>
 
                   {/* Submit Button */}
-                  <div>
+                  <div id="contact-form-panel">
                     <button
                       type="submit"
                       disabled={isSubmitting}
@@ -924,7 +937,7 @@ export const Contact = forwardRef<ContactRef, ContactProps>(({ initialService = 
                       ) : (
                         <>
                           <Send className="w-4 h-4" />
-                          <span>Submit Project Inquiry</span>
+                          <span>Start a Project</span>
                         </>
                       )}
                     </button>
