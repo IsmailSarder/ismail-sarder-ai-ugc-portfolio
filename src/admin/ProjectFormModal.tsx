@@ -1,7 +1,13 @@
 import React, { useState, useRef } from 'react';
 import { PortfolioProject, STORAGE_BUCKETS } from '../lib/supabase.ts';
 import { portfolioService } from '../lib/portfolioService.ts';
-import { X, Upload, Video, Image as ImageIcon, CheckCircle, AlertCircle, Play, Eye } from 'lucide-react';
+import {
+  ASPECT_RATIO_OPTIONS,
+  AspectRatioOption,
+  calculateDetectedRatio,
+  extractVideoDimensions,
+} from '../lib/videoAspectRatios.ts';
+import { X, Upload, Video, Image as ImageIcon, AlertCircle } from 'lucide-react';
 
 interface ProjectFormModalProps {
   project?: PortfolioProject | null;
@@ -19,6 +25,9 @@ export const ProjectFormModal: React.FC<ProjectFormModalProps> = ({
   const categories = [
     'AI UGC Ads',
     'AI Video Ads',
+    'CGI Product Ads',
+    'Product Commercials',
+    '3D Product Animation',
     'Beauty & Skincare',
     'Fashion & Lifestyle',
     'Gadgets & Technology',
@@ -28,7 +37,7 @@ export const ProjectFormModal: React.FC<ProjectFormModalProps> = ({
   // Form State
   const [title, setTitle] = useState(project?.title || '');
   const [description, setDescription] = useState(project?.description || '');
-  const [category, setCategory] = useState(project?.category || 'Beauty & Skincare');
+  const [category, setCategory] = useState(project?.category || 'AI UGC Ads');
   const [brandName, setBrandName] = useState(project?.brand_name || '');
   const [duration, setDuration] = useState(project?.duration || '0:30');
   const [displayOrder, setDisplayOrder] = useState<number>(project?.display_order || 0);
@@ -36,13 +45,21 @@ export const ProjectFormModal: React.FC<ProjectFormModalProps> = ({
   const [isPublished, setIsPublished] = useState<boolean>(
     project ? project.is_published : true
   );
+  const [aspectRatio, setAspectRatio] = useState<AspectRatioOption>(
+    (project?.aspect_ratio as AspectRatioOption) || 'auto'
+  );
+  const [videoWidth, setVideoWidth] = useState<number | undefined>(project?.video_width);
+  const [videoHeight, setVideoHeight] = useState<number | undefined>(project?.video_height);
+  const [videoMimeType, setVideoMimeType] = useState<string>(
+    project?.video_mime_type || 'video/mp4'
+  );
 
   // File Upload State
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
 
-  const [existingVideoUrl, setExistingVideoUrl] = useState(project?.video_url || '');
-  const [existingThumbnailUrl, setExistingThumbnailUrl] = useState(project?.thumbnail_url || '');
+  const [existingVideoUrl] = useState(project?.video_url || '');
+  const [existingThumbnailUrl] = useState(project?.thumbnail_url || '');
 
   // Preview State
   const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
@@ -56,7 +73,7 @@ export const ProjectFormModal: React.FC<ProjectFormModalProps> = ({
   const videoInputRef = useRef<HTMLInputElement>(null);
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
 
-  const handleVideoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleVideoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -76,6 +93,24 @@ export const ProjectFormModal: React.FC<ProjectFormModalProps> = ({
     setVideoFile(file);
     const objectUrl = URL.createObjectURL(file);
     setVideoPreviewUrl(objectUrl);
+
+    try {
+      const meta = await extractVideoDimensions(file);
+      setVideoWidth(meta.width);
+      setVideoHeight(meta.height);
+      setVideoMimeType(meta.mimeType || 'video/mp4');
+      if (meta.duration && isFinite(meta.duration)) {
+        const mins = Math.floor(meta.duration / 60);
+        const secs = Math.round(meta.duration % 60);
+        setDuration(`${mins}:${secs < 10 ? '0' : ''}${secs}`);
+      }
+      if (aspectRatio === 'auto') {
+        const detected = calculateDetectedRatio(meta.width, meta.height);
+        setAspectRatio(detected.closestOption);
+      }
+    } catch {
+      // Retain graceful defaults if browser cannot decode metadata immediately
+    }
   };
 
   const handleThumbnailSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -174,12 +209,18 @@ export const ProjectFormModal: React.FC<ProjectFormModalProps> = ({
       // 3. Save to Database
       setUploadStatus('Saving project record to database...');
 
+      const selectedRatioMeta = ASPECT_RATIO_OPTIONS.find((opt) => opt.value === aspectRatio);
       const payload = {
         title: title.trim(),
         description: description.trim(),
         category,
         brand_name: brandName.trim(),
         duration: duration.trim() || '0:30',
+        format: selectedRatioMeta?.shortLabel || 'Native Video',
+        aspect_ratio: aspectRatio,
+        video_width: videoWidth,
+        video_height: videoHeight,
+        video_mime_type: videoMimeType,
         video_url: finalVideoUrl,
         video_path: finalVideoPath,
         thumbnail_url: finalThumbnailUrl,
@@ -319,6 +360,37 @@ export const ProjectFormModal: React.FC<ProjectFormModalProps> = ({
             </div>
           </div>
 
+          {/* Video Aspect Ratio & Detected Dimensions */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-[#F5F5F0] mb-1.5">
+                Video Aspect Ratio
+              </label>
+              <select
+                value={aspectRatio}
+                onChange={(e) => setAspectRatio(e.target.value as AspectRatioOption)}
+                className="w-full px-3.5 py-2.5 rounded-lg bg-[#171C19] border border-[#2A332B] text-xs text-[#F5F5F0] focus:outline-none focus:border-[#C7F36B]"
+              >
+                {ASPECT_RATIO_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex flex-col justify-end">
+              <div className="px-3.5 py-2.5 rounded-lg bg-[#171C19] border border-[#2A332B] text-xs text-[#A0A89F] flex items-center justify-between">
+                <span>Detected Dimensions:</span>
+                <span className="font-mono text-[#C7F36B] font-semibold">
+                  {videoWidth && videoHeight
+                    ? `${videoWidth} × ${videoHeight} (${aspectRatio})`
+                    : `Auto (${aspectRatio})`}
+                </span>
+              </div>
+            </div>
+          </div>
+
           {/* Description */}
           <div>
             <label className="block text-xs font-medium text-[#F5F5F0] mb-1.5">
@@ -356,11 +428,11 @@ export const ProjectFormModal: React.FC<ProjectFormModalProps> = ({
 
                 {videoPreviewUrl || existingVideoUrl ? (
                   <div className="space-y-2">
-                    <div className="relative aspect-[9/16] max-w-[160px] mx-auto rounded-lg overflow-hidden bg-black border border-[#2A332B]">
+                    <div className="relative aspect-video max-w-[240px] mx-auto rounded-lg overflow-hidden bg-black border border-[#2A332B]">
                       <video
                         src={videoPreviewUrl || existingVideoUrl}
                         controls
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain"
                       />
                     </div>
                     <span className="text-[11px] text-[#C7F36B] block">

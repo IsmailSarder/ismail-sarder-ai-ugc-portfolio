@@ -1,7 +1,11 @@
 export type ProductCategory =
+  | 'All Work'
   | 'All Projects'
   | 'AI UGC Ads'
   | 'AI Video Ads'
+  | 'CGI Product Ads'
+  | 'Product Commercials'
+  | '3D Product Animation'
   | 'Beauty & Skincare'
   | 'Fashion & Lifestyle'
   | 'Gadgets & Technology'
@@ -20,7 +24,7 @@ export interface PortfolioItem {
   id: string;
   title: string;
   brandName: string;
-  category: Exclude<ProductCategory, 'All Projects'>;
+  category: Exclude<ProductCategory, 'All Projects' | 'All Work'>;
   duration: string;
   format: string;
   thumbnail: string;

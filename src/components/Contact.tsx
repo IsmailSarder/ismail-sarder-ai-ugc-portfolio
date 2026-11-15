@@ -196,6 +196,9 @@ export const Contact = forwardRef<ContactRef, ContactProps>(({ initialService = 
   const availableServices = [
     'AI UGC Ads Creation',
     'AI Video Ads Creation',
+    'CGI Product Ads',
+    'Product Commercials',
+    '3D Product Animation',
     'AI UGC Video Ads',
     'AI Spokesperson Videos',
     'Product Demonstration Videos',

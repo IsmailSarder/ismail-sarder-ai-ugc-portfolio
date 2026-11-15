@@ -10,6 +10,7 @@ import {
   SlidersHorizontal,
   Clapperboard,
   Check,
+  Box,
 } from 'lucide-react';
 
 interface ServicesProps {
@@ -51,6 +52,23 @@ export const Services: React.FC<ServicesProps> = ({ onSelectService }) => {
         'Social Media Video Ads for E-commerce Brands',
       ],
       platforms: 'Meta Ads · YouTube · Brand Campaigns · Product Pages',
+    },
+    {
+      code: 'SERVICE 03',
+      title: 'CGI PRODUCT ADS',
+      inquiryKey: 'CGI Product Ads',
+      description:
+        'High-impact cinematic 3D CGI product advertisements crafted with realistic lighting, dynamic motion choreography, and visual storytelling for launch campaigns.',
+      icon: Box,
+      deliverables: [
+        '3D Product Commercials',
+        'Exploded View Product Animations',
+        'Photorealistic Liquid & Particle FX',
+        '360° Studio Lighting Reveals',
+        'Hero Launch & PDP Motion Assets',
+        '16:9 Cinema & 9:16 Social Cutdowns',
+      ],
+      platforms: 'Launch Pages · Meta Ads · YouTube · Commercial Reels',
     },
   ];
 
@@ -146,12 +164,12 @@ export const Services: React.FC<ServicesProps> = ({ onSelectService }) => {
           </div>
 
           <p className="text-sm text-[#A0A89F] max-w-md leading-relaxed">
-            Two specialized production disciplines—authentic AI UGC ads and cinematic AI video commercials—built to help modern brands convert and scale.
+            Three specialized production disciplines—authentic AI UGC ads, cinematic AI video commercials, and 3D CGI product ads—built to help modern brands convert and scale.
           </p>
         </div>
 
-        {/* Two Differentiated Core Service Categories */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mb-16 sm:mb-20">
+        {/* Three Differentiated Core Service Categories */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-7 mb-16 sm:mb-20">
           {coreServices.map((service) => {
             const Icon = service.icon;
             return (
@@ -202,7 +220,14 @@ export const Services: React.FC<ServicesProps> = ({ onSelectService }) => {
                     onClick={() => onSelectService(service.inquiryKey)}
                     className="px-5 py-3 text-xs font-bold font-heading uppercase tracking-wider text-[#090A0B] bg-[#C7F36B] hover:bg-[#d6ff7d] rounded-lg transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shrink-0 min-h-[42px]"
                   >
-                    <span>Start With {service.code === 'SERVICE 01' ? 'AI UGC Ads' : 'AI Video Ads'}</span>
+                    <span>
+                      Start With{' '}
+                      {service.code === 'SERVICE 01'
+                        ? 'AI UGC Ads'
+                        : service.code === 'SERVICE 02'
+                        ? 'AI Video Ads'
+                        : 'CGI Product Ads'}
+                    </span>
                     <ArrowUpRight className="w-4 h-4" />
                   </button>
                 </div>

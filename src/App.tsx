@@ -8,6 +8,7 @@ import { Navbar } from './components/Navbar.tsx';
 import { Hero } from './components/Hero.tsx';
 import { CombinedServiceSection } from './components/CombinedServiceSection.tsx';
 import { Portfolio, PortfolioRef } from './components/Portfolio.tsx';
+import { CgiPortfolio } from './components/CgiPortfolio.tsx';
 import { Services } from './components/Services.tsx';
 import { Pricing } from './components/Pricing.tsx';
 import { About } from './components/About.tsx';
@@ -109,13 +110,26 @@ function MainApp() {
 
         {/* Combined Service Approaches Section */}
         <CombinedServiceSection
-          onExploreCategory={(cat) => portfolioRef.current?.setCategory(cat)}
+          onExploreCategory={(cat) => {
+            if (cat === 'CGI Product Ads') {
+              document.getElementById('cgi-portfolio')?.scrollIntoView({ behavior: 'smooth' });
+            } else {
+              portfolioRef.current?.setCategory(cat);
+            }
+          }}
         />
 
         {/* Featured Portfolio Section (Connected to Supabase) */}
         <Portfolio
           ref={portfolioRef}
           onOpenInquiryWithProject={handleOpenInquiryWithProject}
+          refreshTrigger={refreshTrigger}
+        />
+
+        {/* Dedicated CGI Product Commercials Portfolio Section */}
+        <CgiPortfolio
+          onOpenInquiryWithProject={handleOpenInquiryWithProject}
+          onSelectService={(srv) => handleOpenInquiry(srv)}
           refreshTrigger={refreshTrigger}
         />
 

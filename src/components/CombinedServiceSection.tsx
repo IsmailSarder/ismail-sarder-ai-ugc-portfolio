@@ -1,9 +1,9 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { ArrowRight, UserCheck, Clapperboard, Check } from 'lucide-react';
+import { ArrowRight, UserCheck, Clapperboard, Box, Check } from 'lucide-react';
 
 interface CombinedServiceSectionProps {
-  onExploreCategory: (category: 'AI UGC Ads' | 'AI Video Ads') => void;
+  onExploreCategory: (category: 'AI UGC Ads' | 'AI Video Ads' | 'CGI Product Ads') => void;
 }
 
 export const CombinedServiceSection: React.FC<CombinedServiceSectionProps> = ({
@@ -40,6 +40,21 @@ export const CombinedServiceSection: React.FC<CombinedServiceSectionProps> = ({
       ctaText: 'Explore AI Video Ads',
       icon: Clapperboard,
     },
+    {
+      index: 'APPROACH 03',
+      title: 'CGI Product Ads',
+      categoryKey: 'CGI Product Ads' as const,
+      subtitle: '3D Product Animation & High-Impact Commercials',
+      description:
+        'Photorealistic 3D product renders, exploded-view engineering reveals, and dynamic motion commercials built for luxury launches and standout hero ads.',
+      highlights: [
+        '3D Product Animation & Renders',
+        'Dynamic Liquid & Particle Simulations',
+        'High-Contrast Studio Commercial Reels',
+      ],
+      ctaText: 'Explore CGI Product Ads',
+      icon: Box,
+    },
   ];
 
   return (
@@ -49,18 +64,18 @@ export const CombinedServiceSection: React.FC<CombinedServiceSectionProps> = ({
         <div className="max-w-3xl mb-10 sm:mb-12">
           <div className="flex items-center gap-2 text-xs font-semibold tracking-wider text-[#A0A89F] uppercase mb-2">
             <span className="w-1.5 h-1.5 rounded-full bg-[#C7F36B]" />
-            <span>Dual Creative Capabilities</span>
+            <span>Creative Production Pillars</span>
           </div>
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-heading text-[#F5F5F0] tracking-tight mb-3 [text-wrap:balance]">
-            Two Creative Approaches. One Goal: Better Video Ads.
+            Three Creative Approaches. One Goal: Better Video Ads.
           </h2>
           <p className="text-xs sm:text-sm lg:text-base text-[#A0A89F] leading-relaxed">
-            From authentic AI UGC content to cinematic AI-powered commercials, I create engaging video ad creatives that help brands communicate their value and connect with their audiences.
+            From authentic AI UGC content to cinematic AI video commercials and 3D CGI product ads, I create engaging video creatives that help brands communicate their value and connect with audiences.
           </p>
         </div>
 
-        {/* Two Service Approach Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+        {/* Three Service Approach Cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-7">
           {approaches.map((item, idx) => {
             const Icon = item.icon;
             return (

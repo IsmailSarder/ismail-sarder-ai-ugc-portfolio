@@ -4,6 +4,7 @@ import { VideoModal, PortfolioItem } from './VideoModal.tsx';
 import { ProjectCard3D } from './ProjectCard3D.tsx';
 import { FeaturedShowcase } from './FeaturedShowcase.tsx';
 import { portfolioService } from '../lib/portfolioService.ts';
+import { CGI_INITIAL_PROJECTS, CGI_CATEGORIES } from '../data/cgiProjects.ts';
 import {
   heroUgcBeauty,
   portfolioSkincare,
@@ -22,13 +23,13 @@ interface PortfolioProps {
 
 export const Portfolio = forwardRef<PortfolioRef, PortfolioProps>(
   ({ onOpenInquiryWithProject, refreshTrigger }, ref) => {
-    const [selectedCategory, setSelectedCategory] = useState<string>('All Projects');
+    const [selectedCategory, setSelectedCategory] = useState<string>('All Work');
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [activeModalItem, setActiveModalItem] = useState<PortfolioItem | null>(null);
 
     useImperativeHandle(ref, () => ({
       setCategory: (category: string) => {
-        setSelectedCategory(category);
+        setSelectedCategory(category === 'All Projects' ? 'All Work' : category);
         setSearchQuery('');
         const el = document.getElementById('portfolio');
         if (el) {
@@ -38,9 +39,12 @@ export const Portfolio = forwardRef<PortfolioRef, PortfolioProps>(
     }));
 
     const categories = [
-      'All Projects',
+      'All Work',
       'AI UGC Ads',
       'AI Video Ads',
+      'CGI Product Ads',
+      'Product Commercials',
+      '3D Product Animation',
       'Beauty & Skincare',
       'Fashion & Lifestyle',
       'Gadgets & Technology',
@@ -308,6 +312,7 @@ export const Portfolio = forwardRef<PortfolioRef, PortfolioProps>(
         ],
         targetMarket: 'Global Fashion & DTC Brands',
       },
+      ...CGI_INITIAL_PROJECTS,
     ];
 
     const [projects, setProjects] = useState<PortfolioItem[]>(INITIAL_PROJECTS);
@@ -318,10 +323,12 @@ export const Portfolio = forwardRef<PortfolioRef, PortfolioProps>(
       portfolioService.getPublishedProjects().then(({ data }) => {
         if (isCurrent && data && data.length > 0) {
           const mappedItems: PortfolioItem[] = data.map((p) => {
-            const derivedServiceType: 'AI UGC Ads' | 'AI Video Ads' =
-              p.category === 'AI Video Ads' ||
-              p.category === 'Product Demonstration' ||
-              p.category === 'Product Demonstrations'
+            const derivedServiceType: 'AI UGC Ads' | 'AI Video Ads' | 'CGI Product Ads' =
+              (CGI_CATEGORIES as readonly string[]).includes(p.category)
+                ? 'CGI Product Ads'
+                : p.category === 'AI Video Ads' ||
+                  p.category === 'Product Demonstration' ||
+                  p.category === 'Product Demonstrations'
                 ? 'AI Video Ads'
                 : 'AI UGC Ads';
 
@@ -370,7 +377,7 @@ export const Portfolio = forwardRef<PortfolioRef, PortfolioProps>(
       return projects.filter((project) => {
         let matchesCategory = false;
 
-        if (selectedCategory === 'All Projects') {
+        if (selectedCategory === 'All Work' || selectedCategory === 'All Projects') {
           matchesCategory = true;
         } else if (selectedCategory === 'AI UGC Ads') {
           matchesCategory =
@@ -381,6 +388,10 @@ export const Portfolio = forwardRef<PortfolioRef, PortfolioProps>(
           matchesCategory =
             project.category === 'AI Video Ads' ||
             project.serviceType === 'AI Video Ads';
+        } else if (selectedCategory === 'CGI Product Ads') {
+          matchesCategory =
+            project.category === 'CGI Product Ads' ||
+            project.serviceType === 'CGI Product Ads';
         } else if (selectedCategory === 'Product Demonstrations') {
           matchesCategory =
             project.category === 'Product Demonstrations' ||
@@ -416,7 +427,7 @@ export const Portfolio = forwardRef<PortfolioRef, PortfolioProps>(
     };
 
     const handleResetFilters = () => {
-      setSelectedCategory('All Projects');
+      setSelectedCategory('All Work');
       setSearchQuery('');
     };
 

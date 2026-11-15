@@ -14,6 +14,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenAdmin }) => {
   const navLinks = [
     { label: 'Home', href: '#home' },
     { label: 'Portfolio', href: '#portfolio' },
+    { label: 'CGI Commercials', href: '#cgi-portfolio' },
     { label: 'Services', href: '#services' },
     { label: 'Pricing', href: '#pricing' },
     { label: 'About', href: '#about' },

@@ -85,6 +85,9 @@ export type ProjectCategory =
   | 'Product Demonstration'
   | 'AI UGC Ads'
   | 'AI Video Ads'
+  | 'CGI Product Ads'
+  | 'Product Commercials'
+  | '3D Product Animation'
   | 'Product Demonstrations'
   | 'AI UGC Creator Videos';
 

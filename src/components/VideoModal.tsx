@@ -29,9 +29,12 @@ export interface PortfolioItem {
     | 'Product Demonstration'
     | 'AI UGC Ads'
     | 'AI Video Ads'
+    | 'CGI Product Ads'
+    | 'Product Commercials'
+    | '3D Product Animation'
     | 'Product Demonstrations'
     | 'AI UGC Creator Videos';
-  serviceType?: 'AI UGC Ads' | 'AI Video Ads';
+  serviceType?: 'AI UGC Ads' | 'AI Video Ads' | 'CGI Product Ads';
   isPlaceholder?: boolean;
   duration: string;
   format: string;

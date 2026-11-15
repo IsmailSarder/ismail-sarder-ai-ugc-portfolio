@@ -204,11 +204,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToHome }) 
   });
 
   const categories = [
+    'AI UGC Ads',
+    'AI Video Ads',
+    'CGI Product Ads',
+    'Product Commercials',
+    '3D Product Animation',
     'Beauty & Skincare',
     'Fashion & Lifestyle',
     'Gadgets & Technology',
     'Product Demonstration',
-    'AI UGC Ads',
   ];
 
   return (
@@ -1133,7 +1137,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToHome }) 
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fade-in"
           onClick={() => setPreviewingVideoUrl(null)}
         >
-          <div className="relative max-w-sm w-full bg-[#111514] rounded-2xl overflow-hidden border border-[#2A332B] p-2">
+          <div className="relative max-w-2xl w-full bg-[#111514] rounded-2xl overflow-hidden border border-[#2A332B] p-2">
             <div className="flex justify-end p-2">
               <button
                 onClick={() => setPreviewingVideoUrl(null)}
@@ -1142,8 +1146,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToHome }) 
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="relative aspect-[9/16] bg-black rounded-xl overflow-hidden">
-              <video src={previewingVideoUrl} controls autoPlay className="w-full h-full object-cover" />
+            <div className="relative aspect-video bg-black rounded-xl overflow-hidden flex items-center justify-center">
+              <video src={previewingVideoUrl} controls autoPlay className="w-full h-full object-contain max-h-[75vh]" />
             </div>
           </div>
         </div>
