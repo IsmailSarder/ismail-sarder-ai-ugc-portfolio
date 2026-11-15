@@ -149,7 +149,11 @@ export const Hero: React.FC<HeroProps> = ({ onOpenInquiry }) => {
               transition={{ duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
               className="text-3xl sm:text-5xl lg:text-6xl font-extrabold font-heading text-[#F5F5F0] tracking-tight leading-[1.1] sm:leading-[1.08] mb-5 sm:mb-6 [text-wrap:balance]"
             >
-              AI UGC &amp; VIDEO ADS THAT <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F5F5F0] via-[#F5F5F0] to-[#C7F36B]">HALT THE FEED</span> &amp; SCALE BRANDS.
+              AI UGC &amp; CGI VIDEO ADS THAT MAKE{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F5F5F0] via-[#F5F5F0] to-[#C7F36B]">
+                PRODUCTS STAND OUT
+              </span>
+              .
             </motion.h1>
 
             {/* Supporting Text */}
@@ -159,7 +163,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenInquiry }) => {
               transition={{ duration: 0.6, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
               className="text-sm sm:text-base lg:text-lg text-[#A0A89F] leading-relaxed max-w-2xl mb-6 sm:mb-8 font-sans"
             >
-              I create AI-powered UGC videos and cinematic video advertisements for e-commerce brands, beauty, fashion, and digital businesses.
+              I create high-impact AI-powered UGC content, cinematic CGI product commercials, and scroll-stopping video ads for e-commerce, beauty, fashion, and lifestyle brands. From creative concepts to stunning product visuals, I turn ideas into engaging video advertisements designed to capture attention and drive sales.
             </motion.p>
 
             {/* Action Buttons - Primary: View My Work, Secondary: Let's Work Together, Showreel */}

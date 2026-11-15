@@ -6,6 +6,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Navbar } from './components/Navbar.tsx';
 import { Hero } from './components/Hero.tsx';
+import { IntroVideoSection } from './components/IntroVideoSection.tsx';
 import { CombinedServiceSection } from './components/CombinedServiceSection.tsx';
 import { Portfolio, PortfolioRef } from './components/Portfolio.tsx';
 import { CgiPortfolio } from './components/CgiPortfolio.tsx';
@@ -107,6 +108,9 @@ function MainApp() {
       <main className="flex-1">
         {/* Hero Section */}
         <Hero onOpenInquiry={() => handleOpenInquiry()} />
+
+        {/* Creator Introduction Video Section */}
+        <IntroVideoSection refreshTrigger={refreshTrigger} />
 
         {/* Combined Service Approaches Section */}
         <CombinedServiceSection
