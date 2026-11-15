@@ -310,7 +310,7 @@ CREATE TABLE IF NOT EXISTS public.portfolio_projects (
   format TEXT DEFAULT '9:16 Vertical Video',
   hook TEXT DEFAULT '',
   angle TEXT DEFAULT 'Direct Response',
-  aspect_ratio TEXT DEFAULT 'auto',
+  aspect_ratio TEXT DEFAULT '9:16',
   video_width INTEGER DEFAULT NULL,
   video_height INTEGER DEFAULT NULL,
   video_mime_type TEXT DEFAULT 'video/mp4'
@@ -318,7 +318,7 @@ CREATE TABLE IF NOT EXISTS public.portfolio_projects (
 
 -- Safe migration for existing tables (Adds columns if not present without deleting data)
 ALTER TABLE public.portfolio_projects
-  ADD COLUMN IF NOT EXISTS aspect_ratio TEXT DEFAULT 'auto',
+  ADD COLUMN IF NOT EXISTS aspect_ratio TEXT DEFAULT '9:16',
   ADD COLUMN IF NOT EXISTS video_width INTEGER DEFAULT NULL,
   ADD COLUMN IF NOT EXISTS video_height INTEGER DEFAULT NULL,
   ADD COLUMN IF NOT EXISTS video_mime_type TEXT DEFAULT 'video/mp4';

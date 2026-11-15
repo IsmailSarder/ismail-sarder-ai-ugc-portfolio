@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS public.portfolio_projects (
     category TEXT NOT NULL,
     brand_name TEXT DEFAULT '',
     duration TEXT DEFAULT '0:30',
+    aspect_ratio TEXT DEFAULT '9:16',
     is_featured BOOLEAN NOT NULL DEFAULT false,
     is_published BOOLEAN NOT NULL DEFAULT true,
     display_order INTEGER NOT NULL DEFAULT 0,

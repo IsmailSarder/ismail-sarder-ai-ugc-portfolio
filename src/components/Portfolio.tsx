@@ -4,6 +4,7 @@ import { VideoModal, PortfolioItem } from './VideoModal.tsx';
 import { ProjectCard3D } from './ProjectCard3D.tsx';
 import { FeaturedShowcase } from './FeaturedShowcase.tsx';
 import { portfolioService } from '../lib/portfolioService.ts';
+import { normalizeAspectRatio } from '../lib/videoAspectRatios.ts';
 import { CGI_INITIAL_PROJECTS, CGI_CATEGORIES } from '../data/cgiProjects.ts';
 import {
   heroUgcBeauty,
@@ -342,8 +343,8 @@ export const Portfolio = forwardRef<PortfolioRef, PortfolioProps>(
               thumbnail: p.thumbnail_url,
               video_url: p.video_url,
               videoUrl: p.video_url,
-              aspect_ratio: p.aspect_ratio || 'auto',
-              aspectRatio: p.aspect_ratio || 'auto',
+              aspect_ratio: normalizeAspectRatio(p.aspect_ratio, p.video_width, p.video_height),
+              aspectRatio: normalizeAspectRatio(p.aspect_ratio, p.video_width, p.video_height),
               video_width: p.video_width,
               videoWidth: p.video_width,
               video_height: p.video_height,

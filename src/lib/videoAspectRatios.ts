@@ -1,119 +1,139 @@
 /**
  * Video Aspect Ratio Utility
- * Handles aspect ratio detection, calculation, and presentation container styling
- * Supports all UGC and e-commerce ad formats: 9:16, 16:9, 1:1, 4:5, 3:4, 4:3, Auto, Original.
+ * Handles aspect ratio options, detection, normalization, and responsive container styling.
+ * Supports: 9:16, 16:9, 1:1, 4:5, 4:3, 3:4 (with 9:16 as graceful default).
  */
 
-export type AspectRatioOption =
-  | 'auto'
-  | '9:16'
-  | '16:9'
-  | '1:1'
-  | '4:5'
-  | '3:4'
-  | '4:3'
-  | 'original';
+export type StandardAspectRatio = '9:16' | '16:9' | '1:1' | '4:5' | '4:3' | '3:4';
+
+export type AspectRatioOption = StandardAspectRatio | 'auto' | 'original';
 
 export interface AspectRatioConfig {
-  value: AspectRatioOption;
+  value: StandardAspectRatio;
   label: string;
+  orientation: string;
   shortLabel: string;
   sublabel: string;
-  ratioNum: number | null; // width / height
+  ratioNum: number; // width / height
   cssRatio: string;
+  previewWidthPx: number;
+  previewHeightPx: number;
   isPortrait: boolean;
 }
 
 export const ASPECT_RATIO_OPTIONS: AspectRatioConfig[] = [
   {
-    value: 'auto',
-    label: 'Auto Detect (Original Ratio)',
-    shortLabel: 'Auto',
-    sublabel: 'Adapts to detected media dimensions',
-    ratioNum: null,
-    cssRatio: 'auto',
-    isPortrait: true,
-  },
-  {
     value: '9:16',
-    label: '9:16 — TikTok, Instagram Reels, YouTube Shorts',
+    label: '9:16 (Vertical)',
+    orientation: 'Vertical',
     shortLabel: '9:16 Vertical',
-    sublabel: 'Full Vertical (TikTok / Reels / Shorts)',
+    sublabel: 'TikTok, Reels, Shorts',
     ratioNum: 9 / 16,
     cssRatio: '9/16',
+    previewWidthPx: 20,
+    previewHeightPx: 36,
     isPortrait: true,
   },
   {
     value: '16:9',
-    label: '16:9 — YouTube and landscape videos',
+    label: '16:9 (Landscape)',
+    orientation: 'Landscape',
     shortLabel: '16:9 Landscape',
-    sublabel: 'Widescreen (YouTube & Desktop)',
+    sublabel: 'YouTube & Widescreen',
     ratioNum: 16 / 9,
     cssRatio: '16/9',
+    previewWidthPx: 40,
+    previewHeightPx: 22,
     isPortrait: false,
   },
   {
     value: '1:1',
-    label: '1:1 — Square ads',
+    label: '1:1 (Square)',
+    orientation: 'Square',
     shortLabel: '1:1 Square',
-    sublabel: 'Square Feed (Meta & E-Com Carousel)',
-    ratioNum: 1 / 1,
+    sublabel: 'Square Feed Ads',
+    ratioNum: 1,
     cssRatio: '1/1',
+    previewWidthPx: 28,
+    previewHeightPx: 28,
     isPortrait: false,
   },
   {
     value: '4:5',
-    label: '4:5 — Instagram feed ads',
+    label: '4:5 (Portrait)',
+    orientation: 'Portrait',
     shortLabel: '4:5 Portrait',
-    sublabel: 'Feed Portrait (Instagram In-Feed Ads)',
+    sublabel: 'Instagram Feed Ads',
     ratioNum: 4 / 5,
     cssRatio: '4/5',
-    isPortrait: true,
-  },
-  {
-    value: '3:4',
-    label: '3:4 — Portrait videos',
-    shortLabel: '3:4 Portrait',
-    sublabel: 'Standard Portrait (Mobile Web)',
-    ratioNum: 3 / 4,
-    cssRatio: '3/4',
+    previewWidthPx: 26,
+    previewHeightPx: 32,
     isPortrait: true,
   },
   {
     value: '4:3',
-    label: '4:3 — Classic video',
-    shortLabel: '4:3 Classic',
-    sublabel: 'Classic Fullframe (Product Demo)',
+    label: '4:3 (Standard)',
+    orientation: 'Standard',
+    shortLabel: '4:3 Standard',
+    sublabel: 'Classic Product Video',
     ratioNum: 4 / 3,
     cssRatio: '4/3',
+    previewWidthPx: 34,
+    previewHeightPx: 26,
     isPortrait: false,
   },
   {
-    value: 'original',
-    label: "Original — Preserve uploaded video's native dimensions",
-    shortLabel: 'Original',
-    sublabel: 'Preserve exact native dimensions',
-    ratioNum: null,
-    cssRatio: 'auto',
+    value: '3:4',
+    label: '3:4 (Portrait)',
+    orientation: 'Portrait',
+    shortLabel: '3:4 Portrait',
+    sublabel: 'Social Portrait Card',
+    ratioNum: 3 / 4,
+    cssRatio: '3/4',
+    previewWidthPx: 24,
+    previewHeightPx: 32,
     isPortrait: true,
   },
 ];
 
+const STANDARD_RATIO_SET = new Set<string>(['9:16', '16:9', '1:1', '4:5', '4:3', '3:4']);
+
 /**
- * Given video dimensions (width, height), detects the closest standard ratio and returns clean labels.
+ * Normalizes any saved or missing aspect_ratio value to one of the 6 standard ratios,
+ * defaulting gracefully to '9:16'.
+ */
+export function normalizeAspectRatio(
+  savedRatio?: string | null,
+  width?: number | null,
+  height?: number | null
+): StandardAspectRatio {
+  const cleaned = savedRatio?.trim();
+  if (cleaned && STANDARD_RATIO_SET.has(cleaned)) {
+    return cleaned as StandardAspectRatio;
+  }
+
+  if ((cleaned === 'auto' || cleaned === 'original') && width && height && width > 0 && height > 0) {
+    return calculateDetectedRatio(width, height).closestOption;
+  }
+
+  return '9:16';
+}
+
+/**
+ * Given video dimensions (width, height), detects the closest standard ratio.
  */
 export function calculateDetectedRatio(width: number, height: number): {
-  detectedRatio: string;
-  closestOption: AspectRatioOption;
+  detectedRatio: StandardAspectRatio;
+  closestOption: StandardAspectRatio;
   label: string;
   isPortrait: boolean;
   aspectRatioValue: number;
 } {
   if (!width || !height || width <= 0 || height <= 0) {
     return {
-      detectedRatio: 'Auto',
-      closestOption: 'auto',
-      label: 'Auto Detect (Original)',
+      detectedRatio: '9:16',
+      closestOption: '9:16',
+      label: '9:16 (Default)',
       isPortrait: true,
       aspectRatioValue: 9 / 16,
     };
@@ -122,20 +142,11 @@ export function calculateDetectedRatio(width: number, height: number): {
   const ratio = width / height;
   const isPortrait = height > width;
 
-  const standardTargets: { option: AspectRatioOption; val: number; name: string }[] = [
-    { option: '9:16', val: 9 / 16, name: '9:16' },
-    { option: '3:4', val: 3 / 4, name: '3:4' },
-    { option: '4:5', val: 4 / 5, name: '4:5' },
-    { option: '1:1', val: 1 / 1, name: '1:1' },
-    { option: '4:3', val: 4 / 3, name: '4:3' },
-    { option: '16:9', val: 16 / 9, name: '16:9' },
-  ];
+  let closest = ASPECT_RATIO_OPTIONS[0];
+  let minDiff = Math.abs(ratio - closest.ratioNum);
 
-  let closest = standardTargets[0];
-  let minDiff = Math.abs(ratio - standardTargets[0].val);
-
-  for (const target of standardTargets) {
-    const diff = Math.abs(ratio - target.val);
+  for (const target of ASPECT_RATIO_OPTIONS) {
+    const diff = Math.abs(ratio - target.ratioNum);
     if (diff < minDiff) {
       minDiff = diff;
       closest = target;
@@ -143,9 +154,9 @@ export function calculateDetectedRatio(width: number, height: number): {
   }
 
   return {
-    detectedRatio: closest.name,
-    closestOption: closest.option,
-    label: `${width} × ${height} (${closest.name})`,
+    detectedRatio: closest.value,
+    closestOption: closest.value,
+    label: `${width} × ${height} (${closest.value})`,
     isPortrait,
     aspectRatioValue: ratio,
   };
@@ -157,7 +168,7 @@ export function calculateDetectedRatio(width: number, height: number): {
 export function extractVideoDimensions(
   fileOrUrl: File | string
 ): Promise<{ width: number; height: number; duration: number; mimeType: string }> {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const isFile = typeof fileOrUrl !== 'string';
     const url = isFile ? URL.createObjectURL(fileOrUrl) : fileOrUrl;
     const mimeType = isFile ? (fileOrUrl as File).type || 'video/mp4' : 'video/mp4';
@@ -168,12 +179,6 @@ export function extractVideoDimensions(
     video.muted = true;
     video.src = url;
 
-    const timeout = setTimeout(() => {
-      cleanup();
-      // Graceful fallback if timeout
-      resolve({ width: 1080, height: 1920, duration: 30, mimeType });
-    }, 6000);
-
     const cleanup = () => {
       clearTimeout(timeout);
       video.onloadedmetadata = null;
@@ -182,6 +187,11 @@ export function extractVideoDimensions(
         URL.revokeObjectURL(url);
       }
     };
+
+    const timeout = setTimeout(() => {
+      cleanup();
+      resolve({ width: 1080, height: 1920, duration: 30, mimeType });
+    }, 6000);
 
     video.onloadedmetadata = () => {
       const width = video.videoWidth || 1080;
@@ -200,44 +210,51 @@ export function extractVideoDimensions(
 }
 
 /**
- * Resolve the CSS aspect-ratio string for a project container.
- * If user chose 'auto' or 'original', calculate from width/height if available, or default to 9/16.
+ * Resolve the CSS aspect-ratio string for a project container (defaults cleanly to 9/16).
  */
 export function getPresentationAspectRatio(
-  selectedRatio?: string,
-  width?: number,
-  height?: number
+  selectedRatio?: string | null,
+  width?: number | null,
+  height?: number | null
 ): string {
-  if (selectedRatio && selectedRatio !== 'auto' && selectedRatio !== 'original') {
-    return selectedRatio.replace(':', '/');
-  }
-
-  if (width && height && width > 0 && height > 0) {
-    return `${width}/${height}`;
-  }
-
-  return '9/16';
+  const normalized = normalizeAspectRatio(selectedRatio, width, height);
+  return normalized.replace(':', '/');
 }
 
 /**
- * Determines whether the presentation container is landscape (e.g. 16:9, 4:3)
+ * Determines whether the presentation container is landscape (16:9 or 4:3).
  */
 export function isLandscapeRatio(
-  selectedRatio?: string,
-  width?: number,
-  height?: number
+  selectedRatio?: string | null,
+  width?: number | null,
+  height?: number | null
 ): boolean {
-  if (selectedRatio === '16:9' || selectedRatio === '4:3') {
-    return true;
+  const normalized = normalizeAspectRatio(selectedRatio, width, height);
+  return normalized === '16:9' || normalized === '4:3';
+}
+
+/**
+ * Returns a clean responsive max-width Tailwind class tailored to the selected aspect ratio.
+ */
+export function getModalContainerMaxWidthClass(
+  selectedRatio?: string | null,
+  width?: number | null,
+  height?: number | null
+): string {
+  const normalized = normalizeAspectRatio(selectedRatio, width, height);
+  switch (normalized) {
+    case '16:9':
+      return 'max-w-[580px]';
+    case '4:3':
+      return 'max-w-[500px]';
+    case '1:1':
+      return 'max-w-[420px]';
+    case '4:5':
+      return 'max-w-[360px]';
+    case '3:4':
+      return 'max-w-[350px]';
+    case '9:16':
+    default:
+      return 'max-w-[290px] sm:max-w-[310px]';
   }
-  if (selectedRatio === '9:16' || selectedRatio === '4:5' || selectedRatio === '3:4') {
-    return false;
-  }
-  if (selectedRatio === '1:1') {
-    return false;
-  }
-  if (width && height) {
-    return width > height;
-  }
-  return false;
 }

@@ -219,14 +219,48 @@ export const portfolioService = {
   async createProject(
     payload: Omit<PortfolioProject, 'id' | 'created_at' | 'updated_at'>
   ): Promise<{ data: PortfolioProject | null; error: Error | null }> {
+    const normalizedPayload = {
+      ...payload,
+      aspect_ratio: payload.aspect_ratio || '9:16',
+    };
+
     try {
       const { data, error } = await supabase
         .from('portfolio_projects')
-        .insert([payload])
+        .insert([normalizedPayload])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        // Fallback if optional dimension columns (format, video_width, video_height, video_mime_type) aren't on table yet
+        const msg = error.message || '';
+        if (msg.includes('column') || msg.includes('schema cache') || error.code === 'PGRST204') {
+          const corePayload = {
+            title: normalizedPayload.title,
+            description: normalizedPayload.description,
+            category: normalizedPayload.category,
+            brand_name: normalizedPayload.brand_name,
+            duration: normalizedPayload.duration,
+            aspect_ratio: normalizedPayload.aspect_ratio,
+            video_url: normalizedPayload.video_url,
+            video_path: normalizedPayload.video_path,
+            thumbnail_url: normalizedPayload.thumbnail_url,
+            thumbnail_path: normalizedPayload.thumbnail_path,
+            is_featured: normalizedPayload.is_featured,
+            is_published: normalizedPayload.is_published,
+            display_order: normalizedPayload.display_order,
+          };
+          const retry = await supabase
+            .from('portfolio_projects')
+            .insert([corePayload])
+            .select()
+            .single();
+          if (retry.error) throw retry.error;
+          return { data: retry.data as PortfolioProject, error: null };
+        }
+        throw error;
+      }
+
       return { data: data as PortfolioProject, error: null };
     } catch (err) {
       return { data: null, error: err as Error };
@@ -238,18 +272,58 @@ export const portfolioService = {
     id: string,
     payload: Partial<PortfolioProject>
   ): Promise<{ data: PortfolioProject | null; error: Error | null }> {
+    const normalizedPayload = {
+      ...payload,
+      ...(payload.aspect_ratio !== undefined ? { aspect_ratio: payload.aspect_ratio || '9:16' } : {}),
+      updated_at: new Date().toISOString(),
+    };
+
     try {
       const { data, error } = await supabase
         .from('portfolio_projects')
-        .update({
-          ...payload,
-          updated_at: new Date().toISOString(),
-        })
+        .update(normalizedPayload)
         .eq('id', id)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        const msg = error.message || '';
+        if (msg.includes('column') || msg.includes('schema cache') || error.code === 'PGRST204') {
+          const coreUpdate: Record<string, unknown> = {
+            updated_at: normalizedPayload.updated_at,
+          };
+          const allowedKeys = [
+            'title',
+            'description',
+            'category',
+            'brand_name',
+            'duration',
+            'aspect_ratio',
+            'video_url',
+            'video_path',
+            'thumbnail_url',
+            'thumbnail_path',
+            'is_featured',
+            'is_published',
+            'display_order',
+          ] as const;
+          for (const key of allowedKeys) {
+            if (key in normalizedPayload && normalizedPayload[key] !== undefined) {
+              coreUpdate[key] = normalizedPayload[key];
+            }
+          }
+          const retry = await supabase
+            .from('portfolio_projects')
+            .update(coreUpdate)
+            .eq('id', id)
+            .select()
+            .single();
+          if (retry.error) throw retry.error;
+          return { data: retry.data as PortfolioProject, error: null };
+        }
+        throw error;
+      }
+
       return { data: data as PortfolioProject, error: null };
     } catch (err) {
       return { data: null, error: err as Error };

@@ -8,6 +8,11 @@ import { Logo } from '../components/Logo.tsx';
 import { ProfilePictureManager } from './ProfilePictureManager.tsx';
 import { useProfile } from '../context/ProfileContext.tsx';
 import {
+  getModalContainerMaxWidthClass,
+  getPresentationAspectRatio,
+  normalizeAspectRatio,
+} from '../lib/videoAspectRatios.ts';
+import {
   LayoutDashboard,
   Film,
   PlusCircle,
@@ -67,7 +72,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToHome }) 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<PortfolioProject | null>(null);
   const [deletingProjectId, setDeletingProjectId] = useState<string | null>(null);
-  const [previewingVideoUrl, setPreviewingVideoUrl] = useState<string | null>(null);
+  const [previewingVideoProject, setPreviewingVideoProject] = useState<PortfolioProject | null>(null);
 
   // Copy SQL State
   const [copiedSql, setCopiedSql] = useState(false);
@@ -746,7 +751,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToHome }) 
                           />
                           {p.video_url && (
                             <button
-                              onClick={() => setPreviewingVideoUrl(p.video_url)}
+                              onClick={() => setPreviewingVideoProject(p)}
                               className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                               title="Preview video"
                             >
@@ -768,6 +773,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToHome }) 
                             <span>{p.category}</span>
                             <span>·</span>
                             <span>{p.duration || '0:30'}</span>
+                            <span>·</span>
+                            <span className="text-[#C7F36B]">
+                              {normalizeAspectRatio(p.aspect_ratio, p.video_width, p.video_height)}
+                            </span>
                             {p.brand_name && (
                               <>
                                 <span>·</span>
@@ -1132,22 +1141,55 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToHome }) 
       )}
 
       {/* Video Preview Modal */}
-      {previewingVideoUrl && (
+      {previewingVideoProject && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fade-in"
-          onClick={() => setPreviewingVideoUrl(null)}
+          onClick={() => setPreviewingVideoProject(null)}
         >
-          <div className="relative max-w-2xl w-full bg-[#111514] rounded-2xl overflow-hidden border border-[#2A332B] p-2">
-            <div className="flex justify-end p-2">
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className={`relative w-full ${getModalContainerMaxWidthClass(
+              previewingVideoProject.aspect_ratio,
+              previewingVideoProject.video_width,
+              previewingVideoProject.video_height
+            )} bg-[#111514] rounded-2xl overflow-hidden border border-[#2A332B] p-3`}
+          >
+            <div className="flex items-center justify-between px-2 pb-2 text-xs font-mono text-[#A0A89F]">
+              <span className="truncate pr-2 text-[#F5F5F0]">
+                {previewingVideoProject.title} ·{' '}
+                <strong className="text-[#C7F36B]">
+                  {normalizeAspectRatio(
+                    previewingVideoProject.aspect_ratio,
+                    previewingVideoProject.video_width,
+                    previewingVideoProject.video_height
+                  )}
+                </strong>
+              </span>
               <button
-                onClick={() => setPreviewingVideoUrl(null)}
-                className="p-1 text-white hover:text-[#C7F36B]"
+                onClick={() => setPreviewingVideoProject(null)}
+                className="p-1 text-white hover:text-[#C7F36B] cursor-pointer"
+                aria-label="Close preview"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="relative aspect-video bg-black rounded-xl overflow-hidden flex items-center justify-center">
-              <video src={previewingVideoUrl} controls autoPlay className="w-full h-full object-contain max-h-[75vh]" />
+            <div
+              style={{
+                aspectRatio: getPresentationAspectRatio(
+                  previewingVideoProject.aspect_ratio,
+                  previewingVideoProject.video_width,
+                  previewingVideoProject.video_height
+                ),
+                maxHeight: '75vh',
+              }}
+              className="relative w-full mx-auto bg-black rounded-xl overflow-hidden flex items-center justify-center"
+            >
+              <video
+                src={previewingVideoProject.video_url}
+                controls
+                autoPlay
+                className="w-full h-full object-contain"
+              />
             </div>
           </div>
         </div>

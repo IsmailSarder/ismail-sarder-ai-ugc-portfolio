@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { Play, ArrowUpRight, Box, Clock, Film } from 'lucide-react';
 import { VideoModal, PortfolioItem } from './VideoModal.tsx';
 import { portfolioService } from '../lib/portfolioService.ts';
+import { getPresentationAspectRatio, normalizeAspectRatio } from '../lib/videoAspectRatios.ts';
 import { CGI_INITIAL_PROJECTS, CGI_CATEGORIES } from '../data/cgiProjects.ts';
 
 interface CgiPortfolioProps {
@@ -44,8 +45,8 @@ export const CgiPortfolio: React.FC<CgiPortfolioProps> = ({
           thumbnail: p.thumbnail_url,
           video_url: p.video_url,
           videoUrl: p.video_url,
-          aspect_ratio: p.aspect_ratio || 'auto',
-          aspectRatio: p.aspect_ratio || 'auto',
+          aspect_ratio: normalizeAspectRatio(p.aspect_ratio, p.video_width, p.video_height),
+          aspectRatio: normalizeAspectRatio(p.aspect_ratio, p.video_width, p.video_height),
           video_width: p.video_width,
           videoWidth: p.video_width,
           video_height: p.video_height,
@@ -152,6 +153,11 @@ export const CgiPortfolio: React.FC<CgiPortfolioProps> = ({
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
           {filteredProjects.map((project, idx) => {
             const brandDisplayName = project.brand_name || project.brandName;
+            const resolvedRatio = normalizeAspectRatio(
+              project.aspect_ratio || project.aspectRatio,
+              project.video_width || project.videoWidth,
+              project.video_height || project.videoHeight
+            );
 
             return (
               <motion.article
@@ -163,8 +169,8 @@ export const CgiPortfolio: React.FC<CgiPortfolioProps> = ({
                 onClick={() => setActiveModalItem(project)}
                 className="group bg-[#111514] border border-[#2A332B] hover:border-[#C7F36B]/70 rounded-2xl overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 shadow-xl hover:shadow-[0_24px_50px_-15px_rgba(0,0,0,0.85),0_0_30px_-8px_rgba(199,243,107,0.18)]"
               >
-                {/* Large Video Preview Frame */}
-                <div className="relative aspect-[16/10] bg-[#090A0B] overflow-hidden flex items-center justify-center">
+                {/* Large Video Preview Frame honoring saved aspect ratio with object-contain */}
+                <div className="relative h-56 sm:h-64 bg-[#090A0B] overflow-hidden flex items-center justify-center p-2">
                   {/* Ambient Soft Blur Layer */}
                   <img
                     src={project.thumbnail}
@@ -176,18 +182,29 @@ export const CgiPortfolio: React.FC<CgiPortfolioProps> = ({
                     className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-30 scale-110 pointer-events-none"
                   />
 
-                  {/* Main Crisp Render Thumbnail */}
-                  <img
-                    src={project.thumbnail}
-                    alt={project.title}
-                    loading="lazy"
-                    decoding="async"
-                    referrerPolicy="no-referrer"
-                    className="relative z-10 w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
-                  />
+                  {/* Aspect-Ratio Matched Uncropped Stage */}
+                  <div
+                    style={{
+                      aspectRatio: getPresentationAspectRatio(
+                        resolvedRatio,
+                        project.video_width || project.videoWidth,
+                        project.video_height || project.videoHeight
+                      ),
+                    }}
+                    className="relative z-10 h-full max-w-full rounded-lg overflow-hidden bg-black/70 border border-white/10 flex items-center justify-center"
+                  >
+                    <img
+                      src={project.thumbnail}
+                      alt={project.title}
+                      loading="lazy"
+                      decoding="async"
+                      referrerPolicy="no-referrer"
+                      className="w-full h-full object-contain transition-transform duration-500 ease-out group-hover:scale-105"
+                    />
+                  </div>
 
                   {/* Scrim Overlay */}
-                  <div className="absolute inset-0 z-10 bg-gradient-to-t from-[#111514] via-black/15 to-black/40 pointer-events-none" />
+                  <div className="absolute inset-0 z-10 bg-gradient-to-t from-[#111514]/80 via-transparent to-black/35 pointer-events-none" />
 
                   {/* Top Metadata Strip (Duration & Concept Label) */}
                   <div className="absolute top-3.5 left-3.5 right-3.5 z-20 flex items-center justify-between text-[11px] font-mono pointer-events-none">
@@ -252,7 +269,7 @@ export const CgiPortfolio: React.FC<CgiPortfolioProps> = ({
 
                     <span className="text-[11px] font-mono text-[#A0A89F] flex items-center gap-1.5">
                       <Film className="w-3.5 h-3.5 text-[#C7F36B]" />
-                      <span>{project.aspect_ratio || project.aspectRatio || '16:9'}</span>
+                      <span>{resolvedRatio}</span>
                     </span>
                   </div>
                 </div>

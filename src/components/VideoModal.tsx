@@ -17,6 +17,8 @@ import {
 import {
   getPresentationAspectRatio,
   isLandscapeRatio,
+  normalizeAspectRatio,
+  getModalContainerMaxWidthClass,
 } from '../lib/videoAspectRatios.ts';
 
 export interface PortfolioItem {
@@ -91,10 +93,19 @@ export const VideoModal: React.FC<VideoModalProps> = ({
   const controlsTimeoutRef = useRef<number | null>(null);
 
   const videoSrc = item?.video_url || item?.videoUrl;
-  const effectiveAspectRatio = item?.aspect_ratio || item?.aspectRatio || 'auto';
   const videoWidth = item?.video_width || item?.videoWidth;
   const videoHeight = item?.video_height || item?.videoHeight;
+  const effectiveAspectRatio = normalizeAspectRatio(
+    item?.aspect_ratio || item?.aspectRatio,
+    videoWidth,
+    videoHeight
+  );
   const isLandscape = isLandscapeRatio(effectiveAspectRatio, videoWidth, videoHeight);
+  const containerMaxWidthClass = getModalContainerMaxWidthClass(
+    effectiveAspectRatio,
+    videoWidth,
+    videoHeight
+  );
 
   // Safe Close Handler: immediately halts playback
   const handleClose = useCallback(() => {
@@ -301,7 +312,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
                 </span>
               </>
             )}
-            {effectiveAspectRatio && effectiveAspectRatio !== 'auto' && (
+            {effectiveAspectRatio && (
               <>
                 <span aria-hidden="true" className="text-[#2A332B]">·</span>
                 <span className="text-[10px] text-[#F5F5F0] bg-[#171C19] border border-[#C7F36B]/40 px-1.5 py-0.5 rounded font-bold">
@@ -337,11 +348,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
               ref={playerContainerRef}
               onMouseMove={handleMouseMovePlayer}
               onMouseLeave={() => isPlaying && setShowControls(false)}
-              className={`relative w-full ${
-                isLandscape
-                  ? 'max-w-[560px] aspect-video'
-                  : 'max-w-[280px] sm:max-w-[300px] aspect-[9/16]'
-              } rounded-2xl overflow-hidden border border-[#2A332B] shadow-2xl bg-black flex items-center justify-center group select-none`}
+              className={`relative w-full ${containerMaxWidthClass} rounded-2xl overflow-hidden border border-[#2A332B] shadow-2xl bg-black flex items-center justify-center group select-none`}
               style={{
                 aspectRatio: getPresentationAspectRatio(
                   effectiveAspectRatio,

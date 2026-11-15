@@ -1,13 +1,14 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { PortfolioProject, STORAGE_BUCKETS } from '../lib/supabase.ts';
 import { portfolioService } from '../lib/portfolioService.ts';
 import {
   ASPECT_RATIO_OPTIONS,
-  AspectRatioOption,
+  StandardAspectRatio,
   calculateDetectedRatio,
   extractVideoDimensions,
+  normalizeAspectRatio,
 } from '../lib/videoAspectRatios.ts';
-import { X, Upload, Video, Image as ImageIcon, AlertCircle } from 'lucide-react';
+import { X, Upload, Video, Image as ImageIcon, AlertCircle, Check } from 'lucide-react';
 
 interface ProjectFormModalProps {
   project?: PortfolioProject | null;
@@ -45,14 +46,27 @@ export const ProjectFormModal: React.FC<ProjectFormModalProps> = ({
   const [isPublished, setIsPublished] = useState<boolean>(
     project ? project.is_published : true
   );
-  const [aspectRatio, setAspectRatio] = useState<AspectRatioOption>(
-    (project?.aspect_ratio as AspectRatioOption) || 'auto'
+  const [aspectRatio, setAspectRatio] = useState<StandardAspectRatio>(() =>
+    normalizeAspectRatio(project?.aspect_ratio, project?.video_width, project?.video_height)
+  );
+  const [hasManuallySelectedRatio, setHasManuallySelectedRatio] = useState<boolean>(
+    Boolean(project?.aspect_ratio)
   );
   const [videoWidth, setVideoWidth] = useState<number | undefined>(project?.video_width);
   const [videoHeight, setVideoHeight] = useState<number | undefined>(project?.video_height);
   const [videoMimeType, setVideoMimeType] = useState<string>(
     project?.video_mime_type || 'video/mp4'
   );
+
+  // Automatically load previously saved ratio & fields when editing a project
+  useEffect(() => {
+    setAspectRatio(
+      normalizeAspectRatio(project?.aspect_ratio, project?.video_width, project?.video_height)
+    );
+    setHasManuallySelectedRatio(Boolean(project?.aspect_ratio));
+    setVideoWidth(project?.video_width);
+    setVideoHeight(project?.video_height);
+  }, [project]);
 
   // File Upload State
   const [videoFile, setVideoFile] = useState<File | null>(null);
@@ -104,12 +118,12 @@ export const ProjectFormModal: React.FC<ProjectFormModalProps> = ({
         const secs = Math.round(meta.duration % 60);
         setDuration(`${mins}:${secs < 10 ? '0' : ''}${secs}`);
       }
-      if (aspectRatio === 'auto') {
+      if (!hasManuallySelectedRatio) {
         const detected = calculateDetectedRatio(meta.width, meta.height);
         setAspectRatio(detected.closestOption);
       }
     } catch {
-      // Retain graceful defaults if browser cannot decode metadata immediately
+      // Retain graceful default 9:16 if metadata cannot be read
     }
   };
 
@@ -210,14 +224,16 @@ export const ProjectFormModal: React.FC<ProjectFormModalProps> = ({
       setUploadStatus('Saving project record to database...');
 
       const selectedRatioMeta = ASPECT_RATIO_OPTIONS.find((opt) => opt.value === aspectRatio);
+      const effectiveAspectRatio: StandardAspectRatio = normalizeAspectRatio(aspectRatio);
+
       const payload = {
         title: title.trim(),
         description: description.trim(),
         category,
         brand_name: brandName.trim(),
         duration: duration.trim() || '0:30',
-        format: selectedRatioMeta?.shortLabel || 'Native Video',
-        aspect_ratio: aspectRatio,
+        format: selectedRatioMeta?.shortLabel || '9:16 Vertical',
+        aspect_ratio: effectiveAspectRatio,
         video_width: videoWidth,
         video_height: videoHeight,
         video_mime_type: videoMimeType,
@@ -246,6 +262,9 @@ export const ProjectFormModal: React.FC<ProjectFormModalProps> = ({
     }
   };
 
+  const detectedMatch =
+    videoWidth && videoHeight ? calculateDetectedRatio(videoWidth, videoHeight) : null;
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md overflow-y-auto animate-fade-in"
@@ -265,6 +284,7 @@ export const ProjectFormModal: React.FC<ProjectFormModalProps> = ({
           </div>
 
           <button
+            type="button"
             onClick={onClose}
             disabled={isSaving}
             className="p-2 text-[#A0A89F] hover:text-[#F5F5F0] hover:bg-[#171C19] rounded-md transition-colors cursor-pointer"
@@ -360,34 +380,105 @@ export const ProjectFormModal: React.FC<ProjectFormModalProps> = ({
             </div>
           </div>
 
-          {/* Video Aspect Ratio & Detected Dimensions */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-medium text-[#F5F5F0] mb-1.5">
-                Video Aspect Ratio
+          {/* Professional Visual Video Aspect Ratio Selector */}
+          <div className="space-y-2.5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <label className="block text-xs font-medium text-[#F5F5F0]">
+                Video Aspect Ratio <span className="text-[#C7F36B]">*</span>
               </label>
-              <select
-                value={aspectRatio}
-                onChange={(e) => setAspectRatio(e.target.value as AspectRatioOption)}
-                className="w-full px-3.5 py-2.5 rounded-lg bg-[#171C19] border border-[#2A332B] text-xs text-[#F5F5F0] focus:outline-none focus:border-[#C7F36B]"
-              >
-                {ASPECT_RATIO_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+
+              <div className="flex items-center gap-2 text-[11px] font-mono text-[#A0A89F]">
+                {detectedMatch ? (
+                  <>
+                    <span>
+                      Detected: <strong className="text-[#F5F5F0]">{detectedMatch.label}</strong>
+                    </span>
+                    {detectedMatch.closestOption !== aspectRatio && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAspectRatio(detectedMatch.closestOption);
+                          setHasManuallySelectedRatio(true);
+                        }}
+                        className="px-2 py-0.5 rounded bg-[#C7F36B]/15 text-[#C7F36B] border border-[#C7F36B]/30 hover:bg-[#C7F36B]/25 transition-colors cursor-pointer"
+                      >
+                        Use {detectedMatch.closestOption}
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <span>
+                    Active Frame: <strong className="text-[#C7F36B]">{aspectRatio}</strong> (Default 9:16)
+                  </span>
+                )}
+              </div>
             </div>
 
-            <div className="flex flex-col justify-end">
-              <div className="px-3.5 py-2.5 rounded-lg bg-[#171C19] border border-[#2A332B] text-xs text-[#A0A89F] flex items-center justify-between">
-                <span>Detected Dimensions:</span>
-                <span className="font-mono text-[#C7F36B] font-semibold">
-                  {videoWidth && videoHeight
-                    ? `${videoWidth} × ${videoHeight} (${aspectRatio})`
-                    : `Auto (${aspectRatio})`}
-                </span>
-              </div>
+            <div
+              className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5"
+              role="radiogroup"
+              aria-label="Video Aspect Ratio"
+            >
+              {ASPECT_RATIO_OPTIONS.map((opt) => {
+                const isSelected = aspectRatio === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={isSelected}
+                    onClick={() => {
+                      setAspectRatio(opt.value);
+                      setHasManuallySelectedRatio(true);
+                    }}
+                    className={`relative p-3 rounded-xl border text-center transition-all duration-150 cursor-pointer flex flex-col items-center justify-between gap-2 min-h-[104px] ${
+                      isSelected
+                        ? 'bg-[#C7F36B]/10 border-[#C7F36B] shadow-md shadow-[#C7F36B]/10'
+                        : 'bg-[#171C19] border-[#2A332B] hover:border-[#A0A89F]/50 hover:bg-[#1c221e]'
+                    }`}
+                  >
+                    {isSelected && (
+                      <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-[#C7F36B] text-[#090A0B] flex items-center justify-center">
+                        <Check className="w-2.5 h-2.5 stroke-[3]" />
+                      </span>
+                    )}
+
+                    {/* Proportional Visual Frame Preview */}
+                    <div className="h-11 w-full flex items-center justify-center">
+                      <div
+                        style={{
+                          width: `${opt.previewWidthPx}px`,
+                          height: `${opt.previewHeightPx}px`,
+                        }}
+                        className={`rounded-[3px] border-2 transition-colors flex items-center justify-center ${
+                          isSelected
+                            ? 'border-[#C7F36B] bg-[#C7F36B]/20'
+                            : 'border-[#A0A89F]/60 bg-[#090A0B]'
+                        }`}
+                      >
+                        <div
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            isSelected ? 'bg-[#C7F36B]' : 'bg-[#A0A89F]/40'
+                          }`}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-0.5">
+                      <span
+                        className={`block text-xs font-mono font-bold ${
+                          isSelected ? 'text-[#C7F36B]' : 'text-[#F5F5F0]'
+                        }`}
+                      >
+                        {opt.value}
+                      </span>
+                      <span className="block text-[10px] text-[#A0A89F] leading-tight">
+                        {opt.orientation}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -428,7 +519,11 @@ export const ProjectFormModal: React.FC<ProjectFormModalProps> = ({
 
                 {videoPreviewUrl || existingVideoUrl ? (
                   <div className="space-y-2">
-                    <div className="relative aspect-video max-w-[240px] mx-auto rounded-lg overflow-hidden bg-black border border-[#2A332B]">
+                    <div
+                      onClick={(e) => e.stopPropagation()}
+                      style={{ aspectRatio: aspectRatio.replace(':', '/') }}
+                      className="relative max-h-[210px] max-w-full mx-auto rounded-lg overflow-hidden bg-black border border-[#2A332B] flex items-center justify-center"
+                    >
                       <video
                         src={videoPreviewUrl || existingVideoUrl}
                         controls
@@ -436,7 +531,9 @@ export const ProjectFormModal: React.FC<ProjectFormModalProps> = ({
                       />
                     </div>
                     <span className="text-[11px] text-[#C7F36B] block">
-                      {videoFile ? `Selected: ${videoFile.name}` : 'Current video loaded (Click to replace)'}
+                      {videoFile
+                        ? `Selected: ${videoFile.name} (${aspectRatio})`
+                        : `Current video loaded (${aspectRatio} · Click box to replace)`}
                     </span>
                   </div>
                 ) : (
@@ -445,7 +542,7 @@ export const ProjectFormModal: React.FC<ProjectFormModalProps> = ({
                       <Video className="w-5 h-5" />
                     </div>
                     <p className="text-xs text-[#F5F5F0] font-medium">Click to select video</p>
-                    <p className="text-[10px] text-[#A0A89F]">Max 150MB · Native 9:16 vertical recommended</p>
+                    <p className="text-[10px] text-[#A0A89F]">Max 150MB · Displays uncropped with object-contain</p>
                   </div>
                 )}
               </div>

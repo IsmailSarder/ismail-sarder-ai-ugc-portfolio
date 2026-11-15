@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion } from 'motion/react';
 import { Play, ArrowUpRight, Sparkles, Video, Volume2 } from 'lucide-react';
 import { PortfolioItem } from './VideoModal.tsx';
+import { getPresentationAspectRatio, normalizeAspectRatio } from '../lib/videoAspectRatios.ts';
 
 interface ProjectCard3DProps {
   project: PortfolioItem;
@@ -70,6 +71,16 @@ export const ProjectCard3D: React.FC<ProjectCard3DProps> = ({ project, index, on
   };
 
   const brandDisplayName = project.brand_name || project.brandName;
+  const resolvedRatio = normalizeAspectRatio(
+    project.aspect_ratio || project.aspectRatio,
+    project.video_width || project.videoWidth,
+    project.video_height || project.videoHeight
+  );
+  const cssAspectRatio = getPresentationAspectRatio(
+    resolvedRatio,
+    project.video_width || project.videoWidth,
+    project.video_height || project.videoHeight
+  );
 
   return (
     <motion.div
@@ -118,9 +129,9 @@ export const ProjectCard3D: React.FC<ProjectCard3DProps> = ({ project, index, on
           />
         )}
 
-        {/* Top 3D Media Showcase - Preserves full uncropped media with ambient backdrop */}
+        {/* Top 3D Media Showcase - Preserves full uncropped media in exact aspect ratio with ambient backdrop */}
         <div
-          className="relative aspect-[4/3] bg-[#090A0B] overflow-hidden flex items-center justify-center"
+          className="relative h-60 sm:h-64 bg-[#090A0B] overflow-hidden flex items-center justify-center p-2"
           style={{ transform: 'translateZ(15px)' }}
         >
           {/* Layer 1: Ambient Blurred Backdrop for Unused Space (Never leaves raw blank void) */}
@@ -134,15 +145,20 @@ export const ProjectCard3D: React.FC<ProjectCard3DProps> = ({ project, index, on
             className="absolute inset-0 w-full h-full object-cover blur-xl opacity-35 scale-125 pointer-events-none"
           />
 
-          {/* Layer 2: Full Complete Uncropped Thumbnail */}
-          <img
-            src={project.thumbnail}
-            alt={project.title}
-            loading="lazy"
-            decoding="async"
-            referrerPolicy="no-referrer"
-            className="relative z-10 w-full h-full object-contain p-1 transition-transform duration-500 ease-out group-hover:scale-105"
-          />
+          {/* Layer 2: Proportional Aspect-Ratio Stage with Uncropped Thumbnail */}
+          <div
+            style={{ aspectRatio: cssAspectRatio }}
+            className="relative z-10 h-full max-w-full rounded-lg overflow-hidden bg-black/60 border border-white/10 flex items-center justify-center"
+          >
+            <img
+              src={project.thumbnail}
+              alt={project.title}
+              loading="lazy"
+              decoding="async"
+              referrerPolicy="no-referrer"
+              className="w-full h-full object-contain transition-transform duration-500 ease-out group-hover:scale-105"
+            />
+          </div>
 
           {/* Cinematic Scrim Gradient Overlay */}
           <div className="absolute inset-0 z-10 bg-gradient-to-t from-[#171C19]/90 via-black/20 to-black/35 pointer-events-none" />
@@ -156,11 +172,9 @@ export const ProjectCard3D: React.FC<ProjectCard3DProps> = ({ project, index, on
               <span className="text-[#C7F36B] font-bold bg-[#090A0B]/85 backdrop-blur-md px-2.5 py-1 rounded-md border border-white/10 shadow-sm">
                 {project.duration || '0:30'}
               </span>
-              {(project.aspect_ratio || project.aspectRatio) && (
-                <span className="text-[#F5F5F0] font-bold bg-[#111514]/90 backdrop-blur-md px-2 py-1 rounded-md border border-[#2A332B] shadow-sm">
-                  {project.aspect_ratio || project.aspectRatio}
-                </span>
-              )}
+              <span className="text-[#F5F5F0] font-bold bg-[#111514]/90 backdrop-blur-md px-2 py-1 rounded-md border border-[#2A332B] shadow-sm">
+                {resolvedRatio}
+              </span>
             </div>
 
             {project.isPlaceholder ? (

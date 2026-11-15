@@ -13,6 +13,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { PortfolioItem } from './VideoModal.tsx';
+import { getPresentationAspectRatio, normalizeAspectRatio } from '../lib/videoAspectRatios.ts';
 
 interface FeaturedShowcaseProps {
   projects: PortfolioItem[];
@@ -84,6 +85,16 @@ export const FeaturedShowcase: React.FC<FeaturedShowcaseProps> = ({
 
   const currentProject = featuredProjects[currentIndex] || featuredProjects[0];
   const brandName = currentProject.brand_name || currentProject.brandName;
+  const resolvedRatio = normalizeAspectRatio(
+    currentProject.aspect_ratio || currentProject.aspectRatio,
+    currentProject.video_width || currentProject.videoWidth,
+    currentProject.video_height || currentProject.videoHeight
+  );
+  const cssAspectRatio = getPresentationAspectRatio(
+    resolvedRatio,
+    currentProject.video_width || currentProject.videoWidth,
+    currentProject.video_height || currentProject.videoHeight
+  );
 
   return (
     <div
@@ -154,15 +165,20 @@ export const FeaturedShowcase: React.FC<FeaturedShowcaseProps> = ({
                 className="absolute inset-0 w-full h-full object-cover blur-xl opacity-35 scale-125 pointer-events-none"
               />
 
-              {/* Layer 2: Complete Uncropped Thumbnail */}
-              <img
-                src={currentProject.thumbnail}
-                alt={currentProject.title}
-                loading="eager"
-                decoding="async"
-                referrerPolicy="no-referrer"
-                className="relative z-10 w-full h-full object-contain p-2 transition-transform duration-700 group-hover:scale-105"
-              />
+              {/* Layer 2: Aspect-Ratio Matched Uncropped Thumbnail */}
+              <div
+                style={{ aspectRatio: cssAspectRatio }}
+                className="relative z-10 max-h-[340px] max-w-[92%] rounded-xl overflow-hidden bg-black/60 border border-white/10 flex items-center justify-center"
+              >
+                <img
+                  src={currentProject.thumbnail}
+                  alt={currentProject.title}
+                  loading="eager"
+                  decoding="async"
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105"
+                />
+              </div>
 
               {/* Scrim Overlay */}
               <div className="absolute inset-0 z-10 bg-gradient-to-t from-[#111514] via-black/20 to-black/35 pointer-events-none" />
@@ -177,11 +193,9 @@ export const FeaturedShowcase: React.FC<FeaturedShowcaseProps> = ({
                   <span className="text-[11px] font-mono text-[#F5F5F0] bg-black/80 px-2.5 py-1 rounded-md border border-white/10 backdrop-blur-md">
                     {currentProject.duration || '0:30'}
                   </span>
-                  {(currentProject.aspect_ratio || currentProject.aspectRatio) && (
-                    <span className="text-[11px] font-mono font-bold text-[#C7F36B] bg-black/80 px-2 py-1 rounded-md border border-white/10 backdrop-blur-md">
-                      {currentProject.aspect_ratio || currentProject.aspectRatio}
-                    </span>
-                  )}
+                  <span className="text-[11px] font-mono font-bold text-[#C7F36B] bg-black/80 px-2 py-1 rounded-md border border-white/10 backdrop-blur-md">
+                    {resolvedRatio}
+                  </span>
                 </div>
               </div>
 
