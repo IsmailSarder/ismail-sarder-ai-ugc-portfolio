@@ -12,7 +12,6 @@ import {
   RotateCcw,
   AlertTriangle,
   Loader2,
-  Sparkles,
 } from 'lucide-react';
 import {
   getPresentationAspectRatio,
@@ -20,6 +19,7 @@ import {
   normalizeAspectRatio,
   getModalContainerMaxWidthClass,
 } from '../lib/videoAspectRatios.ts';
+import { deriveCaseStudyDetails } from '../lib/caseStudyEnrichment.ts';
 
 export interface PortfolioItem {
   id: string;
@@ -27,15 +27,19 @@ export interface PortfolioItem {
   category:
     | 'Beauty & Skincare'
     | 'Fashion & Lifestyle'
+    | 'Fashion'
     | 'Gadgets & Technology'
     | 'Product Demonstration'
+    | 'AI UGC'
     | 'AI UGC Ads'
     | 'AI Video Ads'
     | 'CGI Product Ads'
+    | 'CGI Commercials'
     | 'Product Commercials'
     | '3D Product Animation'
     | 'Product Demonstrations'
     | 'AI UGC Creator Videos';
+  rawCategory?: string;
   serviceType?: 'AI UGC Ads' | 'AI Video Ads' | 'CGI Product Ads';
   isPlaceholder?: boolean;
   duration: string;
@@ -46,6 +50,7 @@ export interface PortfolioItem {
   brandName?: string;
   brand_name?: string;
   hook: string;
+  advertisingHook?: string;
   angle: string;
   overview: string;
   isConcept: boolean;
@@ -65,6 +70,9 @@ export interface PortfolioItem {
   };
   keyFeatures?: string[];
   targetMarket?: string;
+  targetAudience?: string;
+  creativeConcept?: string;
+  deliverables?: string[];
 }
 
 interface VideoModalProps {
@@ -276,6 +284,12 @@ export const VideoModal: React.FC<VideoModalProps> = ({
 
   const brandDisplayName = item.brand_name || item.brandName;
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const derived = deriveCaseStudyDetails(item);
+  const statusLabel = brandDisplayName ? 'Client Project' : 'Concept Project';
+  const targetAudience = item.targetAudience || derived.targetAudience;
+  const creativeConcept = item.creativeConcept || derived.creativeConcept;
+  const advertisingHook = item.hook || derived.advertisingHook;
+  const deliverablesList = item.deliverables || derived.deliverables;
 
   return (
     <div
@@ -292,34 +306,22 @@ export const VideoModal: React.FC<VideoModalProps> = ({
           isLandscape ? 'max-w-5xl' : 'max-w-4xl'
         } bg-[#111514] border border-[#2A332B] rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[94vh] flex flex-col transition-all duration-300`}
       >
-        {/* Modal Top Bar */}
+        {/* Modal Top Bar — Unboxed Clean Typography */}
         <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 border-b border-[#2A332B] bg-[#090A0B]/90 shrink-0">
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs font-mono">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 text-xs font-mono">
             <span className="font-bold uppercase tracking-wider text-[#C7F36B]">
               {item.category}
             </span>
             <span aria-hidden="true" className="text-[#2A332B]">·</span>
-            <span className="text-[#A0A89F]">{item.format || 'Native Format'}</span>
-            <span aria-hidden="true" className="text-[#2A332B]">·</span>
-            <span className="text-[10px] text-[#A0A89F] bg-[#171C19] border border-[#2A332B] px-1.5 py-0.5 rounded">
-              {item.isConcept ? 'Spec Concept' : 'Client Campaign'}
-            </span>
+            <span className="text-[#F5F5F0] font-semibold">{statusLabel}</span>
             {brandDisplayName && (
               <>
                 <span aria-hidden="true" className="text-[#2A332B]">·</span>
-                <span className="text-[#C7F36B] font-bold">
-                  {brandDisplayName}
-                </span>
+                <span className="text-[#C7F36B] font-bold">{brandDisplayName}</span>
               </>
             )}
-            {effectiveAspectRatio && (
-              <>
-                <span aria-hidden="true" className="text-[#2A332B]">·</span>
-                <span className="text-[10px] text-[#F5F5F0] bg-[#171C19] border border-[#C7F36B]/40 px-1.5 py-0.5 rounded font-bold">
-                  RATIO: {effectiveAspectRatio}
-                </span>
-              </>
-            )}
+            <span aria-hidden="true" className="text-[#2A332B]">·</span>
+            <span className="text-[#A0A89F]">Ratio {effectiveAspectRatio}</span>
           </div>
 
           <button
@@ -560,7 +562,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
             </div>
           </div>
 
-          {/* Right Column: Creative Strategy & Performance Blueprint */}
+          {/* Right Column: Structured Case Study Breakdown */}
           <div
             className={`${
               isLandscape ? 'lg:col-span-5' : 'lg:col-span-7'
@@ -568,74 +570,69 @@ export const VideoModal: React.FC<VideoModalProps> = ({
           >
             <div>
               <div className="mb-4">
+                <div className="flex items-center gap-2 text-[11px] font-mono text-[#C7F36B] uppercase tracking-wider mb-1.5">
+                  <span>{statusLabel}</span>
+                  <span aria-hidden="true" className="text-[#2A332B]">·</span>
+                  <span className="text-[#A0A89F]">{item.category}</span>
+                </div>
                 <h2
                   id="modal-title"
                   className="text-xl sm:text-2xl font-bold font-heading text-[#F5F5F0]"
                 >
                   {item.title}
                 </h2>
-                <p className="text-xs sm:text-sm text-[#A0A89F] mt-1.5 leading-relaxed">
-                  {item.overview}
-                </p>
               </div>
 
-              {/* Script & Retention Architecture */}
-              <div className="space-y-3.5">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-[#C7F36B]">
-                  Creative Strategy & Hook Breakdown
-                </h3>
-
-                <div className="space-y-2.5 text-xs">
-                  <div className="bg-[#171C19] p-3 rounded-lg border border-[#2A332B]">
-                    <span className="text-[10px] font-mono text-[#C7F36B] uppercase font-bold block mb-1">
-                      01. The Hook (0:00 - 0:03)
-                    </span>
-                    <p className="text-[#F5F5F0]">
-                      {item.scriptBreakdown?.hook || item.hook || 'Opening pattern interrupt designed for high retention.'}
-                    </p>
-                  </div>
-
-                  <div className="bg-[#171C19] p-3 rounded-lg border border-[#2A332B]">
-                    <span className="text-[10px] font-mono text-[#A0A89F] uppercase font-bold block mb-1">
-                      02. Agitation & Problem (0:03 - 0:10)
-                    </span>
-                    <p className="text-[#A0A89F]">
-                      {item.scriptBreakdown?.agitation || 'Relatable viewer frustration and industry pain point agitation.'}
-                    </p>
-                  </div>
-
-                  <div className="bg-[#171C19] p-3 rounded-lg border border-[#2A332B]">
-                    <span className="text-[10px] font-mono text-[#A0A89F] uppercase font-bold block mb-1">
-                      03. Demonstration & Proof (0:10 - 0:22)
-                    </span>
-                    <p className="text-[#A0A89F]">
-                      {item.scriptBreakdown?.demonstration || 'Visceral product demonstration with authentic AI creator persona.'}
-                    </p>
-                  </div>
-
-                  <div className="bg-[#171C19] p-3 rounded-lg border border-[#2A332B]">
-                    <span className="text-[10px] font-mono text-[#C7F36B] uppercase font-bold block mb-1">
-                      04. Direct Response CTA (0:22 - 0:28)
-                    </span>
-                    <p className="text-[#F5F5F0]">
-                      {item.scriptBreakdown?.cta || 'Limited offer incentive with direct link in bio prompt.'}
-                    </p>
-                  </div>
+              {/* Structured Case Study Specification Grid */}
+              <div className="space-y-3 text-xs">
+                <div className="bg-[#171C19] p-3.5 rounded-lg border border-[#2A332B]">
+                  <span className="text-[10px] font-mono text-[#C7F36B] uppercase font-bold block mb-1">
+                    Target Audience
+                  </span>
+                  <p className="text-[#F5F5F0] leading-relaxed">{targetAudience}</p>
                 </div>
+
+                <div className="bg-[#171C19] p-3.5 rounded-lg border border-[#2A332B]">
+                  <span className="text-[10px] font-mono text-[#A0A89F] uppercase font-bold block mb-1">
+                    Creative Concept
+                  </span>
+                  <p className="text-[#A0A89F] leading-relaxed">{creativeConcept}</p>
+                </div>
+
+                <div className="bg-[#171C19] p-3.5 rounded-lg border border-[#2A332B]">
+                  <span className="text-[10px] font-mono text-[#C7F36B] uppercase font-bold block mb-1">
+                    Advertising Hook
+                  </span>
+                  <p className="text-[#F5F5F0] leading-relaxed italic">
+                    &ldquo;{advertisingHook}&rdquo;
+                  </p>
+                </div>
+
+                {item.scriptBreakdown && (
+                  <div className="bg-[#171C19] p-3.5 rounded-lg border border-[#2A332B] space-y-1.5">
+                    <span className="text-[10px] font-mono text-[#A0A89F] uppercase font-bold block">
+                      Narrative Arc &amp; Pacing
+                    </span>
+                    <p className="text-[#A0A89F]">
+                      <strong className="text-[#F5F5F0]">Problem:</strong> {item.scriptBreakdown.agitation}
+                    </p>
+                    <p className="text-[#A0A89F]">
+                      <strong className="text-[#F5F5F0]">Demonstration:</strong> {item.scriptBreakdown.demonstration}
+                    </p>
+                    <p className="text-[#A0A89F]">
+                      <strong className="text-[#F5F5F0]">CTA:</strong> {item.scriptBreakdown.cta}
+                    </p>
+                  </div>
+                )}
               </div>
 
-              {/* Deliverable Specifications */}
+              {/* Deliverables */}
               <div className="mt-5 pt-4 border-t border-[#2A332B]">
                 <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#A0A89F] mb-2.5">
-                  Production Assets Included
+                  Deliverables
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-[#F5F5F0]">
-                  {(item.keyFeatures || [
-                    'Full-Frame Uncropped Master',
-                    '3 Alternative Hook Openings',
-                    'Burned-in Dynamic Captions',
-                    '4K 60FPS Native Deliverables',
-                  ]).map((feat) => (
+                  {deliverablesList.map((feat) => (
                     <div key={feat} className="flex items-center gap-2">
                       <CheckCircle2 className="w-3.5 h-3.5 text-[#C7F36B] shrink-0" />
                       <span>{feat}</span>
@@ -650,7 +647,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
               <div className="text-xs text-[#A0A89F]">
                 Target Markets:{' '}
                 <span className="text-[#F5F5F0] font-medium">
-                  {item.targetMarket || 'USA, UK, UAE & Europe'}
+                  {item.targetMarket || 'USA, UK, UAE, Canada & Europe'}
                 </span>
               </div>
 
@@ -661,7 +658,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
                 }}
                 className="w-full sm:w-auto px-5 py-2.5 text-xs font-bold font-heading uppercase tracking-wider text-[#090A0B] bg-[#C7F36B] hover:bg-[#d6ff7d] rounded-md transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
               >
-                Inquire For Similar Concept
+                Request Similar Ad Concept
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>

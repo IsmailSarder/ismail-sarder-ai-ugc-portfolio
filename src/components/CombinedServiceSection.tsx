@@ -11,48 +11,48 @@ export const CombinedServiceSection: React.FC<CombinedServiceSectionProps> = ({
 }) => {
   const approaches = [
     {
-      index: 'APPROACH 01',
-      title: 'AI UGC Ads',
+      index: 'PILLAR 01',
+      title: 'AI UGC Video Ads & Spokespersons',
       categoryKey: 'AI UGC Ads' as const,
-      subtitle: 'Relatable Creator & Spokesperson Storytelling',
+      subtitle: 'AI UGC Video Ads · AI Spokesperson Videos',
       description:
-        'Authentic-looking AI creator testimonials, product demos, and native vertical videos crafted to blend seamlessly into TikTok, Instagram Reels, and Meta feeds.',
+        'Authentic AI-powered creator ads and direct-to-camera spokesperson videos tailored for TikTok, Instagram Reels, and Meta paid acquisition.',
       highlights: [
-        'AI Avatars & Spokesperson Delivery',
-        'Problem-Solution Hook Frameworks',
-        'Organic Smartphone Pacing & Captions',
+        'AI UGC Video Ads',
+        'AI Spokesperson Videos',
+        'Beauty, Skincare & Fashion UGC',
       ],
-      ctaText: 'Explore AI UGC Ads',
+      ctaText: 'Explore AI UGC Work',
       icon: UserCheck,
     },
     {
-      index: 'APPROACH 02',
-      title: 'AI Video Ads',
+      index: 'PILLAR 02',
+      title: 'Product Demos & Niche Ads',
       categoryKey: 'AI Video Ads' as const,
-      subtitle: 'Cinematic Product Commercials & Brand Storytelling',
+      subtitle: 'AI Product Demonstrations · Beauty, Fashion & Tech',
       description:
-        'High-impact visual commercials, macro product showcases, and fashion or beauty campaign films engineered to elevate brand authority and stop the scroll.',
+        'Clear product demonstration videos and vertical-specific ad creatives highlighting real product texture, fit, ergonomics, and everyday benefits.',
       highlights: [
-        'Cinematic AI Product Commercials',
-        'Beauty, Fashion & Tech Visual Suites',
-        'Studio-Grade Lighting & Sound Design',
+        'AI Product Demonstration Videos',
+        'Beauty & Skincare Ads',
+        'Fashion & Gadget Ads',
       ],
-      ctaText: 'Explore AI Video Ads',
+      ctaText: 'Explore Product Demos',
       icon: Clapperboard,
     },
     {
-      index: 'APPROACH 03',
-      title: 'CGI Product Ads',
+      index: 'PILLAR 03',
+      title: 'CGI Product Commercials',
       categoryKey: 'CGI Product Ads' as const,
-      subtitle: '3D Product Animation & High-Impact Commercials',
+      subtitle: '3D Product Visuals · High-Impact Launch Spots',
       description:
-        'Photorealistic 3D product renders, exploded-view engineering reveals, and dynamic motion commercials built for luxury launches and standout hero ads.',
+        'Cinematic CGI product commercials featuring sculpted studio lighting, dynamic camera choreography, and standout visual framing for e-commerce launches.',
       highlights: [
-        '3D Product Animation & Renders',
-        'Dynamic Liquid & Particle Simulations',
-        'High-Contrast Studio Commercial Reels',
+        'CGI Product Commercials',
+        '16:9 Campaign & 9:16 Social Cuts',
+        'Luxury Fragrance, Footwear & Audio',
       ],
-      ctaText: 'Explore CGI Product Ads',
+      ctaText: 'Explore CGI Commercials',
       icon: Box,
     },
   ];
@@ -62,19 +62,18 @@ export const CombinedServiceSection: React.FC<CombinedServiceSectionProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="max-w-3xl mb-10 sm:mb-12">
-          <div className="flex items-center gap-2 text-xs font-semibold tracking-wider text-[#A0A89F] uppercase mb-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#C7F36B]" />
-            <span>Creative Production Pillars</span>
-          </div>
+          <span className="text-xs font-mono font-semibold tracking-wider text-[#C7F36B] uppercase block mb-2">
+            Core Creative Capabilities
+          </span>
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-heading text-[#F5F5F0] tracking-tight mb-3 [text-wrap:balance]">
-            Three Creative Approaches. One Goal: Better Video Ads.
+            Six Specialized Video Ad Services Built for E-Commerce Brands.
           </h2>
           <p className="text-xs sm:text-sm lg:text-base text-[#A0A89F] leading-relaxed">
-            From authentic AI UGC content to cinematic AI video commercials and 3D CGI product ads, I create engaging video creatives that help brands communicate their value and connect with audiences.
+            Whether you are scaling Meta and TikTok campaigns in the US, UK, UAE, Canada, or Europe, each creative format is structured to communicate product value clearly and convert cold traffic.
           </p>
         </div>
 
-        {/* Three Service Approach Cards */}
+        {/* Three Pillar Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-7">
           {approaches.map((item, idx) => {
             const Icon = item.icon;
@@ -84,7 +83,7 @@ export const CombinedServiceSection: React.FC<CombinedServiceSectionProps> = ({
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: '-40px' }}
-                transition={{ duration: 0.45, delay: idx * 0.1 }}
+                transition={{ duration: 0.45, delay: idx * 0.08 }}
                 className="bg-[#171C19] border border-[#2A332B] hover:border-[#C7F36B]/60 rounded-2xl p-6 sm:p-8 flex flex-col justify-between transition-all duration-300 group shadow-xl"
               >
                 <div>

@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'motion/react';
-import { Play, Pause, Volume2, VolumeX, Sparkles, ArrowRight, Film, X } from 'lucide-react';
-import { heroUgcBeauty } from '../assets/images.ts';
+import { Play, Pause, Volume2, VolumeX, ArrowRight, Film } from 'lucide-react';
 import { useProfile } from '../context/ProfileContext.tsx';
 import { VideoModal, PortfolioItem } from './VideoModal.tsx';
+import { portfolioService, DEFAULT_INITIAL_PROJECTS } from '../lib/portfolioService.ts';
+import { enrichPortfolioItem } from '../lib/caseStudyEnrichment.ts';
+import { normalizeAspectRatio } from '../lib/videoAspectRatios.ts';
 
 interface HeroProps {
   onOpenInquiry: () => void;
@@ -11,12 +13,87 @@ interface HeroProps {
 
 export const Hero: React.FC<HeroProps> = ({ onOpenInquiry }) => {
   const { effectiveProfileImage } = useProfile();
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
-  const [progress, setProgress] = useState(38);
-  const [isShowreelOpen, setIsShowreelOpen] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
 
-  // 3D tilt tracking for phone mockup
+  const defaultFeatured: PortfolioItem = enrichPortfolioItem({
+    id: DEFAULT_INITIAL_PROJECTS[0].id,
+    title: DEFAULT_INITIAL_PROJECTS[0].title,
+    category: DEFAULT_INITIAL_PROJECTS[0].category,
+    serviceType: 'AI UGC Ads',
+    duration: DEFAULT_INITIAL_PROJECTS[0].duration || '0:28',
+    format: '9:16 Vertical Video',
+    thumbnail: DEFAULT_INITIAL_PROJECTS[0].thumbnail_url,
+    videoUrl: DEFAULT_INITIAL_PROJECTS[0].video_url,
+    video_url: DEFAULT_INITIAL_PROJECTS[0].video_url,
+    aspect_ratio: '9:16',
+    aspectRatio: '9:16',
+    video_width: DEFAULT_INITIAL_PROJECTS[0].video_width,
+    video_height: DEFAULT_INITIAL_PROJECTS[0].video_height,
+    hook: 'Candid daily skincare opener contrasting complicated routines with one simple hydrating serum step.',
+    angle: 'Honest Routine Review',
+    isConcept: true,
+    overview: DEFAULT_INITIAL_PROJECTS[0].description,
+    targetMarket: 'USA, UK, UAE, Canada & Europe',
+  });
+
+  const [featuredItem, setFeaturedItem] = useState<PortfolioItem>(defaultFeatured);
+
+  // Load actual featured vertical Supabase video asset so Hero never shows a fake placeholder
+  useEffect(() => {
+    let active = true;
+    portfolioService.getPublishedProjects().then(({ data }) => {
+      if (!active || !data || data.length === 0) return;
+      const preferred =
+        data.find(
+          (p) =>
+            p.video_url &&
+            (p.aspect_ratio === '9:16' || p.is_featured)
+        ) || data[0];
+
+      if (preferred && preferred.video_url) {
+        const mapped = enrichPortfolioItem({
+          id: preferred.id,
+          title: preferred.title,
+          category: preferred.category,
+          serviceType: 'AI UGC Ads',
+          duration: preferred.duration || '0:28',
+          format: preferred.format || '9:16 Vertical Video',
+          thumbnail: preferred.thumbnail_url,
+          videoUrl: preferred.video_url,
+          video_url: preferred.video_url,
+          aspect_ratio: normalizeAspectRatio(
+            preferred.aspect_ratio,
+            preferred.video_width,
+            preferred.video_height
+          ),
+          aspectRatio: normalizeAspectRatio(
+            preferred.aspect_ratio,
+            preferred.video_width,
+            preferred.video_height
+          ),
+          video_width: preferred.video_width,
+          video_height: preferred.video_height,
+          brand_name: preferred.brand_name,
+          brandName: preferred.brand_name,
+          hook: preferred.hook || '',
+          angle: preferred.angle || preferred.category,
+          isConcept: !preferred.brand_name,
+          overview: preferred.description,
+          targetMarket: 'USA, UK, UAE, Canada & Europe',
+        });
+        setFeaturedItem(mapped);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // 3D tilt tracking for phone preview
   const phoneRef = useRef<HTMLDivElement>(null);
   const [phoneTilt, setPhoneTilt] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isHoveringPhone, setIsHoveringPhone] = useState(false);
@@ -35,7 +112,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenInquiry }) => {
       const centerX = rect.width / 2;
       const centerY = rect.height / 2;
 
-      const maxTilt = 10;
+      const maxTilt = 8;
       const rotateX = ((mouseY - centerY) / centerY) * -maxTilt;
       const rotateY = ((mouseX - centerX) / centerX) * maxTilt;
       setPhoneTilt({ x: rotateX, y: rotateY });
@@ -48,169 +125,174 @@ export const Hero: React.FC<HeroProps> = ({ onOpenInquiry }) => {
     setPhoneTilt({ x: 0, y: 0 });
   };
 
-  // Simulated video playback timer
-  useEffect(() => {
-    if (!isPlaying) return;
-    const interval = setInterval(() => {
-      setProgress((prev) => (prev >= 100 ? 0 : prev + 1.2));
-    }, 200);
-    return () => clearInterval(interval);
-  }, [isPlaying]);
-
-  const targetMarkets = [
-    'United States',
-    'United Kingdom',
-    'UAE & GCC',
-    'Canada',
-    'Australia',
-    'European Union',
-  ];
-
-  const masterShowreelItem: PortfolioItem = {
-    id: 'master-showreel-2026',
-    title: 'Ismail Sarder — 2026 AI UGC Master Showreel',
-    category: 'AI UGC Creator Videos',
-    duration: '1:15',
-    format: '9:16 & 16:9 Master Reel',
-    thumbnail: heroUgcBeauty,
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-    video_url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-    hook: 'Halting thumbs, beating creative ad fatigue, and scaling direct-response e-commerce ads with photorealistic AI UGC creators.',
-    angle: '2026 Creative Director & AI Pipeline Showreel',
-    overview: 'Full creative showreel demonstrating realistic multi-demographic AI creators, high-converting product demonstrations, dynamic macro b-roll, and multivariate hook testing formulated for brands in the USA, UK, UAE, Canada, Australia, and Europe.',
-    isConcept: false,
-    keyFeatures: [
-      'Photorealistic AI Creator Personas',
-      'Native TikTok & Reels Pacing & Sound',
-      'Macro Product Staging & ASMR Audio',
-      '4K 60FPS High-Bitrate Master Deliverables',
-    ],
-    targetMarket: 'USA, UK, UAE, Canada, Australia & Europe',
+  const handleTogglePlay = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.paused || video.ended) {
+      video.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+    } else {
+      video.pause();
+      setIsPlaying(false);
+    }
   };
 
+  const handleToggleMute = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = !video.muted;
+    setIsMuted(video.muted);
+  };
+
+  const handleTimeUpdate = () => {
+    const video = videoRef.current;
+    if (!video || !video.duration) return;
+    setProgress((video.currentTime / video.duration) * 100);
+  };
+
+  const targetMarkets = ['USA', 'UK', 'UAE', 'Canada', 'Europe'];
+  const coreCapabilities = [
+    {
+      label: 'Services',
+      value: 'AI UGC · Spokesperson · CGI',
+      detail: 'Beauty, skincare, fashion & gadget ad production',
+    },
+    {
+      label: 'Formats',
+      value: '9:16 · 4:5 · 1:1 · 16:9',
+      detail: 'TikTok, Instagram Reels, Meta & YouTube ready',
+    },
+    {
+      label: 'Turnaround',
+      value: '24 – 72 Hours',
+      detail: 'Fast delivery with structured hook variations',
+    },
+    {
+      label: 'Markets Served',
+      value: 'USA · UK · UAE · CA · EU',
+      detail: 'Direct collaboration for international DTC brands',
+    },
+  ];
+
+  const previewOriginLabel =
+    featuredItem.brand_name || featuredItem.brandName
+      ? 'Client Project'
+      : 'Concept Project';
+
   return (
-    <section id="home" className="relative pt-24 pb-14 sm:pt-28 sm:pb-16 lg:pt-36 lg:pb-24 overflow-hidden">
-      {/* Subtle Studio Backdrop Elements with Continuous Ambient Drift */}
-      <motion.div
-        animate={{
-          scale: [1, 1.15, 1],
-          opacity: [0.05, 0.09, 0.05],
-        }}
-        transition={{
-          repeat: Infinity,
-          duration: 9,
-          ease: 'easeInOut',
-        }}
-        className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[300px] sm:w-[500px] lg:w-[700px] h-[300px] sm:h-[400px] bg-[#C7F36B] blur-[100px] sm:blur-[140px] pointer-events-none rounded-full"
-      />
-      <motion.div
-        animate={{
-          x: [-15, 15, -15],
-          y: [-10, 10, -10],
-        }}
-        transition={{
-          repeat: Infinity,
-          duration: 12,
-          ease: 'easeInOut',
-        }}
-        className="absolute top-10 right-10 w-72 sm:w-96 h-72 sm:h-96 bg-[#171C19] blur-[80px] sm:blur-[100px] pointer-events-none -z-10"
-      />
+    <section
+      id="home"
+      className="relative pt-24 pb-14 sm:pt-28 sm:pb-16 lg:pt-36 lg:pb-24 overflow-hidden"
+    >
+      {/* Subtle Ambient Backdrop */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[320px] sm:w-[540px] lg:w-[740px] h-[300px] sm:h-[420px] bg-[#C7F36B]/[0.06] blur-[120px] pointer-events-none rounded-full" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Main 2-Column Editorial Split */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
-          
-          {/* Left Column: Typographic Hierarchy with Staggered Entrance */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-10 items-center">
+          {/* Left Column: Clear Agency Positioning & Actions */}
           <div className="lg:col-span-7 flex flex-col justify-center text-left">
-            
-            {/* Editorial Lead Kicker with Creator Avatar */}
+            {/* Creator Intro Line */}
             <motion.div
-              initial={{ opacity: 0, y: 15 }}
+              initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-              className="flex flex-wrap items-center gap-2.5 text-xs font-semibold tracking-wider text-[#A0A89F] uppercase mb-4 sm:mb-5"
+              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+              className="flex flex-wrap items-center gap-3 text-xs font-semibold tracking-wider text-[#A0A89F] uppercase mb-5"
             >
-              <div className="relative shrink-0">
-                <img
-                  src={effectiveProfileImage}
-                  alt="Ismail Sarder Profile"
-                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover object-top border border-[#C7F36B]/60 shadow-sm shadow-[#C7F36B]/20"
-                />
-              </div>
+              <img
+                src={effectiveProfileImage}
+                alt="Ismail Sarder — AI UGC Video Ads Creator portrait"
+                width={32}
+                height={32}
+                decoding="async"
+                className="w-8 h-8 rounded-full object-cover object-top border border-[#C7F36B]/60 shrink-0"
+              />
               <span className="text-[#F5F5F0] font-bold">Ismail Sarder</span>
               <span aria-hidden="true" className="text-[#2A332B]">/</span>
-              <span className="text-[#C7F36B]">AI UGC &amp; Video Ad Creative Specialist</span>
+              <span className="text-[#C7F36B] font-mono">
+                AI UGC &amp; Creative Video Ad Studio
+              </span>
             </motion.div>
 
-            {/* Display Headline */}
+            {/* Exact Requested Headline */}
             <motion.h1
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-              className="text-3xl sm:text-5xl lg:text-6xl font-extrabold font-heading text-[#F5F5F0] tracking-tight leading-[1.1] sm:leading-[1.08] mb-5 sm:mb-6 [text-wrap:balance]"
+              transition={{ duration: 0.55, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+              className="text-3xl sm:text-5xl lg:text-[3.5rem] font-extrabold font-heading text-[#F5F5F0] tracking-tight leading-[1.08] mb-5 sm:mb-6 [text-wrap:balance]"
             >
-              AI UGC &amp; CGI VIDEO ADS THAT MAKE{' '}
+              AI UGC Video Ads That Help Brands{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F5F5F0] via-[#F5F5F0] to-[#C7F36B]">
-                PRODUCTS STAND OUT
+                Stand Out
               </span>
-              .
             </motion.h1>
 
-            {/* Supporting Text */}
+            {/* Exact Requested Supporting Text + Professional Introduction */}
             <motion.p
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-              className="text-sm sm:text-base lg:text-lg text-[#A0A89F] leading-relaxed max-w-2xl mb-6 sm:mb-8 font-sans"
+              transition={{ duration: 0.55, delay: 0.16, ease: [0.22, 1, 0.36, 1] }}
+              className="text-base sm:text-lg text-[#F5F5F0]/90 leading-relaxed max-w-2xl mb-3 font-sans"
             >
-              I create high-impact AI-powered UGC content, cinematic CGI product commercials, and scroll-stopping video ads for e-commerce, beauty, fashion, and lifestyle brands. From creative concepts to stunning product visuals, I turn ideas into engaging video advertisements designed to capture attention and drive sales.
+              I create engaging AI-powered video ads, product demonstrations and social media advertising creatives for e-commerce brands.
             </motion.p>
 
-            {/* Action Buttons - Primary: View My Work, Secondary: Let's Work Together, Showreel */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
+            <motion.p
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.55, delay: 0.22, ease: [0.22, 1, 0.36, 1] }}
+              className="text-xs sm:text-sm text-[#A0A89F] leading-relaxed max-w-xl mb-7 sm:mb-8"
+            >
+              Specializing in AI UGC Video Ads, AI Spokesperson Videos, Product Demonstrations, and CGI Commercials tailored for Beauty &amp; Skincare, Fashion, and Gadget brands across the USA, UK, UAE, Canada, and Europe.
+            </motion.p>
+
+            {/* Action Buttons: View My Work, Hire Me, Featured Preview */}
+            <motion.div
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.55, delay: 0.28, ease: [0.22, 1, 0.36, 1] }}
               className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 mb-8 sm:mb-10 flex-wrap"
             >
               <a
                 href="#portfolio"
-                className="group relative px-6 py-3.5 text-xs sm:text-sm font-bold font-heading uppercase tracking-wider text-[#090A0B] bg-[#C7F36B] hover:bg-[#d6ff7d] active:scale-[0.98] rounded-md transition-all duration-200 shadow-lg shadow-[#C7F36B]/20 flex items-center justify-center gap-2 cursor-pointer overflow-hidden min-h-[46px]"
+                className="group px-6 py-3.5 text-xs sm:text-sm font-bold font-heading uppercase tracking-wider text-[#090A0B] bg-[#C7F36B] hover:bg-[#d6ff7d] active:scale-[0.98] rounded-md transition-all duration-200 shadow-lg shadow-[#C7F36B]/20 flex items-center justify-center gap-2 cursor-pointer min-h-[46px]"
               >
                 <span>View My Work</span>
                 <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
               </a>
 
               <button
+                type="button"
                 onClick={onOpenInquiry}
-                className="px-6 py-3.5 text-xs sm:text-sm font-semibold font-heading tracking-wider text-[#F5F5F0] hover:text-[#C7F36B] bg-[#171C19] hover:bg-[#1e2521] border border-[#2A332B] hover:border-[#C7F36B]/40 rounded-md transition-all duration-200 flex items-center justify-center gap-2 text-center cursor-pointer min-h-[46px]"
+                className="px-6 py-3.5 text-xs sm:text-sm font-bold font-heading uppercase tracking-wider text-[#F5F5F0] hover:text-[#C7F36B] bg-[#171C19] hover:bg-[#1e2521] border border-[#2A332B] hover:border-[#C7F36B]/50 rounded-md transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer min-h-[46px]"
               >
-                <span>Let&apos;s Work Together</span>
+                <span>Hire Me</span>
               </button>
 
               <button
-                onClick={() => setIsShowreelOpen(true)}
+                type="button"
+                onClick={() => setIsPreviewModalOpen(true)}
                 className="px-5 py-3.5 text-xs sm:text-sm font-mono tracking-wider text-[#C7F36B] hover:text-[#090A0B] bg-[#C7F36B]/10 hover:bg-[#C7F36B] border border-[#C7F36B]/30 rounded-md transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer min-h-[46px]"
               >
                 <Film className="w-4 h-4" />
-                <span>Watch 2026 Showreel</span>
+                <span>Watch Featured Case Study</span>
               </button>
             </motion.div>
 
-            {/* Target Markets Line - Clean Unboxed Typography */}
+            {/* Target Markets Line */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              className="pt-5 sm:pt-6 border-t border-[#2A332B]"
+              transition={{ duration: 0.5, delay: 0.36 }}
+              className="pt-5 border-t border-[#2A332B]"
             >
-              <span className="text-[11px] sm:text-xs uppercase tracking-wider text-[#A0A89F] block mb-2 font-medium">
-                Target Markets Served
+              <span className="text-[11px] font-mono uppercase tracking-wider text-[#A0A89F] block mb-2">
+                Serving E-Commerce Brands In
               </span>
-              <div className="flex flex-wrap items-center gap-y-1 gap-x-2.5 sm:gap-x-3 text-xs sm:text-sm text-[#F5F5F0] font-medium">
+              <div className="flex flex-wrap items-center gap-y-1 gap-x-3 text-xs sm:text-sm text-[#F5F5F0] font-medium">
                 {targetMarkets.map((market, index) => (
                   <React.Fragment key={market}>
-                    <span className="hover:text-[#C7F36B] transition-colors whitespace-nowrap">{market}</span>
+                    <span>{market}</span>
                     {index < targetMarkets.length - 1 && (
                       <span aria-hidden="true" className="text-[#2A332B]">·</span>
                     )}
@@ -218,182 +300,155 @@ export const Hero: React.FC<HeroProps> = ({ onOpenInquiry }) => {
                 ))}
               </div>
             </motion.div>
-
           </div>
 
-          {/* Right Column: Layered Creative Showcase Reel with 3D Float & Tilt */}
+          {/* Right Column: Featured Live Video Preview Frame (Real Video Asset) */}
           <div className="lg:col-span-5 flex justify-center lg:justify-end">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 25 }}
+              initial={{ opacity: 0, scale: 0.96, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-              className="relative w-full max-w-[310px] sm:max-w-[360px] group perspective-1000"
+              transition={{ duration: 0.6, delay: 0.18, ease: [0.22, 1, 0.36, 1] }}
+              className="relative w-full max-w-[300px] sm:max-w-[340px] group perspective-1000"
             >
-              {/* Outer Glow & Architectural Framing */}
               <div className="absolute -inset-1.5 bg-gradient-to-b from-[#C7F36B]/20 via-[#2A332B]/40 to-transparent rounded-3xl blur-md -z-10" />
 
-              {/* Mobile Phone Mockup Device Frame with 3D Mouse Parallax & Gentle Idle Float */}
               <motion.div
                 ref={phoneRef}
                 onMouseMove={handlePhoneMouseMove}
                 onMouseEnter={() => setIsHoveringPhone(true)}
                 onMouseLeave={handlePhoneMouseLeave}
-                animate={
-                  !isHoveringPhone && !isTouchDevice
-                    ? { y: [-4, 4, -4] }
-                    : undefined
-                }
-                transition={
-                  !isHoveringPhone && !isTouchDevice
-                    ? { repeat: Infinity, duration: 6, ease: 'easeInOut' }
-                    : undefined
-                }
                 style={{
                   transform:
                     !isTouchDevice && isHoveringPhone
-                      ? `perspective(1000px) rotateX(${phoneTilt.x}deg) rotateY(${phoneTilt.y}deg) scale3d(1.02, 1.02, 1)`
+                      ? `perspective(1000px) rotateX(${phoneTilt.x}deg) rotateY(${phoneTilt.y}deg) scale3d(1.015, 1.015, 1)`
                       : undefined,
                   transformStyle: 'preserve-3d',
                   transition: isHoveringPhone
                     ? 'transform 0.1s ease-out'
-                    : 'transform 0.5s cubic-bezier(0.23, 1, 0.32, 1)',
+                    : 'transform 0.45s cubic-bezier(0.23, 1, 0.32, 1)',
                 }}
                 className="relative bg-[#111514] border border-[#2A332B] rounded-[24px] sm:rounded-[28px] p-2.5 sm:p-3 shadow-2xl overflow-hidden hover:border-[#C7F36B]/60 transition-colors"
               >
-                
-                {/* Screen Top Status bar */}
+                {/* Frame Top Bar */}
                 <div className="flex items-center justify-between px-2.5 py-1.5 text-[10px] sm:text-[11px] text-[#A0A89F] font-mono border-b border-[#2A332B]/60 mb-2">
-                  <span className="font-semibold text-[#F5F5F0]">
-                    AI UGC REEL · 4K 60FPS
-                  </span>
-                  <span>9:16 VERTICAL</span>
+                  <span className="font-semibold text-[#F5F5F0]">FEATURED PREVIEW</span>
+                  <span className="text-[#C7F36B]">{featuredItem.aspect_ratio || '9:16'}</span>
                 </div>
 
-                {/* Video Container */}
-                <div className="relative aspect-[9/16] rounded-xl sm:rounded-2xl overflow-hidden bg-[#090A0B] border border-[#2A332B]/80">
-                  <img
-                    src={heroUgcBeauty}
-                    alt="AI UGC Skincare Concept Ad Demonstration"
-                    loading="eager"
-                    decoding="async"
-                    referrerPolicy="no-referrer"
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                {/* Real HTML5 Video Container */}
+                <div
+                  onClick={() => setIsPreviewModalOpen(true)}
+                  className="relative aspect-[9/16] rounded-xl sm:rounded-2xl overflow-hidden bg-black border border-[#2A332B]/80 cursor-pointer"
+                >
+                  <video
+                    ref={videoRef}
+                    src={featuredItem.video_url || featuredItem.videoUrl}
+                    poster={featuredItem.thumbnail}
+                    autoPlay
+                    loop
+                    muted={isMuted}
+                    playsInline
+                    preload="metadata"
+                    onTimeUpdate={handleTimeUpdate}
+                    onPlay={() => setIsPlaying(true)}
+                    onPause={() => setIsPlaying(false)}
+                    className="w-full h-full object-contain bg-black"
                   />
 
-                  {/* Scrim Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/30 pointer-events-none" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/30 pointer-events-none" />
 
-                  {/* Top Badges */}
-                  <div className="absolute top-2.5 sm:top-3 left-2.5 sm:left-3 right-2.5 sm:right-3 flex items-center justify-between">
-                    <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#090A0B] bg-[#C7F36B] px-2 py-0.5 sm:py-1 rounded font-mono">
-                      Spec Concept Demo
+                  {/* Top Overlay Controls */}
+                  <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between z-10">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#090A0B] bg-[#C7F36B] px-2 py-0.5 rounded font-mono">
+                      {previewOriginLabel}
                     </span>
 
-                    <button
-                      onClick={() => setIsMuted(!isMuted)}
-                      className="p-1.5 bg-black/60 hover:bg-black/90 text-white rounded-full border border-white/20 transition-colors cursor-pointer"
-                      aria-label={isMuted ? 'Unmute video preview' : 'Mute video preview'}
-                    >
-                      {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
-                    </button>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={handleTogglePlay}
+                        className="p-1.5 bg-black/70 hover:bg-black text-white rounded-full border border-white/20 transition-colors cursor-pointer"
+                        aria-label={isPlaying ? 'Pause video preview' : 'Play video preview'}
+                      >
+                        {isPlaying ? (
+                          <Pause className="w-3.5 h-3.5" />
+                        ) : (
+                          <Play className="w-3.5 h-3.5 ml-0.5 fill-current" />
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleToggleMute}
+                        className="p-1.5 bg-black/70 hover:bg-black text-white rounded-full border border-white/20 transition-colors cursor-pointer"
+                        aria-label={isMuted ? 'Unmute video preview' : 'Mute video preview'}
+                      >
+                        {isMuted ? (
+                          <VolumeX className="w-3.5 h-3.5" />
+                        ) : (
+                          <Volume2 className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+                    </div>
                   </div>
 
-                  {/* Play / Pause Interactive Center Overlay */}
-                  <button
-                    onClick={() => setIsPlaying(!isPlaying)}
-                    className="absolute inset-0 flex items-center justify-center group/btn focus:outline-none cursor-pointer"
-                    aria-label={isPlaying ? 'Pause video preview' : 'Play video preview'}
-                  >
-                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-black/60 backdrop-blur-sm border border-white/30 text-white flex items-center justify-center transition-all duration-300 group-hover/btn:scale-110 group-hover/btn:bg-[#C7F36B] group-hover/btn:text-[#090A0B] group-hover/btn:border-[#C7F36B] shadow-lg">
-                      {isPlaying ? <Pause className="w-5 h-5 sm:w-6 sm:h-6" /> : <Play className="w-5 h-5 sm:w-6 sm:h-6 ml-0.5 fill-current" />}
-                    </div>
-                  </button>
-
-                  {/* Bottom Ad Meta & Captions */}
-                  <div className="absolute bottom-2.5 sm:bottom-3 left-2.5 sm:left-3 right-2.5 sm:right-3 space-y-1.5 sm:space-y-2 pointer-events-none">
-                    <div className="bg-black/75 backdrop-blur-md p-2 sm:p-2.5 rounded-lg border border-white/10 text-left">
-                      <p className="text-[10px] sm:text-[11px] font-semibold text-[#F5F5F0] leading-snug">
-                        &ldquo;Wait, this glow without a 10-step routine? Honestly obsessed...&rdquo;
+                  {/* Bottom Title & Scrubber */}
+                  <div className="absolute bottom-2.5 left-2.5 right-2.5 space-y-2 pointer-events-none z-10">
+                    <div className="bg-black/75 backdrop-blur-md p-2.5 rounded-lg border border-white/10 text-left">
+                      <span className="text-[10px] font-mono text-[#C7F36B] uppercase block">
+                        {featuredItem.category}
+                      </span>
+                      <p className="text-[11px] sm:text-xs font-semibold text-[#F5F5F0] leading-snug line-clamp-2 mt-0.5">
+                        {featuredItem.title}
                       </p>
-                      <div className="flex items-center gap-1.5 sm:gap-2 mt-1 text-[9px] sm:text-[10px] text-[#A0A89F]">
-                        <span>Aurelia Botanica Serum</span>
-                        <span>·</span>
-                        <span className="text-[#C7F36B]">0:28 Total Run</span>
-                      </div>
                     </div>
 
-                    {/* Dynamic Scrubber Progress */}
                     <div className="w-full bg-white/20 h-1 rounded-full overflow-hidden">
                       <div
-                        className="bg-[#C7F36B] h-full transition-all duration-200"
+                        className="bg-[#C7F36B] h-full transition-all duration-150"
                         style={{ width: `${progress}%` }}
                       />
                     </div>
                   </div>
-
                 </div>
 
-                {/* Sub-label Below Device */}
-                <div className="mt-2.5 flex items-center justify-between text-[10px] sm:text-[11px] text-[#A0A89F] px-1 font-mono">
-                  <span>ANGLE: PROBLEM-TO-SOLUTION</span>
-                  <span className="text-[#C7F36B] flex items-center gap-1">
-                    <Sparkles className="w-3 h-3" /> PHOTOREALISTIC
-                  </span>
-                </div>
-
+                {/* Bottom Action Trigger */}
+                <button
+                  type="button"
+                  onClick={() => setIsPreviewModalOpen(true)}
+                  className="mt-2.5 w-full flex items-center justify-between text-[11px] font-mono text-[#A0A89F] hover:text-[#C7F36B] px-1 py-0.5 transition-colors cursor-pointer"
+                >
+                  <span>CLICK TO WATCH CASE STUDY</span>
+                  <span className="text-[#C7F36B] font-bold">OPEN PLAYER &rarr;</span>
+                </button>
               </motion.div>
             </motion.div>
           </div>
-
         </div>
 
-        {/* Full-Width Metric Strip Below the Split - 100% Truthful Capability Metrics */}
+        {/* Truthful Studio Capabilities Strip (Zero Fabricated Stats) */}
         <div className="mt-14 sm:mt-16 pt-8 sm:pt-10 border-t border-[#2A332B] grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
-          <div>
-            <div className="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-heading text-[#F5F5F0] tracking-tight tabular-nums">
-              100<span className="text-[#C7F36B]">%</span>
+          {coreCapabilities.map((item) => (
+            <div key={item.label}>
+              <span className="text-[10px] font-mono uppercase tracking-wider text-[#C7F36B] block mb-1">
+                {item.label}
+              </span>
+              <div className="text-lg sm:text-xl lg:text-2xl font-extrabold font-heading text-[#F5F5F0] tracking-tight">
+                {item.value}
+              </div>
+              <p className="text-xs text-[#A0A89F] mt-1">{item.detail}</p>
             </div>
-            <p className="text-xs sm:text-sm text-[#A0A89F] mt-1">
-              Realistic AI Persona & Natural Voice
-            </p>
-          </div>
-
-          <div>
-            <div className="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-heading text-[#F5F5F0] tracking-tight tabular-nums">
-              3-5<span className="text-[#C7F36B]">x</span>
-            </div>
-            <p className="text-xs sm:text-sm text-[#A0A89F] mt-1">
-              Testable Hook Openings Per Concept
-            </p>
-          </div>
-
-          <div>
-            <div className="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-heading text-[#F5F5F0] tracking-tight tabular-nums">
-              48<span className="text-[#C7F36B]">h</span>
-            </div>
-            <p className="text-xs sm:text-sm text-[#A0A89F] mt-1">
-              Turnaround For Testable Ad Batches
-            </p>
-          </div>
-
-          <div>
-            <div className="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-heading text-[#F5F5F0] tracking-tight tabular-nums">
-              4K<span className="text-[#C7F36B]">·60</span>
-            </div>
-            <p className="text-xs sm:text-sm text-[#A0A89F] mt-1">
-              Native Vertical 9:16 & 4:5 Formats
-            </p>
-          </div>
+          ))}
         </div>
       </div>
 
-      {/* Featured Master Showreel Lightbox Modal */}
-      {isShowreelOpen && (
+      {/* Featured Case Study Lightbox */}
+      {isPreviewModalOpen && (
         <VideoModal
-          item={masterShowreelItem}
-          onClose={() => setIsShowreelOpen(false)}
+          item={featuredItem}
+          onClose={() => setIsPreviewModalOpen(false)}
           onOrderSimilar={() => {
-            setIsShowreelOpen(false);
+            setIsPreviewModalOpen(false);
             onOpenInquiry();
           }}
         />

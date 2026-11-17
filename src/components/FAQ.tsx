@@ -5,70 +5,64 @@ interface FAQProps {
   onOpenInquiry?: () => void;
 }
 
+export const HOMEPAGE_FAQS = [
+  {
+    question: 'What is an AI UGC video ad and how does it compare to traditional filming?',
+    answer:
+      'AI UGC combines realistic AI-generated creators, natural speech delivery, and focused product visuals to produce relatable social media video ads. Instead of waiting 3–4 weeks to ship physical samples and book studio talent, brands can test new creative angles and spokesperson styles within 24 to 72 hours.',
+  },
+  {
+    question: 'Are the portfolio pieces Concept Projects or Client Projects?',
+    answer:
+      'Each case study in the portfolio is explicitly labeled as either a Concept Project (spec demonstrations built to showcase creative strategy, hooks, and visual quality) or a Client Project. When working with active brand partners under confidentiality agreements, campaign assets remain private.',
+  },
+  {
+    question: 'What do I need to share to get started?',
+    answer:
+      'All I need to start is your product or store URL, clear high-resolution product photos, your target country (such as USA, UK, UAE, Canada, or Europe), and any key benefits or customer pain points you want highlighted.',
+  },
+  {
+    question: 'How fast is delivery and do you work across international timezones?',
+    answer:
+      'Standard packages feature 24-hour to 72-hour turnaround depending on batch size and complexity. I collaborate smoothly with brands across EST, GMT, GST, and CET timezones via email and WhatsApp.',
+  },
+  {
+    question: 'Which video aspect ratios and file formats are delivered?',
+    answer:
+      'Videos are exported in crisp HD / 4K MP4 tailored to your placements—9:16 vertical for TikTok, Instagram Reels, and YouTube Shorts, 4:5 or 1:1 for Meta Feed ads, and 16:9 widescreen for YouTube or hero web commercials.',
+  },
+  {
+    question: 'Do I get full commercial rights and revisions?',
+    answer:
+      'Yes. Every completed order includes revision rounds matched to your package along with full commercial usage rights so you can run ads across Meta, TikTok, Google, and your online store without ongoing licensing fees.',
+  },
+];
+
 export const FAQ: React.FC<FAQProps> = ({ onOpenInquiry }) => {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
-
-  const faqs = [
-    {
-      question: 'What is an AI UGC video ad and how does it compare to traditional filming?',
-      answer:
-        'AI UGC (User-Generated Content) combines high-fidelity AI-generated video creators, lifelike speech models, and cinematic product b-roll to create authentic, relatable video ads. Unlike traditional filming—which requires physical sample shipments, talent contracts, studio rentals, and 3-4 week delays—AI UGC allows brands to test multiple creator demographics, accents, and visual hooks within 48 to 72 hours at a fraction of the cost.',
-    },
-    {
-      question: 'Are the portfolio projects on this website live client campaigns or concept demonstrations?',
-      answer:
-        'The portfolio pieces showcased here are self-developed spec concepts and creative benchmarks created by Ismail Sarder. They demonstrate my creative copywriting, hook formulation, AI video persona synthesis, macro product staging, and post-production capabilities. For live client work where non-disclosure agreements (NDAs) are in place, performance metrics and creative assets are kept confidential to protect client ad strategy.',
-    },
-    {
-      question: 'What do I need to provide to start a project?',
-      answer:
-        'Getting started is straightforward: provide your product website link, primary customer pain points, key benefits, and high-resolution product photos (or packshots) on neutral or transparent backgrounds. If you have existing customer review highlights or winning angle hypotheses, those can be incorporated into the hook strategy.',
-    },
-    {
-      question: 'What is your typical production turnaround?',
-      answer:
-        'Standard creative batches (3 hook variations + direct response body + CTA) are delivered within 48 to 72 hours from the moment the script and creative brief are approved. Rapid iterations and headline refreshes can be turned around within 24 to 48 hours to prevent creative ad fatigue on Meta and TikTok.',
-    },
-    {
-      question: 'What video formats, resolutions, and deliverables are included?',
-      answer:
-        'All deliverables are rendered in native 4K 60FPS or 1080p 60FPS. Master files are supplied in 9:16 vertical (for TikTok, Instagram Reels, YouTube Shorts), with 4:5 or 1:1 cutdowns available for Meta Feeds. Deliverables include burned-in kinetic typography captions formatted above platform UI elements, as well as clean caption-free masters.',
-    },
-    {
-      question: 'How do revisions work if we need adjustments?',
-      answer:
-        'Every project includes one comprehensive round of revisions following initial delivery. You can request adjustments to pacing, caption styling, voiceover tone, background music tracks, or on-screen product highlights.',
-    },
-    {
-      question: 'Does my brand retain full commercial usage rights?',
-      answer:
-        'Yes. Upon final delivery and payment, you receive 100% full commercial rights to deploy, edit, and scale the delivered video creatives across all paid advertising platforms (Meta, TikTok, Google Demand Gen, Pinterest, Amazon PDP) worldwide with zero recurring royalty fees.',
-    },
-  ];
+  const faqs = HOMEPAGE_FAQS;
 
   const toggleAccordion = (index: number) => {
     setOpenIndex(openIndex === index ? null : index);
   };
 
   return (
-    <section id="faq" className="py-16 sm:py-20 lg:py-28 bg-[#090A0B] relative">
+    <section id="faq" className="py-16 sm:py-20 lg:py-28 bg-[#090A0B] border-t border-[#2A332B] relative">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        
         {/* Section Header */}
         <div className="text-center mb-12 sm:mb-16">
-          <div className="inline-flex items-center gap-2 text-xs font-semibold tracking-wider text-[#A0A89F] uppercase mb-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#C7F36B]" />
-            <span>Clear Answers & Process Clarifications</span>
-          </div>
+          <span className="text-xs font-mono font-semibold tracking-wider text-[#C7F36B] uppercase block mb-2">
+            Frequently Asked Questions
+          </span>
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-heading text-[#F5F5F0] tracking-tight">
-            FREQUENTLY ASKED QUESTIONS.
+            CLEAR ANSWERS BEFORE YOU ORDER.
           </h2>
           <p className="text-xs sm:text-sm text-[#A0A89F] max-w-xl mx-auto mt-3 leading-relaxed">
-            Everything you need to know about AI UGC production workflows, licensing rights, timelines, and concept deliverables.
+            Key details on production workflow, aspect ratios, pricing flexibility, revisions, and commercial rights.
           </p>
         </div>
 
-        {/* Accordion Container */}
+        {/* Accordion */}
         <div className="space-y-3.5">
           {faqs.map((faq, index) => {
             const isOpen = openIndex === index;
@@ -104,18 +98,18 @@ export const FAQ: React.FC<FAQProps> = ({ onOpenInquiry }) => {
           })}
         </div>
 
-        {/* Still have questions banner */}
+        {/* CTA Banner */}
         <div className="mt-12 p-6 rounded-xl bg-[#111514] border border-[#2A332B] flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-lg bg-[#090A0B] text-[#C7F36B] border border-[#2A332B] shrink-0 hidden sm:block">
               <HelpCircle className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-sm font-bold font-heading text-[#F5F5F0]">
-                Have a unique product or custom requirement?
-              </h4>
+              <h3 className="text-sm font-bold font-heading text-[#F5F5F0]">
+                Have a custom brief or campaign question?
+              </h3>
               <p className="text-xs text-[#A0A89F] mt-0.5">
-                Reach out on WhatsApp or submit a brief to get a custom creative evaluation.
+                Message me directly on WhatsApp or send your brief below.
               </p>
             </div>
           </div>
@@ -125,11 +119,10 @@ export const FAQ: React.FC<FAQProps> = ({ onOpenInquiry }) => {
             onClick={onOpenInquiry}
             className="w-full sm:w-auto px-5 py-2.5 text-xs font-bold font-heading uppercase tracking-wider text-[#090A0B] bg-[#C7F36B] hover:bg-[#d6ff7d] rounded-md transition-all whitespace-nowrap flex items-center justify-center gap-1.5 cursor-pointer"
           >
-            <span>Ask a Question</span>
+            <span>Start a Project</span>
             <ArrowUpRight className="w-3.5 h-3.5" />
           </a>
         </div>
-
       </div>
     </section>
   );

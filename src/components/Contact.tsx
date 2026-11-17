@@ -194,19 +194,14 @@ export const Contact = forwardRef<ContactRef, ContactProps>(({ initialService = 
   ];
 
   const availableServices = [
-    'AI UGC Ads Creation',
-    'AI Video Ads Creation',
-    'CGI Product Ads',
-    'Product Commercials',
-    '3D Product Animation',
     'AI UGC Video Ads',
     'AI Spokesperson Videos',
-    'Product Demonstration Videos',
-    'E-commerce Video Creatives',
-    'Ad Hooks & Scriptwriting',
-    'Multiple Creative Variations',
+    'AI Product Demonstration Videos',
+    'CGI Product Commercials',
+    'Beauty & Skincare Ads',
+    'Fashion & Gadget Ads',
     'Product B-roll & Lifestyle',
-    'Social Media Ad Creatives',
+    'Ad Hooks & Scriptwriting',
   ];
 
   const handlePackageSelect = (pkg: typeof packagesList[0]) => {
@@ -349,15 +344,14 @@ export const Contact = forwardRef<ContactRef, ContactProps>(({ initialService = 
         
         {/* Section Header */}
         <div className="max-w-3xl mb-12 sm:mb-16">
-          <div className="flex items-center gap-2 text-xs font-semibold tracking-wider text-[#A0A89F] uppercase mb-2">
-            <span className="w-2 h-2 rounded-full bg-[#C7F36B]" />
-            <span>Project Inquiries &amp; Hiring</span>
-          </div>
+          <span className="text-xs font-mono font-semibold tracking-wider text-[#C7F36B] uppercase block mb-2">
+            Project Inquiries &amp; Hiring
+          </span>
           <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold font-heading text-[#F5F5F0] tracking-tight mb-3 sm:mb-4 [text-wrap:balance]">
-            Need AI UGC videos or creative AI video advertisements for your brand?
+            Ready to launch high-converting video ads for your brand?
           </h2>
           <p className="text-xs sm:text-base text-[#A0A89F] leading-relaxed mb-5">
-            Let&apos;s discuss your project and create video ads that match your brand&apos;s goals.
+            Share your product details and creative goals below, or message me directly on WhatsApp or LinkedIn for a fast response.
           </p>
           <a
             href="#contact-form-panel"
@@ -421,7 +415,7 @@ export const Contact = forwardRef<ContactRef, ContactProps>(({ initialService = 
                   <div>
                     <span className="text-[10px] font-mono text-[#A0A89F] block">DIRECT WHATSAPP</span>
                     <span className="text-xs sm:text-sm font-semibold text-[#F5F5F0]">
-                      +88 01648861141
+                      +8801648861141
                     </span>
                   </div>
                 </div>
@@ -585,20 +579,13 @@ export const Contact = forwardRef<ContactRef, ContactProps>(({ initialService = 
                 <form onSubmit={handleSubmit} noValidate className="space-y-6">
                   
                   {/* Form Header */}
-                  <div className="border-b border-[#2A332B] pb-4 flex items-center justify-between">
-                    <div>
-                      <h3 className="text-lg sm:text-xl font-bold font-heading text-[#F5F5F0]">
-                        Project Brief &amp; Quote Request
-                      </h3>
-                      <p className="text-xs text-[#A0A89F] mt-1">
-                        Select a package or negotiate custom pricing based on your project requirements.
-                      </p>
-                    </div>
-
-                    <div className="hidden sm:flex items-center gap-1.5 text-[11px] font-mono text-[#A0A89F]">
-                      <span className={`w-2 h-2 rounded-full ${isSupabaseReady ? 'bg-[#C7F36B]' : 'bg-amber-400'}`} />
-                      <span>{isSupabaseReady ? 'Supabase Live' : 'Local Capture'}</span>
-                    </div>
+                  <div className="border-b border-[#2A332B] pb-4">
+                    <h3 className="text-lg sm:text-xl font-bold font-heading text-[#F5F5F0]">
+                      Project Brief &amp; Quote Request
+                    </h3>
+                    <p className="text-xs text-[#A0A89F] mt-1">
+                      Select a package or propose custom pricing based on your project scope.
+                    </p>
                   </div>
 
                   {/* Active Highlight Banner */}

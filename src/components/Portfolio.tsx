@@ -3,15 +3,10 @@ import { Search, X } from 'lucide-react';
 import { VideoModal, PortfolioItem } from './VideoModal.tsx';
 import { ProjectCard3D } from './ProjectCard3D.tsx';
 import { FeaturedShowcase } from './FeaturedShowcase.tsx';
-import { portfolioService } from '../lib/portfolioService.ts';
+import { portfolioService, DEFAULT_INITIAL_PROJECTS } from '../lib/portfolioService.ts';
 import { normalizeAspectRatio } from '../lib/videoAspectRatios.ts';
-import { CGI_INITIAL_PROJECTS, CGI_CATEGORIES } from '../data/cgiProjects.ts';
-import {
-  heroUgcBeauty,
-  portfolioSkincare,
-  portfolioTech,
-  portfolioFashion,
-} from '../assets/images.ts';
+import { enrichPortfolioItem } from '../lib/caseStudyEnrichment.ts';
+import { CGI_CATEGORIES } from '../data/cgiProjects.ts';
 
 export interface PortfolioRef {
   setCategory: (category: string) => void;
@@ -22,6 +17,15 @@ interface PortfolioProps {
   refreshTrigger?: number;
 }
 
+const PORTFOLIO_CATEGORIES = [
+  'All Work',
+  'Beauty & Skincare',
+  'Fashion',
+  'Gadgets & Technology',
+  'AI UGC',
+  'CGI Commercials',
+] as const;
+
 export const Portfolio = forwardRef<PortfolioRef, PortfolioProps>(
   ({ onOpenInquiryWithProject, refreshTrigger }, ref) => {
     const [selectedCategory, setSelectedCategory] = useState<string>('All Work');
@@ -30,7 +34,19 @@ export const Portfolio = forwardRef<PortfolioRef, PortfolioProps>(
 
     useImperativeHandle(ref, () => ({
       setCategory: (category: string) => {
-        setSelectedCategory(category === 'All Projects' ? 'All Work' : category);
+        if (category === 'All Projects' || category === 'All Work') {
+          setSelectedCategory('All Work');
+        } else if (category === 'AI UGC Ads' || category === 'AI UGC Creator Videos') {
+          setSelectedCategory('AI UGC');
+        } else if (category === 'CGI Product Ads' || category === 'Product Commercials' || category === '3D Product Animation') {
+          setSelectedCategory('CGI Commercials');
+        } else if (category === 'Fashion & Lifestyle') {
+          setSelectedCategory('Fashion');
+        } else if (category === 'AI Video Ads' || category === 'Product Demonstrations') {
+          setSelectedCategory('All Work');
+        } else {
+          setSelectedCategory(category);
+        }
         setSearchQuery('');
         const el = document.getElementById('portfolio');
         if (el) {
@@ -39,284 +55,42 @@ export const Portfolio = forwardRef<PortfolioRef, PortfolioProps>(
       },
     }));
 
-    const categories = [
-      'All Work',
-      'AI UGC Ads',
-      'AI Video Ads',
-      'CGI Product Ads',
-      'Product Commercials',
-      '3D Product Animation',
-      'Beauty & Skincare',
-      'Fashion & Lifestyle',
-      'Gadgets & Technology',
-      'Product Demonstrations',
-    ];
+    const initialMapped: PortfolioItem[] = useMemo(
+      () =>
+        DEFAULT_INITIAL_PROJECTS.map((p) =>
+          enrichPortfolioItem({
+            id: p.id,
+            title: p.title,
+            category: p.category,
+            serviceType: (CGI_CATEGORIES as readonly string[]).includes(p.category)
+              ? 'CGI Product Ads'
+              : 'AI UGC Ads',
+            duration: p.duration || '0:28',
+            format: p.format || '9:16 Vertical Video',
+            thumbnail: p.thumbnail_url,
+            video_url: p.video_url,
+            videoUrl: p.video_url,
+            aspect_ratio: normalizeAspectRatio(p.aspect_ratio, p.video_width, p.video_height),
+            aspectRatio: normalizeAspectRatio(p.aspect_ratio, p.video_width, p.video_height),
+            video_width: p.video_width,
+            videoWidth: p.video_width,
+            video_height: p.video_height,
+            videoHeight: p.video_height,
+            video_mime_type: p.video_mime_type,
+            videoMimeType: p.video_mime_type,
+            brand_name: p.brand_name,
+            brandName: p.brand_name,
+            hook: p.hook || '',
+            angle: p.angle || p.category,
+            overview: p.description,
+            isConcept: !p.brand_name,
+            targetMarket: 'USA, UK, UAE, Canada & Europe',
+          })
+        ),
+      []
+    );
 
-    const INITIAL_PROJECTS: PortfolioItem[] = [
-      {
-        id: 'aurelia-serum',
-        title: 'Aurelia Botanica — Dewy Skin Viral Hook',
-        category: 'Beauty & Skincare',
-        serviceType: 'AI UGC Ads',
-        duration: '0:28',
-        format: '9:16 Vertical Video',
-        thumbnail: heroUgcBeauty,
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-        video_url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-        aspect_ratio: '9:16',
-        aspectRatio: '9:16',
-        video_width: 1080,
-        video_height: 1920,
-        video_mime_type: 'video/mp4',
-        hook: 'Wait, this glow without a 10-step routine? Honestly obsessed...',
-        angle: 'Relatable Problem-to-Solution',
-        isConcept: true,
-        overview:
-          'High-converting TikTok and Instagram Reels AI UGC ad creative engineered for a luxury botanical skincare brand targeting female demographics aged 22-38.',
-        scriptBreakdown: {
-          hook: 'Close-up camera tap, unfiltered morning natural skin, unexpected opening statement cutting through skincare skepticism.',
-          agitation: 'Calling out the exhausting 10-step glass skin routine that clogs pores and wastes money monthly.',
-          demonstration: 'Texture application demonstration showing immediate hydration sheen with zero sticky residue.',
-          cta: 'Limited first-batch 20% discount offer with direct link in bio.',
-        },
-        keyFeatures: [
-          '3 Alternative Hook Openings',
-          'Burned-in Dynamic Kinetic Captions',
-          'TikTok & Reels Sound Optimized',
-          '9:16 + 4:5 Feed Master Deliverables',
-        ],
-        targetMarket: 'USA & United Kingdom',
-      },
-      {
-        id: 'botanica-macro-demo',
-        title: 'Botanica Facial Illumination — Macro Product Commercial',
-        category: 'Product Demonstrations',
-        serviceType: 'AI Video Ads',
-        duration: '0:22',
-        format: '4:5 Feed & 9:16 Story',
-        thumbnail: portfolioSkincare,
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
-        video_url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
-        aspect_ratio: '4:5',
-        aspectRatio: '4:5',
-        video_width: 1080,
-        video_height: 1350,
-        video_mime_type: 'video/mp4',
-        hook: 'Watch what happens when cold-pressed botanicals touch dehydrated skin...',
-        angle: 'Sensory ASMR & Texture Proof',
-        isConcept: true,
-        overview:
-          'Cinematic AI product commercial highlighting active ingredients, viscosity, and instant epidermal absorption with studio-grade lighting.',
-        scriptBreakdown: {
-          hook: 'Slow-motion macro droplet suspension with crisp ASMR dropper sound.',
-          agitation: 'Why standard water-based moisturizers evaporate within 40 minutes.',
-          demonstration: 'Split-screen hydration meter demonstration and cellular barrier simulation.',
-          cta: 'Claim clinical trial kit before current batch sells out.',
-        },
-        keyFeatures: [
-          'Macro Texture Cinematography',
-          'Cellular Absorption Simulation',
-          'Clean Studio Travertine Staging',
-          'High-Retention Sound Design',
-        ],
-        targetMarket: 'USA, UAE & Canada',
-      },
-      {
-        id: 'elara-anc-headphones',
-        title: 'Elara ANC Pro — Commuter Noise-Cancellation Commercial',
-        category: 'Gadgets & Technology',
-        serviceType: 'AI Video Ads',
-        duration: '0:34',
-        format: '16:9 Landscape & 9:16 Feed',
-        thumbnail: portfolioTech,
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
-        video_url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
-        aspect_ratio: '16:9',
-        aspectRatio: '16:9',
-        video_width: 1920,
-        video_height: 1080,
-        video_mime_type: 'video/mp4',
-        hook: 'I tested these on the London Tube and my entire brain went quiet...',
-        angle: 'Real-World Commute Stress Test',
-        isConcept: true,
-        overview:
-          'Dynamic AI product showcase & unboxing commercial engineered for Meta Ads and YouTube Shorts with dramatic sound contrast.',
-        scriptBreakdown: {
-          hook: 'Loud screeching subway background instantly cuts to absolute studio silence upon placing headphones on ears.',
-          agitation: 'Tired of overpaying $400 for bulky plastic headphones with 4-hour battery life.',
-          demonstration: 'Tap-to-transparency mode switch, industrial matte build showcase, 60-hour battery stress test.',
-          cta: 'Tap below to unlock 30-day risk-free commuter trial.',
-        },
-        keyFeatures: [
-          'Binaural Sound Cut Pattern Interrupt',
-          'Authentic Streetwear Tech Persona',
-          'Exploded View Driver Architecture',
-          'Direct Comparison vs Legacy Audio Brands',
-        ],
-        targetMarket: 'UK, Germany & Australia',
-      },
-      {
-        id: 'nomad-atelier-trench',
-        title: 'Nomad Atelier — Minimalist Capsule Wardrobe UGC',
-        category: 'Fashion & Lifestyle',
-        serviceType: 'AI UGC Ads',
-        duration: '0:25',
-        format: '9:16 TikTok / Reels',
-        thumbnail: portfolioFashion,
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyBlazes.mp4',
-        video_url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyBlazes.mp4',
-        aspect_ratio: '9:16',
-        aspectRatio: '9:16',
-        video_width: 1080,
-        video_height: 1920,
-        video_mime_type: 'video/mp4',
-        hook: 'Styling the one coat you will actually wear all week in 3 different ways...',
-        angle: 'Capsule Wardrobe Utility & Fit',
-        isConcept: true,
-        overview:
-          'High-fashion street aesthetic AI UGC showing movement, drape, water-resistance, and styling versatility for an apparel brand.',
-        scriptBreakdown: {
-          hook: 'Fast 1-second transitional fit snap in an architectural urban setting.',
-          agitation: 'Fast fashion outerwear that falls apart after two rainstorms.',
-          demonstration: '3 quick outfit swaps (casual denim, office tailoring, weekend travel) showing natural drape.',
-          cta: 'Shop the Autumn capsule before restock waitlist closes.',
-        },
-        keyFeatures: [
-          'Dynamic Motion Transitions',
-          'Fabric Drape & Stitching Close-ups',
-          'Natural Daylight Color Grading',
-          'Multi-Angle Fit Verification',
-        ],
-        targetMarket: 'Europe, USA & Australia',
-      },
-      {
-        id: 'founder-ugc-spokesperson',
-        title: 'Founder Direct-to-Camera — AI Spokesperson UGC Ad',
-        category: 'AI UGC Ads',
-        serviceType: 'AI UGC Ads',
-        duration: '0:30',
-        format: '1:1 Square & 9:16 Feed',
-        thumbnail: heroUgcBeauty,
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4',
-        video_url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4',
-        aspect_ratio: '1:1',
-        aspectRatio: '1:1',
-        video_width: 1080,
-        video_height: 1080,
-        video_mime_type: 'video/mp4',
-        hook: 'Big skincare brands lied about why your pores stay enlarged...',
-        angle: 'Contrarian Industry Whistleblower',
-        isConcept: true,
-        overview:
-          'Hyper-realistic AI spokesperson UGC ad with authentic speech cadences, micro-expressions, and conversational direct-response structure.',
-        scriptBreakdown: {
-          hook: 'Contrarian question challenging common industry misconceptions with high authority tone.',
-          agitation: 'Explaining the vicious cycle of stripping skin with harsh chemical washes.',
-          demonstration: 'Presenting the pH-balanced biological formula with third-party lab proof.',
-          cta: 'Exclusive 60-day money-back guarantee with order link below.',
-        },
-        keyFeatures: [
-          '100% Natural Speech Synthesis',
-          'Emotional Resonance Calibration',
-          'Custom Scripting & Hook Matrix',
-          'Burned-in Captions with Highlighted Keywords',
-        ],
-        targetMarket: 'USA, UK & Canada',
-      },
-      {
-        id: 'kinetic-smart-ring',
-        title: 'Kinetic Pulse — Smart Ring Product Ad',
-        category: 'Gadgets & Technology',
-        serviceType: 'AI Video Ads',
-        duration: '0:26',
-        format: '3:4 Portrait Video',
-        thumbnail: portfolioTech,
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WhatCarCanYouGetForAGrand.mp4',
-        video_url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WhatCarCanYouGetForAGrand.mp4',
-        aspect_ratio: '3:4',
-        aspectRatio: '3:4',
-        video_width: 1080,
-        video_height: 1440,
-        video_mime_type: 'video/mp4',
-        hook: 'Why I threw away my smart watch and switched to this titanium ring...',
-        angle: 'Lifestyle Replacement & Freedom',
-        isConcept: true,
-        overview:
-          'Targeted tech and wellness AI video ad demonstrating biocompatible titanium construction, biometric precision, and sleep tracking.',
-        scriptBreakdown: {
-          hook: 'Showing wrist indentation from bulky smartwatches before introducing the ultralight titanium ring.',
-          agitation: 'Constantly charging watches every single night ruins sleep tracking.',
-          demonstration: '7-day battery life, waterproof shower test, sync with real-time iOS app.',
-          cta: 'Free sizing kit included with every early bird reservation.',
-        },
-        keyFeatures: [
-          'Hardware Durability Demonstration',
-          'App Interface Sync Integration',
-          'Lifestyle Gym & Sleep Settings',
-          '4 Testable Hook Variations',
-        ],
-        targetMarket: 'USA, UAE, Australia & UK',
-      },
-      {
-        id: 'placeholder-beauty-commercial',
-        title: 'Cinematic Beauty & Skincare Commercial (Placeholder Slot)',
-        category: 'AI Video Ads',
-        serviceType: 'AI Video Ads',
-        isPlaceholder: true,
-        duration: '0:24',
-        format: '9:16 & 16:9 Commercial',
-        thumbnail: portfolioSkincare,
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
-        video_url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
-        aspect_ratio: '4:5',
-        aspectRatio: '4:5',
-        video_width: 1080,
-        video_height: 1350,
-        video_mime_type: 'video/mp4',
-        hook: 'Placeholder Slot — Replace via Admin Dashboard with your Beauty Commercial video.',
-        angle: 'Cinematic Luxury Brand Commercial',
-        isConcept: true,
-        overview:
-          'Placeholder slot for a cinematic AI Beauty & Skincare video advertisement showcasing elevated product lighting and brand identity.',
-        keyFeatures: [
-          'Cinematic Lighting & Transitions',
-          'Premium Product Staging',
-          'Replaceable via Admin Video Manager',
-        ],
-        targetMarket: 'Global E-commerce Brands',
-      },
-      {
-        id: 'placeholder-fashion-campaign',
-        title: 'AI Fashion & Lifestyle Campaign Film (Placeholder Slot)',
-        category: 'AI Video Ads',
-        serviceType: 'AI Video Ads',
-        isPlaceholder: true,
-        duration: '0:28',
-        format: '9:16 Campaign Reel',
-        thumbnail: portfolioFashion,
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyBlazes.mp4',
-        video_url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyBlazes.mp4',
-        aspect_ratio: '9:16',
-        aspectRatio: '9:16',
-        video_width: 1080,
-        video_height: 1920,
-        video_mime_type: 'video/mp4',
-        hook: 'Placeholder Slot — Replace via Admin Dashboard with your Fashion & Lifestyle commercial.',
-        angle: 'Editorial Lifestyle Showcase',
-        isConcept: true,
-        overview:
-          'Placeholder slot for an AI Fashion & Lifestyle promotional campaign video highlighting aesthetic movement and visual storytelling.',
-        keyFeatures: [
-          'Editorial Motion Pacing',
-          'Brand Storytelling Structure',
-          'Replaceable via Admin Video Manager',
-        ],
-        targetMarket: 'Global Fashion & DTC Brands',
-      },
-      ...CGI_INITIAL_PROJECTS,
-    ];
-
-    const [projects, setProjects] = useState<PortfolioItem[]>(INITIAL_PROJECTS);
+    const [projects, setProjects] = useState<PortfolioItem[]>(initialMapped);
 
     // Load published projects from Supabase whenever mounted or refreshed
     useEffect(() => {
@@ -333,7 +107,7 @@ export const Portfolio = forwardRef<PortfolioRef, PortfolioProps>(
                 ? 'AI Video Ads'
                 : 'AI UGC Ads';
 
-            return {
+            return enrichPortfolioItem({
               id: p.id,
               title: p.title,
               category: p.category,
@@ -353,17 +127,12 @@ export const Portfolio = forwardRef<PortfolioRef, PortfolioProps>(
               videoMimeType: p.video_mime_type,
               brand_name: p.brand_name,
               brandName: p.brand_name,
-              hook: p.hook || p.title,
+              hook: p.hook || '',
               angle: p.angle || p.category,
               overview: p.description,
               isConcept: !p.brand_name,
-              targetMarket: 'USA & Global',
-              keyFeatures: [
-                '4K 60FPS Master Deliverable',
-                'High-Converting Creative Hook',
-                'Dynamic Kinetic Captions',
-              ],
-            };
+              targetMarket: 'USA, UK, UAE, Canada & Europe',
+            });
           });
           setProjects(mappedItems);
         }
@@ -377,28 +146,45 @@ export const Portfolio = forwardRef<PortfolioRef, PortfolioProps>(
     const filteredProjects = useMemo(() => {
       return projects.filter((project) => {
         let matchesCategory = false;
+        const cat = project.category;
 
         if (selectedCategory === 'All Work' || selectedCategory === 'All Projects') {
           matchesCategory = true;
-        } else if (selectedCategory === 'AI UGC Ads') {
+        } else if (selectedCategory === 'Beauty & Skincare') {
           matchesCategory =
-            project.category === 'AI UGC Ads' ||
-            project.category === 'AI UGC Creator Videos' ||
+            cat === 'Beauty & Skincare' ||
+            project.title.toLowerCase().includes('serum') ||
+            project.title.toLowerCase().includes('skin') ||
+            project.title.toLowerCase().includes('body wash') ||
+            project.title.toLowerCase().includes('bloom');
+        } else if (selectedCategory === 'Fashion') {
+          matchesCategory =
+            cat === 'Fashion & Lifestyle' ||
+            project.title.toLowerCase().includes('tee') ||
+            project.title.toLowerCase().includes('sneaker') ||
+            project.title.toLowerCase().includes('future');
+        } else if (selectedCategory === 'Gadgets & Technology') {
+          matchesCategory =
+            cat === 'Gadgets & Technology' ||
+            project.title.toLowerCase().includes('headphone') ||
+            project.title.toLowerCase().includes('beat') ||
+            project.title.toLowerCase().includes('charge');
+        } else if (selectedCategory === 'AI UGC') {
+          matchesCategory =
+            cat === 'AI UGC Ads' ||
+            cat === 'AI UGC Creator Videos' ||
+            cat === 'Beauty & Skincare' ||
+            cat === 'Fashion & Lifestyle' ||
+            cat === 'Gadgets & Technology' ||
             project.serviceType === 'AI UGC Ads';
-        } else if (selectedCategory === 'AI Video Ads') {
+        } else if (selectedCategory === 'CGI Commercials') {
           matchesCategory =
-            project.category === 'AI Video Ads' ||
-            project.serviceType === 'AI Video Ads';
-        } else if (selectedCategory === 'CGI Product Ads') {
-          matchesCategory =
-            project.category === 'CGI Product Ads' ||
+            cat === 'CGI Product Ads' ||
+            cat === 'Product Commercials' ||
+            cat === '3D Product Animation' ||
             project.serviceType === 'CGI Product Ads';
-        } else if (selectedCategory === 'Product Demonstrations') {
-          matchesCategory =
-            project.category === 'Product Demonstrations' ||
-            project.category === 'Product Demonstration';
         } else {
-          matchesCategory = project.category === selectedCategory;
+          matchesCategory = cat === selectedCategory;
         }
 
         const q = searchQuery.toLowerCase().trim();
@@ -409,8 +195,8 @@ export const Portfolio = forwardRef<PortfolioRef, PortfolioProps>(
           (project.serviceType || '').toLowerCase().includes(q) ||
           (project.brandName || project.brand_name || '').toLowerCase().includes(q) ||
           (project.hook || '').toLowerCase().includes(q) ||
-          (project.angle || '').toLowerCase().includes(q) ||
-          (project.overview || '').toLowerCase().includes(q);
+          (project.targetAudience || '').toLowerCase().includes(q) ||
+          (project.creativeConcept || project.overview || '').toLowerCase().includes(q);
 
         return matchesCategory && matchesSearch;
       });
@@ -438,29 +224,25 @@ export const Portfolio = forwardRef<PortfolioRef, PortfolioProps>(
         className="py-16 sm:py-20 lg:py-28 bg-[#111514] border-t border-b border-[#2A332B] relative"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
           {/* Section Header */}
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 sm:mb-12 gap-6">
             <div>
-              <div className="flex items-center gap-2 text-xs font-semibold tracking-wider text-[#A0A89F] uppercase mb-2">
-                <span>AI UGC Ads &amp; AI Video Ads Portfolio</span>
-              </div>
+              <span className="text-xs font-mono font-semibold tracking-wider text-[#C7F36B] uppercase block mb-2">
+                Selected Work &amp; Case Studies
+              </span>
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-heading text-[#F5F5F0] tracking-tight">
-                FEATURED CREATIVE CONCEPTS.
+                AI UGC &amp; VIDEO AD PORTFOLIO.
               </h2>
             </div>
 
             <div className="max-w-md">
               <p className="text-xs sm:text-sm text-[#A0A89F] leading-relaxed">
-                Explore authentic AI UGC creator videos and cinematic AI video advertisements engineered to stop scrolling and present your brand clearly.
+                Real creative work produced for e-commerce verticals across beauty, fashion, consumer tech, and CGI product commercials. Each project breaks down target audience, creative concept, hook, and deliverables.
               </p>
-              <span className="text-[11px] font-mono text-[#A0A89F] block mt-1.5">
-                Notice: Self-developed spec ad concepts &amp; replaceable slots demonstrating creative direction.
-              </span>
             </div>
           </div>
 
-          {/* 3D Animated Featured Showcase Carousel */}
+          {/* Featured Case Study Spotlight */}
           <FeaturedShowcase
             projects={projects}
             onSelectProject={(p) => setActiveModalItem(p)}
@@ -469,10 +251,9 @@ export const Portfolio = forwardRef<PortfolioRef, PortfolioProps>(
 
           {/* Search Bar & Category Controls Row */}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8 sm:mb-10">
-            
             {/* Category Filter Segments */}
             <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0 no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
-              {categories.map((cat) => (
+              {PORTFOLIO_CATEGORIES.map((cat) => (
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
@@ -494,7 +275,7 @@ export const Portfolio = forwardRef<PortfolioRef, PortfolioProps>(
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search concepts or categories..."
+                placeholder="Search case studies..."
                 className="w-full pl-9 pr-8 py-2 text-xs rounded-md bg-[#171C19] border border-[#2A332B] text-[#F5F5F0] placeholder-[#A0A89F]/60 focus:outline-none focus:border-[#C7F36B] transition-colors"
               />
               {searchQuery && (
@@ -507,7 +288,6 @@ export const Portfolio = forwardRef<PortfolioRef, PortfolioProps>(
                 </button>
               )}
             </div>
-
           </div>
 
           {/* Zero Results State */}
@@ -518,21 +298,20 @@ export const Portfolio = forwardRef<PortfolioRef, PortfolioProps>(
               </div>
               <div>
                 <h3 className="text-base font-bold font-heading text-[#F5F5F0]">
-                  No concepts found matching &ldquo;{searchQuery || selectedCategory}&rdquo;
+                  No projects found matching &ldquo;{searchQuery || selectedCategory}&rdquo;
                 </h3>
                 <p className="text-xs text-[#A0A89F] mt-1">
-                  Try switching categories or searching for &ldquo;AI UGC Ads&rdquo;, &ldquo;AI Video Ads&rdquo;, or &ldquo;skincare&rdquo;.
+                  Try switching categories or resetting your search filters.
                 </p>
               </div>
               <button
                 onClick={handleResetFilters}
                 className="px-4 py-2 text-xs font-semibold text-[#090A0B] bg-[#C7F36B] hover:bg-[#d6ff7d] rounded-md transition-colors cursor-pointer"
               >
-                Reset Search &amp; Filters
+                Reset Filters
               </button>
             </div>
           ) : (
-            /* 3D Interactive Portfolio Bento Grid */
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
               {filteredProjects.map((project, index) => (
                 <ProjectCard3D
@@ -544,10 +323,9 @@ export const Portfolio = forwardRef<PortfolioRef, PortfolioProps>(
               ))}
             </div>
           )}
-
         </div>
 
-        {/* Video Lightbox Modal */}
+        {/* Video Case Study Lightbox Modal */}
         {activeModalItem && (
           <VideoModal
             item={activeModalItem}

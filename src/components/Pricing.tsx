@@ -91,10 +91,9 @@ export const Pricing: React.FC<PricingProps> = ({ onSelectPackage }) => {
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-14 sm:mb-16 gap-6">
           <div className="max-w-2xl">
-            <div className="flex items-center gap-2 text-xs font-semibold tracking-wider text-[#A0A89F] uppercase mb-2">
-              <span className="w-2 h-2 rounded-full bg-[#C7F36B]" />
-              <span>Transparent Rates · Rapid 1-Day Delivery</span>
-            </div>
+            <span className="text-xs font-mono font-semibold tracking-wider text-[#C7F36B] uppercase block mb-2">
+              Transparent Rates · Rapid 1-Day Delivery
+            </span>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold font-heading text-[#F5F5F0] tracking-tight">
               PERFORMANCE PRICING &amp; PACKAGES.
             </h2>

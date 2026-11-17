@@ -69,7 +69,7 @@ export const BUCKET_VIDEOS = 'portfolio-videos';
 export const BUCKET_THUMBNAILS = 'portfolio-thumbnails';
 export const BUCKET_PROFILE_IMAGES = 'profile-images';
 export const TABLE_PROJECTS = 'portfolio_projects';
-export const TABLE_INQUIRIES = 'project_inquiries';
+export const TABLE_INQUIRIES = 'inquiries';
 export const TABLE_PROFILE_SETTINGS = 'profile_settings';
 
 export const STORAGE_BUCKETS = {
@@ -80,11 +80,14 @@ export const STORAGE_BUCKETS = {
 
 export type ProjectCategory =
   | 'Beauty & Skincare'
+  | 'Fashion'
   | 'Fashion & Lifestyle'
   | 'Gadgets & Technology'
   | 'Product Demonstration'
+  | 'AI UGC'
   | 'AI UGC Ads'
   | 'AI Video Ads'
+  | 'CGI Commercials'
   | 'CGI Product Ads'
   | 'Product Commercials'
   | '3D Product Animation'
@@ -190,7 +193,7 @@ export async function submitProjectInquiry(inquiryData: {
     selected_services: inquiryData.selectedServices,
     message: enrichedMessage,
     created_at: new Date().toISOString(),
-    status: 'new',
+    is_read: false,
   };
 
   // Always save to local storage as fallback
@@ -203,10 +206,10 @@ export async function submitProjectInquiry(inquiryData: {
     console.warn('Local storage inquiry cache warning:', e);
   }
 
-  // Attempt Supabase insert if configured
+  // Attempt Supabase insert into live 'inquiries' table if configured
   if (isSupabaseConfigured()) {
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from(TABLE_INQUIRIES)
         .insert([
           {
@@ -218,14 +221,12 @@ export async function submitProjectInquiry(inquiryData: {
             budget: inquiryData.budget,
             selected_services: inquiryData.selectedServices,
             message: enrichedMessage,
-            status: 'new',
+            is_read: false,
           },
-        ])
-        .select()
-        .single();
+        ]);
 
-      if (!error && data) {
-        return { success: true, syncedWithSupabase: true, id: data.id };
+      if (!error) {
+        return { success: true, syncedWithSupabase: true, id: newInquiry.id };
       }
       console.warn('Supabase inquiry insert warning:', error?.message);
     } catch (err) {

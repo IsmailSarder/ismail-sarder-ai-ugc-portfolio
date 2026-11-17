@@ -448,9 +448,8 @@ export const IntroVideoSection: React.FC<IntroVideoSectionProps> = ({ refreshTri
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           className="max-w-3xl mx-auto text-center mb-10 sm:mb-12"
         >
-          <div className="inline-flex items-center gap-2 text-xs font-semibold tracking-widest text-[#C7F36B] uppercase font-mono mb-3">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#C7F36B]" />
-            <span>{settings.heading || DEFAULT_INTRO_VIDEO_SETTINGS.heading}</span>
+          <div className="text-xs font-semibold tracking-widest text-[#C7F36B] uppercase font-mono mb-3">
+            {settings.heading || DEFAULT_INTRO_VIDEO_SETTINGS.heading}
           </div>
 
           <h2 className="text-2xl sm:text-4xl lg:text-[2.65rem] font-extrabold font-heading text-[#F5F5F0] tracking-tight leading-[1.12] mb-4 [text-wrap:balance]">

@@ -4,6 +4,7 @@ import { Play, ArrowUpRight, Box, Clock, Film } from 'lucide-react';
 import { VideoModal, PortfolioItem } from './VideoModal.tsx';
 import { portfolioService } from '../lib/portfolioService.ts';
 import { getPresentationAspectRatio, normalizeAspectRatio } from '../lib/videoAspectRatios.ts';
+import { deriveCaseStudyDetails, enrichPortfolioItem } from '../lib/caseStudyEnrichment.ts';
 import { CGI_INITIAL_PROJECTS, CGI_CATEGORIES } from '../data/cgiProjects.ts';
 
 interface CgiPortfolioProps {
@@ -25,7 +26,9 @@ export const CgiPortfolio: React.FC<CgiPortfolioProps> = ({
   refreshTrigger,
 }) => {
   const [selectedFilter, setSelectedFilter] = useState<string>('All Work');
-  const [projects, setProjects] = useState<PortfolioItem[]>(CGI_INITIAL_PROJECTS);
+  const [projects, setProjects] = useState<PortfolioItem[]>(
+    CGI_INITIAL_PROJECTS.map(enrichPortfolioItem)
+  );
   const [activeModalItem, setActiveModalItem] = useState<PortfolioItem | null>(null);
 
   useEffect(() => {
@@ -35,40 +38,38 @@ export const CgiPortfolio: React.FC<CgiPortfolioProps> = ({
 
       const cgiFromDb: PortfolioItem[] = data
         .filter((p) => (CGI_CATEGORIES as readonly string[]).includes(p.category))
-        .map((p) => ({
-          id: p.id,
-          title: p.title,
-          category: p.category,
-          serviceType: 'CGI Product Ads',
-          duration: p.duration || '0:30',
-          format: p.format || '16:9 & 9:16 Commercial Master',
-          thumbnail: p.thumbnail_url,
-          video_url: p.video_url,
-          videoUrl: p.video_url,
-          aspect_ratio: normalizeAspectRatio(p.aspect_ratio, p.video_width, p.video_height),
-          aspectRatio: normalizeAspectRatio(p.aspect_ratio, p.video_width, p.video_height),
-          video_width: p.video_width,
-          videoWidth: p.video_width,
-          video_height: p.video_height,
-          videoHeight: p.video_height,
-          video_mime_type: p.video_mime_type,
-          videoMimeType: p.video_mime_type,
-          brand_name: p.brand_name,
-          brandName: p.brand_name,
-          hook: p.hook || p.title,
-          angle: p.angle || p.category,
-          overview: p.description,
-          isConcept: !p.brand_name,
-          targetMarket: 'Global Brands',
-          keyFeatures: [
-            '3D Lighting & Material Craft',
-            '4K Master Video Delivery',
-            'Social & Web Cutdowns',
-          ],
-        }));
+        .map((p) =>
+          enrichPortfolioItem({
+            id: p.id,
+            title: p.title,
+            category: p.category,
+            serviceType: 'CGI Product Ads',
+            duration: p.duration || '0:24',
+            format: p.format || '16:9 & 9:16 Commercial Master',
+            thumbnail: p.thumbnail_url,
+            video_url: p.video_url,
+            videoUrl: p.video_url,
+            aspect_ratio: normalizeAspectRatio(p.aspect_ratio, p.video_width, p.video_height),
+            aspectRatio: normalizeAspectRatio(p.aspect_ratio, p.video_width, p.video_height),
+            video_width: p.video_width,
+            videoWidth: p.video_width,
+            video_height: p.video_height,
+            videoHeight: p.video_height,
+            video_mime_type: p.video_mime_type,
+            videoMimeType: p.video_mime_type,
+            brand_name: p.brand_name,
+            brandName: p.brand_name,
+            hook: p.hook || '',
+            angle: p.angle || p.category,
+            overview: p.description,
+            isConcept: !p.brand_name,
+            targetMarket: 'USA, UK, UAE, Canada & Europe',
+          })
+        );
 
+      // Render only live DB records when present (avoid duplicating fallback rows)
       if (cgiFromDb.length > 0) {
-        setProjects([...cgiFromDb, ...CGI_INITIAL_PROJECTS]);
+        setProjects(cgiFromDb);
       }
     });
 
@@ -99,7 +100,7 @@ export const CgiPortfolio: React.FC<CgiPortfolioProps> = ({
         {/* Section Header */}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-10 sm:mb-12 gap-6">
           <div className="max-w-2xl">
-            <div className="flex items-center gap-2 text-xs font-semibold tracking-wider text-[#C7F36B] uppercase mb-2">
+            <div className="flex items-center gap-2 text-xs font-mono font-semibold tracking-wider text-[#C7F36B] uppercase mb-2">
               <Box className="w-3.5 h-3.5" />
               <span>3D Visuals &amp; Product Cinema</span>
             </div>
@@ -115,10 +116,10 @@ export const CgiPortfolio: React.FC<CgiPortfolioProps> = ({
             {onSelectService && (
               <button
                 type="button"
-                onClick={() => onSelectService('CGI Product Ads')}
+                onClick={() => onSelectService('CGI Product Commercials')}
                 className="px-5 py-3 text-xs font-bold font-heading uppercase tracking-wider text-[#090A0B] bg-[#C7F36B] hover:bg-[#d6ff7d] rounded-lg transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap min-h-[42px] shadow-md shadow-[#C7F36B]/15"
               >
-                <span>Commission a CGI Ad</span>
+                <span>Commission a CGI Commercial</span>
                 <ArrowUpRight className="w-4 h-4" />
               </button>
             )}
@@ -145,12 +146,12 @@ export const CgiPortfolio: React.FC<CgiPortfolioProps> = ({
           </div>
 
           <span className="text-[11px] font-mono text-[#A0A89F]">
-            Sample reels marked as Portfolio Concepts · Click any card to watch full video
+            Click any commercial to inspect the full video &amp; case study
           </span>
         </div>
 
-        {/* Large CGI Video Preview Cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+        {/* CGI Commercial Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
           {filteredProjects.map((project, idx) => {
             const brandDisplayName = project.brand_name || project.brandName;
             const resolvedRatio = normalizeAspectRatio(
@@ -158,6 +159,8 @@ export const CgiPortfolio: React.FC<CgiPortfolioProps> = ({
               project.video_width || project.videoWidth,
               project.video_height || project.videoHeight
             );
+            const derived = deriveCaseStudyDetails(project);
+            const statusLabel = brandDisplayName ? 'Client Project' : 'Concept Project';
 
             return (
               <motion.article
@@ -169,9 +172,8 @@ export const CgiPortfolio: React.FC<CgiPortfolioProps> = ({
                 onClick={() => setActiveModalItem(project)}
                 className="group bg-[#111514] border border-[#2A332B] hover:border-[#C7F36B]/70 rounded-2xl overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 shadow-xl hover:shadow-[0_24px_50px_-15px_rgba(0,0,0,0.85),0_0_30px_-8px_rgba(199,243,107,0.18)]"
               >
-                {/* Large Video Preview Frame honoring saved aspect ratio with object-contain */}
-                <div className="relative h-56 sm:h-64 bg-[#090A0B] overflow-hidden flex items-center justify-center p-2">
-                  {/* Ambient Soft Blur Layer */}
+                {/* Aspect-Ratio Matched Uncropped Stage */}
+                <div className="relative h-56 sm:h-64 bg-[#090A0B] overflow-hidden flex items-center justify-center p-2.5">
                   <img
                     src={project.thumbnail}
                     alt=""
@@ -182,7 +184,6 @@ export const CgiPortfolio: React.FC<CgiPortfolioProps> = ({
                     className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-30 scale-110 pointer-events-none"
                   />
 
-                  {/* Aspect-Ratio Matched Uncropped Stage */}
                   <div
                     style={{
                       aspectRatio: getPresentationAspectRatio(
@@ -203,22 +204,25 @@ export const CgiPortfolio: React.FC<CgiPortfolioProps> = ({
                     />
                   </div>
 
-                  {/* Scrim Overlay */}
                   <div className="absolute inset-0 z-10 bg-gradient-to-t from-[#111514]/80 via-transparent to-black/35 pointer-events-none" />
 
-                  {/* Top Metadata Strip (Duration & Concept Label) */}
                   <div className="absolute top-3.5 left-3.5 right-3.5 z-20 flex items-center justify-between text-[11px] font-mono pointer-events-none">
                     <span className="inline-flex items-center gap-1.5 text-[#C7F36B] font-bold bg-[#090A0B]/85 backdrop-blur-md px-2.5 py-1 rounded-md border border-white/10 tabular-nums">
                       <Clock className="w-3 h-3" />
-                      {project.duration || '0:30'}
+                      {project.duration || '0:24'}
                     </span>
 
-                    <span className="text-[10px] text-[#A0A89F] bg-[#090A0B]/85 backdrop-blur-md px-2.5 py-1 rounded-md border border-white/10 uppercase tracking-wider">
-                      {project.isConcept ? 'Portfolio Concept' : 'Client Reel'}
+                    <span
+                      className={`text-[10px] px-2.5 py-1 rounded-md border uppercase tracking-wider backdrop-blur-md ${
+                        brandDisplayName
+                          ? 'bg-[#C7F36B] text-[#090A0B] border-[#C7F36B] font-bold'
+                          : 'bg-[#090A0B]/85 text-[#F5F5F0] border-white/15'
+                      }`}
+                    >
+                      {statusLabel}
                     </span>
                   </div>
 
-                  {/* Center Play Button Overlay */}
                   <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
                     <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#C7F36B] text-[#090A0B] flex items-center justify-center shadow-[0_0_32px_rgba(199,243,107,0.5)] transform group-hover:scale-110 transition-all duration-300">
                       <Play className="w-6 h-6 sm:w-7 sm:h-7 ml-1 fill-current" />
@@ -226,16 +230,13 @@ export const CgiPortfolio: React.FC<CgiPortfolioProps> = ({
                   </div>
                 </div>
 
-                {/* Card Body */}
-                <div className="p-6 flex-1 flex flex-col justify-between space-y-5">
+                {/* Card Body with Case Study Breakdown */}
+                <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
                   <div className="space-y-2.5">
-                    {/* Unboxed Clean Category & Metadata */}
                     <div className="flex items-center gap-2 text-xs font-mono text-[#A0A89F] flex-wrap">
                       <span className="text-[#C7F36B] font-semibold">
                         {project.category}
                       </span>
-                      <span aria-hidden="true" className="text-[#2A332B]">·</span>
-                      <span className="tabular-nums">{project.duration || '0:30'}</span>
                       {brandDisplayName && (
                         <>
                           <span aria-hidden="true" className="text-[#2A332B]">·</span>
@@ -248,12 +249,22 @@ export const CgiPortfolio: React.FC<CgiPortfolioProps> = ({
                       {project.title}
                     </h3>
 
-                    <p className="text-xs sm:text-sm text-[#A0A89F] leading-relaxed line-clamp-3">
-                      {project.overview}
+                    <p className="text-xs sm:text-sm text-[#A0A89F] leading-relaxed line-clamp-2">
+                      {project.creativeConcept || derived.creativeConcept}
                     </p>
+
+                    <div className="pt-2 border-t border-[#2A332B]/70 space-y-1 text-[11px]">
+                      <p className="text-[#A0A89F] line-clamp-1">
+                        <span className="font-mono text-[#F5F5F0] uppercase">Audience:</span>{' '}
+                        {project.targetAudience || derived.targetAudience}
+                      </p>
+                      <p className="text-[#A0A89F] line-clamp-1 italic">
+                        <span className="font-mono text-[#C7F36B] uppercase not-italic">Hook:</span>{' '}
+                        &ldquo;{project.hook || derived.advertisingHook}&rdquo;
+                      </p>
+                    </div>
                   </div>
 
-                  {/* Play Video Button Footer */}
                   <div className="pt-4 border-t border-[#2A332B] flex items-center justify-between gap-3">
                     <button
                       type="button"
@@ -264,7 +275,7 @@ export const CgiPortfolio: React.FC<CgiPortfolioProps> = ({
                       className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold font-heading uppercase tracking-wider text-[#090A0B] bg-[#C7F36B] hover:bg-[#d6ff7d] rounded-md transition-colors cursor-pointer min-h-[38px]"
                     >
                       <Play className="w-3.5 h-3.5 fill-current" />
-                      <span>Play Video</span>
+                      <span>Watch Commercial</span>
                     </button>
 
                     <span className="text-[11px] font-mono text-[#A0A89F] flex items-center gap-1.5">

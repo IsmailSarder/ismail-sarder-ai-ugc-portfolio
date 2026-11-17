@@ -1,62 +1,92 @@
 import React from 'react';
-import { Search, PenTool, Cpu, Film, Clock, CheckCircle } from 'lucide-react';
+import {
+  MessageSquare,
+  Search,
+  PenTool,
+  Cpu,
+  Film,
+  CheckCircle,
+  Clock,
+} from 'lucide-react';
 
 export const Process: React.FC = () => {
   const steps = [
     {
       step: '01',
-      title: 'Product Research',
-      subtitle: 'Angle Discovery & Review Mining',
-      icon: Search,
-      timeframe: 'Day 1',
-      description: 'We analyze your product UVP, examine top-performing competitor creatives in your niche, and mine real customer reviews on Amazon/Shopify to extract the exact emotional vocabulary your buyers use.',
+      title: 'Discovery & Brand Brief',
+      subtitle: 'Product Goals & Asset Intake',
+      icon: MessageSquare,
+      timeframe: 'Step 1',
+      description:
+        'You share your product link, high-resolution product photos, target country (USA, UK, UAE, Canada, or Europe), and preferred ad format or package.',
       deliverables: [
-        'Competitor Creative Audit',
-        'Customer Pain-Point & Review Extraction',
-        'Target Demographic Persona Profile',
-        'Primary & Contrarian Angle Selection',
+        'Product & Offer Alignment',
+        'Platform & Aspect Ratio Plan',
       ],
     },
     {
       step: '02',
-      title: 'Script & Hook Development',
-      subtitle: 'Direct-Response Storyboarding',
-      icon: PenTool,
-      timeframe: 'Day 1 - 2',
-      description: 'We construct word-for-word scripts designed to retain viewers past the 3-second mark. Every script is paired with 3 distinct hook variations (curiosity, problem-agitation, or contrarian) for multivariate testing.',
+      title: 'Audience & Angle Research',
+      subtitle: 'Pain Points & Value Framing',
+      icon: Search,
+      timeframe: 'Step 2',
+      description:
+        'I review your customer objections, category positioning, and product benefits to pick the strongest creative angles for cold social traffic.',
       deliverables: [
-        '3-5 Testable Hook Variations',
-        'Direct-Response Script Drafts',
-        'Visual Shotlist & Text Overlay Guide',
-        'Brand Sign-off & Refinement',
+        'Primary Buying Trigger',
+        'Creative Concept Direction',
       ],
     },
     {
       step: '03',
-      title: 'AI Video Production',
-      subtitle: 'Photorealistic AI Persona Synthesis',
-      icon: Cpu,
-      timeframe: 'Day 2 - 3',
-      description: 'Using advanced AI video rendering pipelines, we generate hyper-realistic creator personas with natural eye contact, realistic micro-expressions, authentic speech pacing, and flawless product demonstrations.',
+      title: 'Hook & Script Writing',
+      subtitle: 'First 3-Second Retention',
+      icon: PenTool,
+      timeframe: 'Step 3',
+      description:
+        'Writing a concise, conversational direct-response script paired with testable opening hooks designed to stop scrolling immediately.',
       deliverables: [
-        'Ultra-Realistic Creator Synthesis',
-        'Natural Demographic Voice Generation',
-        'Macro Product Integration Passes',
-        'Native Mobile Smartphone Framing',
+        'Opening Hook Options',
+        'Structured Voiceover Script',
       ],
     },
     {
       step: '04',
-      title: 'Editing & Delivery',
-      subtitle: 'Sound Design, Captions & Final Cut',
-      icon: Film,
-      timeframe: 'Day 3 (48h Avg)',
-      description: 'We finish the creatives with high-retention dynamic kinetic captions, professional sound effects, trend audio tracks, and native aspect ratio exports (9:16 vertical, 4:5 feed, 1:1 square).',
+      title: 'AI Video & CGI Production',
+      subtitle: 'Creator & Visual Synthesis',
+      icon: Cpu,
+      timeframe: 'Step 4',
+      description:
+        'Producing realistic AI spokesperson scenes, product demonstrations, or 3D CGI visuals calibrated for your brand look and audience demographic.',
       deliverables: [
-        'Burned-in High-Contrast Captions',
-        'ASMR & Foley Sound Design',
-        'Ready-to-Deploy Ad Master Files',
-        '1 Round of Polish & Iteration Revisions',
+        'AI Creator or CGI Scenes',
+        'Product Showcase Shots',
+      ],
+    },
+    {
+      step: '05',
+      title: 'Editing, Captions & Audio',
+      subtitle: 'Sound Design & Pacing',
+      icon: Film,
+      timeframe: 'Step 5',
+      description:
+        'Assembling tight rhythm-synced edits with burned-in readable captions, clean SFX, balanced voiceover, and music matched to social feeds.',
+      deliverables: [
+        'Dynamic Kinetic Captions',
+        'Balanced Voice & Music Mix',
+      ],
+    },
+    {
+      step: '06',
+      title: 'Delivery & Revisions',
+      subtitle: 'Multi-Ratio Launch Readiness',
+      icon: CheckCircle,
+      timeframe: 'Step 6',
+      description:
+        'Exporting final master videos in your requested aspect ratios with included revisions so your media buyers can launch with confidence.',
+      deliverables: [
+        'Platform-Ready Master Files',
+        'Included Polish Revisions',
       ],
     },
   ];
@@ -64,25 +94,24 @@ export const Process: React.FC = () => {
   return (
     <section id="process" className="py-20 lg:py-28 bg-[#090A0B] relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
         {/* Section Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-14 sm:mb-16 gap-6">
           <div>
-            <div className="flex items-center gap-2 text-xs font-semibold tracking-wider text-[#A0A89F] uppercase mb-2">
-              <span>The Production System</span>
-            </div>
+            <span className="text-xs font-mono font-semibold tracking-wider text-[#C7F36B] uppercase block mb-2">
+              Creative Workflow
+            </span>
             <h2 className="text-3xl sm:text-4xl font-extrabold font-heading text-[#F5F5F0] tracking-tight">
-              FROM BRIEF TO VIRAL ADS IN 4 STEPS.
+              MY CREATIVE PROCESS IN 6 STEPS.
             </h2>
           </div>
 
           <p className="text-sm text-[#A0A89F] max-w-md leading-relaxed">
-            A battle-tested production pipeline delivering high-converting ad variations in days instead of weeks, with zero logistical friction.
+            A clear, collaborative six-stage workflow moving smoothly from product brief to launch-ready video ads in days.
           </p>
         </div>
 
-        {/* 4 Process Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* 6 Process Steps Grid (3x2 on desktop, 2x3 on tablet, 1-col on mobile) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {steps.map((item) => {
             const Icon = item.icon;
             return (
@@ -91,18 +120,15 @@ export const Process: React.FC = () => {
                 className="bg-[#171C19] border border-[#2A332B] rounded-xl p-6 flex flex-col justify-between hover:border-[#C7F36B]/50 transition-all duration-300 relative group"
               >
                 <div>
-                  {/* Top Step Index & Duration */}
-                  <div className="flex items-center justify-between mb-6">
-                    <span className="text-2xl font-extrabold font-heading text-[#C7F36B]">
+                  <div className="flex items-center justify-between mb-5">
+                    <span className="text-2xl font-extrabold font-heading text-[#C7F36B] tabular-nums">
                       {item.step}
                     </span>
-                    <span className="text-[11px] font-mono text-[#A0A89F] flex items-center gap-1 bg-[#111514] px-2.5 py-1 rounded border border-[#2A332B]">
-                      <Clock className="w-3 h-3 text-[#C7F36B]" />
+                    <span className="text-[11px] font-mono text-[#A0A89F] bg-[#111514] px-2.5 py-1 rounded border border-[#2A332B]">
                       {item.timeframe}
                     </span>
                   </div>
 
-                  {/* Icon & Title */}
                   <div className="flex items-center gap-3 mb-2">
                     <div className="p-2 rounded-lg bg-[#111514] text-[#C7F36B] border border-[#2A332B]">
                       <Icon className="w-4 h-4" />
@@ -112,34 +138,32 @@ export const Process: React.FC = () => {
                     </h3>
                   </div>
 
-                  <span className="text-[11px] font-mono text-[#A0A89F] block mb-4">
+                  <span className="text-[11px] font-mono text-[#A0A89F] block mb-3">
                     {item.subtitle}
                   </span>
 
-                  <p className="text-xs text-[#A0A89F] leading-relaxed mb-6">
+                  <p className="text-xs sm:text-sm text-[#A0A89F] leading-relaxed mb-6">
                     {item.description}
                   </p>
                 </div>
 
-                {/* Deliverables Checklist */}
                 <div className="pt-4 border-t border-[#2A332B] space-y-2">
                   <span className="text-[10px] font-mono uppercase tracking-wider text-[#A0A89F] font-bold block mb-1">
-                    Step Output
+                    Stage Output
                   </span>
                   {item.deliverables.map((deliv) => (
-                    <div key={deliv} className="text-[11px] text-[#F5F5F0] flex items-start gap-1.5">
-                      <CheckCircle className="w-3.5 h-3.5 text-[#C7F36B] shrink-0 mt-0.5" />
+                    <div key={deliv} className="text-xs text-[#F5F5F0] flex items-center gap-2">
+                      <CheckCircle className="w-3.5 h-3.5 text-[#C7F36B] shrink-0" />
                       <span>{deliv}</span>
                     </div>
                   ))}
                 </div>
-
               </div>
             );
           })}
         </div>
 
-        {/* Turnaround Guarantee Banner */}
+        {/* Turnaround CTA Banner */}
         <div className="mt-12 p-6 rounded-xl bg-[#111514] border border-[#2A332B] flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 rounded-full bg-[#C7F36B]/10 border border-[#C7F36B]/30 flex items-center justify-center shrink-0 text-[#C7F36B]">
@@ -147,10 +171,10 @@ export const Process: React.FC = () => {
             </div>
             <div>
               <h4 className="text-sm font-bold font-heading text-[#F5F5F0]">
-                Average Turnaround: 48 to 72 Hours
+                Fast Delivery: 24 to 72 Hours Average Turnaround
               </h4>
               <p className="text-xs text-[#A0A89F]">
-                Fast creative iterations allow your media buying team to beat ad fatigue and scale winning creatives without waiting for physical shipments.
+                Launch creative tests quickly without physical product shipping delays.
               </p>
             </div>
           </div>
@@ -159,10 +183,9 @@ export const Process: React.FC = () => {
             href="#contact"
             className="px-5 py-2.5 text-xs font-bold font-heading uppercase tracking-wider text-[#090A0B] bg-[#C7F36B] hover:bg-[#d6ff7d] rounded-md transition-all whitespace-nowrap"
           >
-            Submit Creative Brief
+            Start Your Brief
           </a>
         </div>
-
       </div>
     </section>
   );

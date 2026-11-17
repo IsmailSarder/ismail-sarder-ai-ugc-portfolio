@@ -1,5 +1,11 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabase.ts';
 import { PortfolioItem } from '../components/VideoModal.tsx';
+import {
+  heroUgcBeauty,
+  portfolioSkincare,
+  portfolioTech,
+  portfolioFashion,
+} from '../assets/images.ts';
 
 export const INITIAL_SEED_PROJECTS: PortfolioItem[] = [
   {
@@ -8,7 +14,7 @@ export const INITIAL_SEED_PROJECTS: PortfolioItem[] = [
     category: 'Beauty & Skincare',
     duration: '0:28',
     format: '9:16 Vertical Video',
-    thumbnail: '/src/assets/images/hero_ugc_beauty_showcase_1793804788830.jpg',
+    thumbnail: heroUgcBeauty,
     videoUrl: '',
     hook: 'Wait, this glow without a 10-step routine? Honestly obsessed...',
     angle: 'Relatable Problem-to-Solution',
@@ -34,7 +40,7 @@ export const INITIAL_SEED_PROJECTS: PortfolioItem[] = [
     category: 'Product Demonstrations',
     duration: '0:22',
     format: '4:5 Feed & 9:16 Story',
-    thumbnail: '/src/assets/images/portfolio_skincare_glow_1793804789975.jpg',
+    thumbnail: portfolioSkincare,
     video_url: '',
     hook: 'Watch what happens when cold-pressed botanicals touch dehydrated skin...',
     angle: 'Sensory ASMR & Texture Proof',
@@ -60,7 +66,7 @@ export const INITIAL_SEED_PROJECTS: PortfolioItem[] = [
     category: 'Gadgets & Technology',
     duration: '0:34',
     format: '9:16 Vertical Video',
-    thumbnail: '/src/assets/images/portfolio_tech_audio_1793804790153.jpg',
+    thumbnail: portfolioTech,
     video_url: '',
     hook: 'I tested these on the London Tube and my entire brain went quiet...',
     angle: 'Real-World Commute Stress Test',
@@ -86,7 +92,7 @@ export const INITIAL_SEED_PROJECTS: PortfolioItem[] = [
     category: 'Fashion & Lifestyle',
     duration: '0:25',
     format: '9:16 TikTok / Reels',
-    thumbnail: '/src/assets/images/portfolio_fashion_street_1793804790905.jpg',
+    thumbnail: portfolioFashion,
     video_url: '',
     hook: 'Styling the one coat you will actually wear all week in 3 different ways...',
     angle: 'Capsule Wardrobe Utility & Fit',
@@ -112,7 +118,7 @@ export const INITIAL_SEED_PROJECTS: PortfolioItem[] = [
     category: 'AI UGC Creator Videos',
     duration: '0:30',
     format: '9:16 Vertical & 1:1 Feed',
-    thumbnail: '/src/assets/images/hero_ugc_beauty_showcase_1793804788830.jpg',
+    thumbnail: heroUgcBeauty,
     videoUrl: '',
     hook: 'Big skincare brands lied about why your pores stay enlarged...',
     angle: 'Contrarian Industry Whistleblower',
@@ -138,7 +144,7 @@ export const INITIAL_SEED_PROJECTS: PortfolioItem[] = [
     category: 'Gadgets & Technology',
     duration: '0:26',
     format: '9:16 Vertical Video',
-    thumbnail: '/src/assets/images/portfolio_tech_audio_1793804790153.jpg',
+    thumbnail: portfolioTech,
     video_url: '',
     hook: 'Why I threw away my smart watch and switched to this titanium ring...',
     angle: 'Lifestyle Replacement & Freedom',

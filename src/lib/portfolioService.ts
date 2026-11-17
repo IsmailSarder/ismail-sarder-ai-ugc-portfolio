@@ -1,21 +1,24 @@
 import { supabase, PortfolioProject, Inquiry, STORAGE_BUCKETS } from './supabase.ts';
 
-// Initial default projects to show if Supabase table is empty or migrating
+// Initial default projects to show only if Supabase table is temporarily unreachable
 export const DEFAULT_INITIAL_PROJECTS: PortfolioProject[] = [
   {
-    id: 'aurelia-serum-spec',
-    title: 'Aurelia Botanica — Dewy Skin Viral Hook',
-    description: 'High-converting TikTok and Instagram Reels ad creative engineered for a luxury botanical skincare brand. Designed with relatable morning routine pattern interrupt and dynamic kinetic captions.',
+    id: '12a2503f-fallback',
+    title: 'My Simple Serum Routine: An Honest Skincare Review',
+    description:
+      'Vertical AI UGC skincare review concept highlighting an effortless daily serum routine with natural creator framing and clear product storytelling.',
     category: 'Beauty & Skincare',
-    brand_name: 'Aurelia Botanica',
+    brand_name: '',
     duration: '0:28',
     aspect_ratio: '9:16',
     video_width: 1080,
     video_height: 1920,
     video_mime_type: 'video/mp4',
-    video_url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+    video_url:
+      'https://ogzrhiwvgahjnazeuxmg.supabase.co/storage/v1/object/public/portfolio-videos/videos/1794245521871_1000029752.mp4',
     video_path: '',
-    thumbnail_url: '/src/assets/images/hero_ugc_beauty_showcase_1793804788830.jpg',
+    thumbnail_url:
+      'https://ogzrhiwvgahjnazeuxmg.supabase.co/storage/v1/object/public/portfolio-thumbnails/thumbnails/1794245531277_1000030084.png',
     thumbnail_path: '',
     is_featured: true,
     is_published: true,
@@ -24,19 +27,22 @@ export const DEFAULT_INITIAL_PROJECTS: PortfolioProject[] = [
     updated_at: new Date().toISOString(),
   },
   {
-    id: 'botanica-macro-demo-spec',
-    title: 'Botanica Facial Illumination — Macro Product Demo',
-    description: 'Photorealistic AI product demonstration highlighting active ingredients, viscosity, and instant epidermal absorption with studio-grade lighting on limestone travertine.',
-    category: 'Product Demonstration',
-    brand_name: 'Botanica Lab',
-    duration: '0:22',
-    aspect_ratio: '4:5',
+    id: '450af57c-fallback',
+    title: 'Lumera Skin Serum: Hydrated-Looking Skin, Simple Routine',
+    description:
+      'Skincare AI UGC video ad demonstrating hydrating serum application, lightweight glow, and concise direct-response pacing for Reels and TikTok.',
+    category: 'Beauty & Skincare',
+    brand_name: '',
+    duration: '0:26',
+    aspect_ratio: '9:16',
     video_width: 1080,
-    video_height: 1350,
+    video_height: 1920,
     video_mime_type: 'video/mp4',
-    video_url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+    video_url:
+      'https://ogzrhiwvgahjnazeuxmg.supabase.co/storage/v1/object/public/portfolio-videos/videos/1794245604657_1000029754.mp4',
     video_path: '',
-    thumbnail_url: '/src/assets/images/portfolio_skincare_glow_1793804789975.jpg',
+    thumbnail_url:
+      'https://ogzrhiwvgahjnazeuxmg.supabase.co/storage/v1/object/public/portfolio-thumbnails/thumbnails/1794245611859_1000030085.png',
     thumbnail_path: '',
     is_featured: true,
     is_published: true,
@@ -45,19 +51,22 @@ export const DEFAULT_INITIAL_PROJECTS: PortfolioProject[] = [
     updated_at: new Date().toISOString(),
   },
   {
-    id: 'elara-anc-headphones-spec',
-    title: 'Elara ANC Pro — Commuter Noise-Cancellation Demo',
-    description: 'Authentic tech creator unboxing and real-time subway noise cancellation stress test engineered to outperform competitor ads across Meta and YouTube Shorts.',
+    id: '14b37ac4-fallback',
+    title: 'Premium Sound, Comfortable All Day: Everyday Headphones Review',
+    description:
+      'Consumer electronics AI UGC review spotlighting all-day headband comfort, acoustic clarity, and everyday wireless utility.',
     category: 'Gadgets & Technology',
-    brand_name: 'Elara Audio',
-    duration: '0:34',
-    aspect_ratio: '16:9',
-    video_width: 1920,
-    video_height: 1080,
+    brand_name: '',
+    duration: '0:30',
+    aspect_ratio: '9:16',
+    video_width: 1080,
+    video_height: 1920,
     video_mime_type: 'video/mp4',
-    video_url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyBlazes.mp4',
+    video_url:
+      'https://ogzrhiwvgahjnazeuxmg.supabase.co/storage/v1/object/public/portfolio-videos/videos/1794245706375_1000029755.mp4',
     video_path: '',
-    thumbnail_url: '/src/assets/images/portfolio_tech_audio_1793804790153.jpg',
+    thumbnail_url:
+      'https://ogzrhiwvgahjnazeuxmg.supabase.co/storage/v1/object/public/portfolio-thumbnails/thumbnails/1794245714197_1000030086.png',
     thumbnail_path: '',
     is_featured: false,
     is_published: true,
@@ -66,19 +75,22 @@ export const DEFAULT_INITIAL_PROJECTS: PortfolioProject[] = [
     updated_at: new Date().toISOString(),
   },
   {
-    id: 'nomad-atelier-trench-spec',
-    title: 'Nomad Atelier — Minimalist Capsule Wardrobe UGC',
-    description: 'High-fashion street aesthetic UGC showing movement, drape, water-resistance, and 3-way styling versatility for a modern sustainable apparel brand.',
-    category: 'Fashion & Lifestyle',
-    brand_name: 'Nomad Atelier',
-    duration: '0:25',
+    id: 'af7e8df2-fallback',
+    title: 'Pro UGC Content That Sells: Real Product Demos That Convert',
+    description:
+      'Direct-to-camera AI spokesperson creative highlighting structured hook pacing, visual product proof, and clear brand communication.',
+    category: 'AI UGC Ads',
+    brand_name: '',
+    duration: '0:27',
     aspect_ratio: '9:16',
     video_width: 1080,
     video_height: 1920,
     video_mime_type: 'video/mp4',
-    video_url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
+    video_url:
+      'https://ogzrhiwvgahjnazeuxmg.supabase.co/storage/v1/object/public/portfolio-videos/videos/1794245792416_1000029756.mp4',
     video_path: '',
-    thumbnail_url: '/src/assets/images/portfolio_fashion_street_1793804790905.jpg',
+    thumbnail_url:
+      'https://ogzrhiwvgahjnazeuxmg.supabase.co/storage/v1/object/public/portfolio-thumbnails/thumbnails/1794245801394_1000030087.png',
     thumbnail_path: '',
     is_featured: false,
     is_published: true,
@@ -87,19 +99,22 @@ export const DEFAULT_INITIAL_PROJECTS: PortfolioProject[] = [
     updated_at: new Date().toISOString(),
   },
   {
-    id: 'founder-ugc-spokesperson-spec',
-    title: 'Founder Direct-to-Camera — E-Com Brand Story Ad',
-    description: 'Hyper-realistic AI founder spokesperson ad with authentic speech cadences, micro-expressions, and conversational direct response structure.',
-    category: 'AI UGC Ads',
-    brand_name: 'SkinBio Direct',
-    duration: '0:30',
-    aspect_ratio: '1:1',
+    id: 'eece6777-fallback',
+    title: 'Simple Fit. Premium Feel: The Everyday Oversized Black Tee',
+    description:
+      'Apparel AI UGC video showcasing relaxed drape, fabric weight, and clean everyday styling for DTC fashion brands.',
+    category: 'Fashion & Lifestyle',
+    brand_name: '',
+    duration: '0:24',
+    aspect_ratio: '9:16',
     video_width: 1080,
-    video_height: 1080,
+    video_height: 1920,
     video_mime_type: 'video/mp4',
-    video_url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4',
+    video_url:
+      'https://ogzrhiwvgahjnazeuxmg.supabase.co/storage/v1/object/public/portfolio-videos/videos/1794245883418_1000029757.mp4',
     video_path: '',
-    thumbnail_url: '/src/assets/images/hero_ugc_beauty_showcase_1793804788830.jpg',
+    thumbnail_url:
+      'https://ogzrhiwvgahjnazeuxmg.supabase.co/storage/v1/object/public/portfolio-thumbnails/thumbnails/1794245890811_1000030088.png',
     thumbnail_path: '',
     is_featured: false,
     is_published: true,
@@ -108,19 +123,22 @@ export const DEFAULT_INITIAL_PROJECTS: PortfolioProject[] = [
     updated_at: new Date().toISOString(),
   },
   {
-    id: 'kinetic-smart-ring-spec',
-    title: 'Kinetic Pulse — Sleep & Recovery Tracker Ad',
-    description: 'Targeted tech and wellness ad demonstrating biocompatible titanium construction, biometric precision, and discreet sleep tracking.',
-    category: 'Gadgets & Technology',
-    brand_name: 'Kinetic Health',
-    duration: '0:26',
-    aspect_ratio: '3:4',
+    id: '2e1c5146-fallback',
+    title: 'NOIRÉ – Luxury Perfume CGI Commercial',
+    description:
+      'Photorealistic vertical CGI fragrance commercial crafted with moody studio lighting and luxury pacing.',
+    category: 'CGI Product Ads',
+    brand_name: '',
+    duration: '0:24',
+    aspect_ratio: '9:16',
     video_width: 1080,
-    video_height: 1440,
+    video_height: 1920,
     video_mime_type: 'video/mp4',
-    video_url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
+    video_url:
+      'https://ogzrhiwvgahjnazeuxmg.supabase.co/storage/v1/object/public/portfolio-videos/videos/1794738300263_Perfume.mp4',
     video_path: '',
-    thumbnail_url: '/src/assets/images/portfolio_tech_audio_1793804790153.jpg',
+    thumbnail_url:
+      'https://ogzrhiwvgahjnazeuxmg.supabase.co/storage/v1/object/public/portfolio-thumbnails/thumbnails/1794738306514_Perfume_thumbnail_9x16.jpg',
     thumbnail_path: '',
     is_featured: false,
     is_published: true,
@@ -129,6 +147,7 @@ export const DEFAULT_INITIAL_PROJECTS: PortfolioProject[] = [
     updated_at: new Date().toISOString(),
   },
 ];
+
 
 export const portfolioService = {
   // Public: Fetch published projects from Supabase database
@@ -373,16 +392,54 @@ export const portfolioService = {
     return this.updateProject(id, { display_order: newOrder });
   },
 
-  // Inquiries
+  // Inquiries (Synced with project_inquiries table + local fallback)
   async getInquiries(): Promise<{ data: Inquiry[]; error: Error | null }> {
     try {
-      const { data, error } = await supabase
+      const primary = await supabase
+        .from('project_inquiries')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (!primary.error && primary.data) {
+        const normalized: Inquiry[] = primary.data.map((d: any) => ({
+          id: d.id,
+          name: d.name || '',
+          email: d.email || '',
+          brandName: d.brand_name || d.brandName || '',
+          brand_name: d.brand_name || d.brandName || '',
+          websiteUrl: d.website_url || d.websiteUrl || '',
+          website_url: d.website_url || d.websiteUrl || '',
+          industry: d.industry || '',
+          budget: d.budget || '',
+          selectedServices: d.selected_services || d.selectedServices || [],
+          selected_services: d.selected_services || d.selectedServices || [],
+          message: d.message || '',
+          created_at: d.created_at || new Date().toISOString(),
+          status: d.status || 'new',
+          is_read: typeof d.is_read === 'boolean' ? d.is_read : d.status === 'read',
+        }));
+        return { data: normalized, error: null };
+      }
+
+      // Fallback to legacy 'inquiries' table if present
+      const legacy = await supabase
         .from('inquiries')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      return { data: (data || []) as Inquiry[], error: null };
+      if (!legacy.error && legacy.data) {
+        return { data: legacy.data as Inquiry[], error: null };
+      }
+
+      // Fallback to localStorage cached inquiries
+      if (typeof window !== 'undefined') {
+        const raw = localStorage.getItem('local_project_inquiries');
+        if (raw) {
+          return { data: JSON.parse(raw) as Inquiry[], error: null };
+        }
+      }
+
+      return { data: [], error: primary.error ? new Error(primary.error.message) : null };
     } catch (err) {
       return { data: [], error: err as Error };
     }
@@ -390,12 +447,34 @@ export const portfolioService = {
 
   async toggleInquiryRead(id: string, isRead: boolean): Promise<{ error: Error | null }> {
     try {
+      // Update local fallback cache if present
+      if (typeof window !== 'undefined') {
+        try {
+          const raw = localStorage.getItem('local_project_inquiries');
+          if (raw) {
+            const parsed = JSON.parse(raw) as Inquiry[];
+            const updated = parsed.map((i) =>
+              i.id === id ? { ...i, is_read: isRead, status: isRead ? 'read' : 'new' } : i
+            );
+            localStorage.setItem('local_project_inquiries', JSON.stringify(updated));
+          }
+        } catch {
+          // Ignore local cache errors
+        }
+      }
+
       const { error } = await supabase
-        .from('inquiries')
-        .update({ is_read: isRead })
+        .from('project_inquiries')
+        .update({ status: isRead ? 'read' : 'new' })
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        const legacy = await supabase
+          .from('inquiries')
+          .update({ is_read: isRead })
+          .eq('id', id);
+        if (legacy.error) throw legacy.error;
+      }
       return { error: null };
     } catch (err) {
       return { error: err as Error };
@@ -404,8 +483,26 @@ export const portfolioService = {
 
   async deleteInquiry(id: string): Promise<{ error: Error | null }> {
     try {
-      const { error } = await supabase.from('inquiries').delete().eq('id', id);
-      if (error) throw error;
+      if (typeof window !== 'undefined') {
+        try {
+          const raw = localStorage.getItem('local_project_inquiries');
+          if (raw) {
+            const parsed = JSON.parse(raw) as Inquiry[];
+            localStorage.setItem(
+              'local_project_inquiries',
+              JSON.stringify(parsed.filter((i) => i.id !== id))
+            );
+          }
+        } catch {
+          // Ignore local cache errors
+        }
+      }
+
+      const { error } = await supabase.from('project_inquiries').delete().eq('id', id);
+      if (error) {
+        const legacy = await supabase.from('inquiries').delete().eq('id', id);
+        if (legacy.error) throw legacy.error;
+      }
       return { error: null };
     } catch (err) {
       return { error: err as Error };

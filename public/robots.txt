@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://ismailsarder.com/sitemap.xml
+Sitemap: https://ismail-sarder-ai-ugc-ad-creator-creative-studio.ai.studio/sitemap.xml

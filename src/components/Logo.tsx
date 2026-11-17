@@ -1,4 +1,5 @@
 import React from 'react';
+import { navigateToPath } from '../lib/seo.ts';
 
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg';
@@ -19,7 +20,12 @@ export const Logo: React.FC<LogoProps> = ({
 
   return (
     <a
-      href="#home"
+      href="/"
+      onClick={(e) => {
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+        e.preventDefault();
+        navigateToPath('/');
+      }}
       className={`inline-flex items-center gap-3 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C7F36B] rounded-lg transition-transform duration-200 active:scale-[0.98] ${className}`}
       aria-label="Ismail Sarder - AI UGC Creative Studio Homepage"
     >

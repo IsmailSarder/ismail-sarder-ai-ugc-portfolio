@@ -1,6 +1,7 @@
 import React from 'react';
 import { Logo } from './Logo.tsx';
 import { Mail, MessageSquare, Linkedin, ArrowUp, Lock } from 'lucide-react';
+import { navigateToPath } from '../lib/seo.ts';
 
 interface FooterProps {
   onOpenAdmin?: () => void;
@@ -11,38 +12,44 @@ export const Footer: React.FC<FooterProps> = ({ onOpenAdmin }) => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleLinkClick = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    path: string,
+    hash?: string
+  ) => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+    e.preventDefault();
+    navigateToPath(path, hash);
+  };
+
   const navLinks = [
-    { label: 'Home', href: '#home' },
-    { label: 'Portfolio', href: '#portfolio' },
-    { label: 'CGI Commercials', href: '#cgi-portfolio' },
-    { label: 'Services', href: '#services' },
-    { label: 'Pricing', href: '#pricing' },
-    { label: 'About', href: '#about' },
-    { label: 'Process', href: '#process' },
-    { label: 'FAQ', href: '#faq' },
-    { label: 'Contact', href: '#contact' },
+    { label: 'Home', path: '/', hash: '' },
+    { label: 'Portfolio', path: '/portfolio', hash: '' },
+    { label: 'About', path: '/about', hash: '' },
+    { label: 'Pricing', path: '/', hash: 'pricing' },
+    { label: 'Process', path: '/', hash: 'process' },
+    { label: 'FAQ', path: '/', hash: 'faq' },
+    { label: 'Contact', path: '/contact', hash: '' },
   ];
 
-  const industries = [
-    'Skincare & Beauty',
-    'Fashion & Lifestyle',
-    'Gadgets & Tech',
-    'E-commerce Products',
-    'SaaS & Digital Apps',
+  const serviceLinks = [
+    { label: 'AI UGC Video Ads', path: '/ai-ugc-video-ads' },
+    { label: 'AI Spokesperson Videos', path: '/ai-spokesperson-videos' },
+    { label: 'CGI Product Ads', path: '/cgi-product-ads' },
+    { label: 'Beauty Video Ads', path: '/beauty-video-ads' },
+    { label: 'Fashion Video Ads', path: '/fashion-video-ads' },
   ];
 
   return (
     <footer className="bg-[#090A0B] border-t border-[#2A332B] pt-14 sm:pt-16 pb-12 text-[#A0A89F] relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
         {/* Main Footer Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-10 pb-12 border-b border-[#2A332B]">
-          
           {/* Brand Column */}
-          <div className="lg:col-span-5 space-y-4">
+          <div className="lg:col-span-4 space-y-4">
             <Logo size="md" showSubtitle={true} />
             <p className="text-xs sm:text-sm text-[#A0A89F] max-w-sm leading-relaxed mt-4">
-              I help e-commerce brands create realistic AI-powered UGC video ads, product demonstrations, social media advertisements, and performance-focused creative content.
+              AI UGC Video Ads Creator &amp; Creative Strategist helping e-commerce brands across the USA, UK, UAE, Canada, Australia, and Europe create high-impact video ads.
             </p>
             <div className="flex items-center gap-3 pt-2">
               <a
@@ -50,7 +57,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenAdmin }) => {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-2.5 rounded-lg bg-[#111514] border border-[#2A332B] text-[#A0A89F] hover:text-[#C7F36B] hover:border-[#C7F36B]/50 transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
-                aria-label="WhatsApp: +88 01648861141"
+                aria-label="WhatsApp: +8801648861141"
               >
                 <MessageSquare className="w-4 h-4" />
               </a>
@@ -82,7 +89,8 @@ export const Footer: React.FC<FooterProps> = ({ onOpenAdmin }) => {
               {navLinks.map((item) => (
                 <li key={item.label}>
                   <a
-                    href={item.href}
+                    href={item.hash ? `/#${item.hash}` : item.path}
+                    onClick={(e) => handleLinkClick(e, item.path, item.hash || undefined)}
                     className="hover:text-[#F5F5F0] transition-colors hover:underline underline-offset-4 py-0.5 inline-block"
                   >
                     {item.label}
@@ -103,17 +111,26 @@ export const Footer: React.FC<FooterProps> = ({ onOpenAdmin }) => {
             </ul>
           </div>
 
-          {/* Target Industries */}
-          <div className="lg:col-span-2 space-y-3">
+          {/* Specialized SEO Landing Pages */}
+          <div className="lg:col-span-3 space-y-3">
             <span className="text-xs font-mono uppercase tracking-wider text-[#F5F5F0] font-semibold block">
-              Industries
+              Specialized Services
             </span>
             <ul className="space-y-2 text-xs">
-              {industries.map((ind) => (
-                <li key={ind} className="text-[#A0A89F] py-0.5">
-                  {ind}
+              {serviceLinks.map((srv) => (
+                <li key={srv.path}>
+                  <a
+                    href={srv.path}
+                    onClick={(e) => handleLinkClick(e, srv.path)}
+                    className="hover:text-[#C7F36B] transition-colors hover:underline underline-offset-4 py-0.5 inline-block"
+                  >
+                    {srv.label}
+                  </a>
                 </li>
               ))}
+              <li className="pt-1 text-[11px] font-mono text-[#A0A89F]">
+                Markets: USA · UK · UAE · Canada · Australia · EU
+              </li>
             </ul>
           </div>
 
@@ -140,7 +157,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenAdmin }) => {
                   rel="noopener noreferrer"
                   className="text-[#F5F5F0] hover:text-[#C7F36B] transition-colors"
                 >
-                  +88 01648861141
+                  +8801648861141
                 </a>
               </div>
               <div>
@@ -151,12 +168,11 @@ export const Footer: React.FC<FooterProps> = ({ onOpenAdmin }) => {
                   rel="noopener noreferrer"
                   className="text-[#F5F5F0] hover:text-[#C7F36B] transition-colors"
                 >
-                  in/ismail-sarder
+                  linkedin.com/in/ismail-sarder
                 </a>
               </div>
             </div>
           </div>
-
         </div>
 
         {/* Bottom Bar: Copyright & Back to Top */}
@@ -186,7 +202,6 @@ export const Footer: React.FC<FooterProps> = ({ onOpenAdmin }) => {
             </button>
           </div>
         </div>
-
       </div>
     </footer>
   );
