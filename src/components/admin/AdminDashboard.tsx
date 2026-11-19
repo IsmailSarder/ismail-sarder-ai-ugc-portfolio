@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
-  X, Plus, Edit2, Trash2, Upload, Video, Eye,
-  RefreshCw, LogOut, Check, Sparkles, Database, ExternalLink
+  X, Plus, Edit2, Trash2, Upload, Video,
+  RefreshCw, LogOut, Lock
 } from 'lucide-react';
 import { PortfolioItem } from '../VideoModal.tsx';
 import {
@@ -11,7 +11,8 @@ import {
   deletePortfolioProject,
   uploadPortfolioMedia,
 } from '../../services/portfolioService.ts';
-import { isSupabaseConfigured, clearSupabaseCredentials } from '../../lib/supabase.ts';
+import { isSupabaseConfigured } from '../../lib/supabase.ts';
+import { useAuth } from '../../context/AuthContext.tsx';
 
 interface AdminDashboardProps {
   isOpen: boolean;
@@ -37,12 +38,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onLogout,
   onProjectsChanged,
 }) => {
+  const { user, isAdmin, loading: authLoading } = useAuth();
   const [projects, setProjects] = useState<PortfolioItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isUploadingThumb, setIsUploadingThumb] = useState(false);
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   // Form State
   const [formData, setFormData] = useState<AdminFormData>({
@@ -86,12 +90,37 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   };
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && isAdmin && user) {
       loadProjects();
     }
-  }, [isOpen]);
+  }, [isOpen, isAdmin, user]);
 
   if (!isOpen) return null;
+
+  if (authLoading || !isAdmin || !user) {
+    return (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"
+        role="dialog"
+        aria-modal="true"
+      >
+        <div className="bg-[#111514] border border-[#2A332B] rounded-2xl p-6 max-w-sm w-full text-center space-y-4">
+          <Lock className="w-8 h-8 text-rose-400 mx-auto" />
+          <h2 className="text-base font-bold font-heading text-[#F5F5F0]">Unauthorized Access</h2>
+          <p className="text-xs text-[#A0A89F]">
+            You must be signed in with the verified Admin UUID to open the Studio Portfolio CMS.
+          </p>
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 text-xs font-bold bg-[#C7F36B] text-[#090A0B] rounded-md cursor-pointer"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const handleOpenAdd = () => {
     setEditingId(null);
@@ -145,11 +174,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setIsEditing(true);
   };
 
-  const handleDelete = async (id: string, title: string) => {
-    if (window.confirm(`Are you sure you want to delete "${title}"?`)) {
+  const handleDelete = async (id: string) => {
+    if (confirmDeleteId !== id) {
+      setConfirmDeleteId(id);
+      return;
+    }
+    setActionError(null);
+    try {
       await deletePortfolioProject(id);
+      setConfirmDeleteId(null);
       await loadProjects();
       onProjectsChanged();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Failed to delete project');
     }
   };
 
@@ -157,12 +194,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
     setIsUploadingThumb(true);
+    setActionError(null);
     try {
       const publicUrl = await uploadPortfolioMedia(file, 'thumbnails');
       setFormData((prev) => ({ ...prev, thumbnail: publicUrl }));
     } catch (err) {
       console.error(err);
-      alert('Failed to process image');
+      setActionError(err instanceof Error ? err.message : 'Failed to process image');
     } finally {
       setIsUploadingThumb(false);
     }
@@ -172,12 +210,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
     setIsUploadingVideo(true);
+    setActionError(null);
     try {
       const publicUrl = await uploadPortfolioMedia(file, 'videos');
       setFormData((prev) => ({ ...prev, video_url: publicUrl }));
     } catch (err) {
       console.error(err);
-      alert('Failed to process video file');
+      setActionError(err instanceof Error ? err.message : 'Failed to process video file');
     } finally {
       setIsUploadingVideo(false);
     }
@@ -185,8 +224,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setActionError(null);
     if (!formData.title || !formData.thumbnail || !formData.hook) {
-      alert('Please fill out the Title, Thumbnail, and Hook fields.');
+      setActionError('Please fill out the Title, Thumbnail, and Hook fields.');
       return;
     }
 
@@ -200,15 +240,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       keyFeatures: parsedFeatures,
     };
 
-    if (editingId) {
-      await updatePortfolioProject(editingId, projectPayload);
-    } else {
-      await createPortfolioProject(projectPayload);
-    }
+    try {
+      if (editingId) {
+        await updatePortfolioProject(editingId, projectPayload);
+      } else {
+        await createPortfolioProject(projectPayload);
+      }
 
-    setIsEditing(false);
-    await loadProjects();
-    onProjectsChanged();
+      setIsEditing(false);
+      await loadProjects();
+      onProjectsChanged();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Failed to save project.');
+    }
   };
 
   return (
@@ -264,6 +308,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         {/* Dashboard Content */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {actionError && (
+            <div className="p-3 rounded-lg bg-rose-500/15 border border-rose-500/40 text-xs text-rose-300 flex items-center justify-between gap-2">
+              <span>{actionError}</span>
+              <button
+                type="button"
+                onClick={() => setActionError(null)}
+                className="underline cursor-pointer"
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
           {/* Action Row */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#171C19] p-4 rounded-xl border border-[#2A332B]">
             <div>
@@ -333,19 +389,40 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                       <div className="flex items-center gap-1.5">
                         <button
+                          type="button"
                           onClick={() => handleOpenEdit(project)}
                           className="p-1.5 text-[#A0A89F] hover:text-[#C7F36B] hover:bg-[#111514] rounded transition-colors cursor-pointer"
                           title="Edit project"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
-                        <button
-                          onClick={() => handleDelete(project.id, project.title)}
-                          className="p-1.5 text-[#A0A89F] hover:text-rose-400 hover:bg-[#111514] rounded transition-colors cursor-pointer"
-                          title="Delete project"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        {confirmDeleteId === project.id ? (
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(project.id)}
+                              className="px-2 py-0.5 text-[10px] font-bold bg-rose-500 text-white rounded cursor-pointer"
+                            >
+                              Delete
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setConfirmDeleteId(null)}
+                              className="px-2 py-0.5 text-[10px] text-[#A0A89F] border border-[#2A332B] rounded cursor-pointer"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(project.id)}
+                            className="p-1.5 text-[#A0A89F] hover:text-rose-400 hover:bg-[#111514] rounded transition-colors cursor-pointer"
+                            title="Delete project"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>

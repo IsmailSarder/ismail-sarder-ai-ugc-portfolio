@@ -171,7 +171,7 @@ export const Process: React.FC = () => {
             </div>
             <div>
               <h4 className="text-sm font-bold font-heading text-[#F5F5F0]">
-                Fast Delivery: 24 to 72 Hours Average Turnaround
+                Realistic Delivery: 1–4 Days (AI UGC) · 2–8 Days (CGI &amp; Commercials)
               </h4>
               <p className="text-xs text-[#A0A89F]">
                 Launch creative tests quickly without physical product shipping delays.
@@ -181,7 +181,7 @@ export const Process: React.FC = () => {
 
           <a
             href="#contact"
-            className="px-5 py-2.5 text-xs font-bold font-heading uppercase tracking-wider text-[#090A0B] bg-[#C7F36B] hover:bg-[#d6ff7d] rounded-md transition-all whitespace-nowrap"
+            className="px-5 py-2.5 text-xs font-bold font-heading uppercase tracking-wider text-[#090A0B] bg-[#C7F36B] hover:bg-[#d6ff7d] rounded-md transition-all whitespace-nowrap min-h-[42px] inline-flex items-center"
           >
             Start Your Brief
           </a>

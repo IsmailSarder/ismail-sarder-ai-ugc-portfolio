@@ -158,7 +158,7 @@ export const ProjectCard3D: React.FC<ProjectCard3DProps> = ({ project, index, on
           >
             <img
               src={project.thumbnail}
-              alt={project.title}
+              alt={`${project.title} — ${project.category} video ad thumbnail`}
               loading="lazy"
               decoding="async"
               referrerPolicy="no-referrer"

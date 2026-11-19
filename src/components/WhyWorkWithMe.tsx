@@ -14,8 +14,8 @@ export const WhyWorkWithMe: React.FC = () => {
       title: 'Fast Production Without Studio Delays',
       icon: Cpu,
       description:
-        'Launch fresh video creatives in 24 to 72 hours instead of waiting weeks for sample shipping, physical set coordination, and creator scheduling.',
-      benefit: '24–72h Turnaround',
+        'Launch AI UGC video ads in 1–4 days and CGI or multi-scene brand commercials in 2–8 days—without waiting weeks for sample shipping or set bookings.',
+      benefit: '1–8 Day Turnaround',
     },
     {
       title: 'Multiple Hook & Angle Options',

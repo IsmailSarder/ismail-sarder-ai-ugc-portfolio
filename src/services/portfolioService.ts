@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabase.ts';
+import { isAuthorizedAdminUser } from '../context/AuthContext.tsx';
 import { PortfolioItem } from '../components/VideoModal.tsx';
 import {
   heroUgcBeauty,
@@ -6,6 +7,15 @@ import {
   portfolioTech,
   portfolioFashion,
 } from '../assets/images.ts';
+
+async function requireAdminSession() {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session?.user || !isAuthorizedAdminUser(session.user)) {
+    throw new Error('Unauthorized: Admin authentication is required for this operation.');
+  }
+}
 
 export const INITIAL_SEED_PROJECTS: PortfolioItem[] = [
   {
@@ -188,6 +198,7 @@ export const uploadPortfolioMedia = async (
   file: File,
   folder: 'thumbnails' | 'videos' = 'thumbnails'
 ): Promise<string> => {
+  await requireAdminSession();
   if (supabase && isSupabaseConfigured()) {
     try {
       const fileExt = file.name.split('.').pop() || 'jpg';
@@ -282,6 +293,7 @@ export const fetchAllProjects = async (): Promise<PortfolioItem[]> => {
 export const createPortfolioProject = async (
   project: Omit<PortfolioItem, 'id'>
 ): Promise<PortfolioItem> => {
+  await requireAdminSession();
   const newId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `proj-${Date.now()}`;
   const completeProject: PortfolioItem = {
     ...project,
@@ -332,6 +344,7 @@ export const updatePortfolioProject = async (
   id: string,
   updates: Partial<PortfolioItem>
 ): Promise<void> => {
+  await requireAdminSession();
   if (supabase && isSupabaseConfigured()) {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -371,6 +384,7 @@ export const updatePortfolioProject = async (
 
 // Delete project
 export const deletePortfolioProject = async (id: string): Promise<void> => {
+  await requireAdminSession();
   if (supabase && isSupabaseConfigured()) {
     try {
       await supabase.from('portfolio_projects').delete().eq('id', id);

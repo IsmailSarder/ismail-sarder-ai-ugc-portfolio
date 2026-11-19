@@ -151,27 +151,27 @@ export const Hero: React.FC<HeroProps> = ({ onOpenInquiry }) => {
     setProgress((video.currentTime / video.duration) * 100);
   };
 
-  const targetMarkets = ['USA', 'UK', 'UAE', 'Canada', 'Europe'];
+  const targetMarkets = ['USA', 'UK', 'UAE', 'Canada', 'Australia', 'Europe'];
   const coreCapabilities = [
     {
-      label: 'Services',
-      value: 'AI UGC · Spokesperson · CGI',
-      detail: 'Beauty, skincare, fashion & gadget ad production',
+      label: 'Core Services',
+      value: 'AI UGC · CGI · Commercials',
+      detail: 'Vertical social ads, 3D product spots & brand films',
     },
     {
-      label: 'Formats',
-      value: '9:16 · 4:5 · 1:1 · 16:9',
-      detail: 'TikTok, Instagram Reels, Meta & YouTube ready',
+      label: 'Launch Rates',
+      value: 'Starting at $25',
+      detail: 'Intro pricing for first 3–5 clients · Custom quotes',
     },
     {
       label: 'Turnaround',
-      value: '24 – 72 Hours',
-      detail: 'Fast delivery with structured hook variations',
+      value: '1 – 8 Days',
+      detail: '1–4 days for AI UGC · 2–8 days for CGI & commercials',
     },
     {
-      label: 'Markets Served',
-      value: 'USA · UK · UAE · CA · EU',
-      detail: 'Direct collaboration for international DTC brands',
+      label: 'Formats & Ratios',
+      value: '9:16 · 4:5 · 1:1 · 16:9',
+      detail: 'TikTok, Instagram Reels, Meta Feeds & YouTube ready',
     },
   ];
 
@@ -201,40 +201,41 @@ export const Hero: React.FC<HeroProps> = ({ onOpenInquiry }) => {
             >
               <img
                 src={effectiveProfileImage}
-                alt="Ismail Sarder — AI UGC Video Ads Creator portrait"
+                alt="Ismail Sarder — AI UGC Video Ads Creator & Creative Strategist"
                 width={32}
                 height={32}
+                loading="eager"
                 decoding="async"
                 className="w-8 h-8 rounded-full object-cover object-top border border-[#C7F36B]/60 shrink-0"
               />
               <span className="text-[#F5F5F0] font-bold">Ismail Sarder</span>
               <span aria-hidden="true" className="text-[#2A332B]">/</span>
               <span className="text-[#C7F36B] font-mono">
-                AI UGC &amp; Creative Video Ad Studio
+                AI UGC, CGI &amp; Commercial Ad Studio
               </span>
             </motion.div>
 
-            {/* Exact Requested Headline */}
+            {/* Primary Hero Headline */}
             <motion.h1
               initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.55, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
               className="text-3xl sm:text-5xl lg:text-[3.5rem] font-extrabold font-heading text-[#F5F5F0] tracking-tight leading-[1.08] mb-5 sm:mb-6 [text-wrap:balance]"
             >
-              AI UGC Video Ads That Help Brands{' '}
+              AI UGC &amp; CGI Video Ads Built to Help E-Commerce Brands{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F5F5F0] via-[#F5F5F0] to-[#C7F36B]">
                 Stand Out
               </span>
             </motion.h1>
 
-            {/* Exact Requested Supporting Text + Professional Introduction */}
+            {/* Supporting Value Proposition */}
             <motion.p
               initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.55, delay: 0.16, ease: [0.22, 1, 0.36, 1] }}
               className="text-base sm:text-lg text-[#F5F5F0]/90 leading-relaxed max-w-2xl mb-3 font-sans"
             >
-              I create engaging AI-powered video ads, product demonstrations and social media advertising creatives for e-commerce brands.
+              I produce scroll-stopping AI UGC Video Ads, photorealistic AI CGI Product Commercials, and full-story AI Commercial Videos engineered for Meta, TikTok, and YouTube campaigns.
             </motion.p>
 
             <motion.p
@@ -243,10 +244,10 @@ export const Hero: React.FC<HeroProps> = ({ onOpenInquiry }) => {
               transition={{ duration: 0.55, delay: 0.22, ease: [0.22, 1, 0.36, 1] }}
               className="text-xs sm:text-sm text-[#A0A89F] leading-relaxed max-w-xl mb-7 sm:mb-8"
             >
-              Specializing in AI UGC Video Ads, AI Spokesperson Videos, Product Demonstrations, and CGI Commercials tailored for Beauty &amp; Skincare, Fashion, and Gadget brands across the USA, UK, UAE, Canada, and Europe.
+              Tailored for beauty &amp; skincare, fashion, gadget, and DTC brands across the USA, UK, UAE, Canada, Australia, and Europe—with introductory launch packages starting from $25 for the first 3–5 clients.
             </motion.p>
 
-            {/* Action Buttons: View My Work, Hire Me, Featured Preview */}
+            {/* Action Buttons: View Portfolio, Hire Me, Watch Featured Case Study */}
             <motion.div
               initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
@@ -257,7 +258,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenInquiry }) => {
                 href="#portfolio"
                 className="group px-6 py-3.5 text-xs sm:text-sm font-bold font-heading uppercase tracking-wider text-[#090A0B] bg-[#C7F36B] hover:bg-[#d6ff7d] active:scale-[0.98] rounded-md transition-all duration-200 shadow-lg shadow-[#C7F36B]/20 flex items-center justify-center gap-2 cursor-pointer min-h-[46px]"
               >
-                <span>View My Work</span>
+                <span>View Portfolio</span>
                 <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
               </a>
 
@@ -287,7 +288,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenInquiry }) => {
               className="pt-5 border-t border-[#2A332B]"
             >
               <span className="text-[11px] font-mono uppercase tracking-wider text-[#A0A89F] block mb-2">
-                Serving E-Commerce Brands In
+                Serving E-Commerce Brands Worldwide
               </span>
               <div className="flex flex-wrap items-center gap-y-1 gap-x-3 text-xs sm:text-sm text-[#F5F5F0] font-medium">
                 {targetMarkets.map((market, index) => (

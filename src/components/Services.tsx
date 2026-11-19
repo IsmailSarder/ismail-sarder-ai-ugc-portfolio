@@ -117,7 +117,7 @@ export const Services: React.FC<ServicesProps> = ({ onSelectService }) => {
           </div>
 
           <p className="text-sm text-[#A0A89F] max-w-md leading-relaxed">
-            Six focused video production services structured to help DTC brands across the USA, UK, UAE, Canada, and Europe test more winning angles without physical studio delays.
+            Six focused video production services structured to help DTC brands across the USA, UK, UAE, Canada, Australia, and Europe test more winning angles with transparent 1–8 day delivery windows.
           </p>
         </div>
 
@@ -173,7 +173,7 @@ export const Services: React.FC<ServicesProps> = ({ onSelectService }) => {
                   <button
                     type="button"
                     onClick={() => onSelectService(service.title)}
-                    className="w-full py-3 px-4 text-xs font-bold font-heading uppercase tracking-wider text-[#090A0B] bg-[#C7F36B] hover:bg-[#d6ff7d] rounded-lg transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer min-h-[42px]"
+                    className="w-full py-3 px-4 text-xs font-bold font-heading uppercase tracking-wider text-[#090A0B] bg-[#C7F36B] hover:bg-[#d6ff7d] rounded-lg transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer min-h-[44px]"
                   >
                     <span>Book {service.title}</span>
                     <ArrowUpRight className="w-4 h-4" />

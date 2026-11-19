@@ -52,22 +52,36 @@ FOR INSERT
 TO anon, authenticated
 WITH CHECK (true);
 
--- Policy B: Allow authenticated studio owner or service role to read inquiries (SELECT)
+-- Admin UUID verification helper (replace with your Supabase Auth User UUID)
+CREATE OR REPLACE FUNCTION public.is_studio_admin()
+RETURNS BOOLEAN AS $$
+  SELECT auth.uid() = '00000000-0000-0000-0000-000000000000'::uuid;
+$$ LANGUAGE sql STABLE SECURITY DEFINER;
+
+-- Policy B: Allow only Admin UUID to read inquiries (SELECT)
 DROP POLICY IF EXISTS "Allow authenticated studio owner to read inquiries" ON public.project_inquiries;
 CREATE POLICY "Allow authenticated studio owner to read inquiries"
 ON public.project_inquiries
 FOR SELECT
 TO authenticated
-USING (true);
+USING (public.is_studio_admin());
 
--- Policy C: Allow authenticated studio owner to update inquiry status (UPDATE)
+-- Policy C: Allow only Admin UUID to update inquiry status (UPDATE)
 DROP POLICY IF EXISTS "Allow authenticated studio owner to update inquiries" ON public.project_inquiries;
 CREATE POLICY "Allow authenticated studio owner to update inquiries"
 ON public.project_inquiries
 FOR UPDATE
 TO authenticated
-USING (true)
-WITH CHECK (true);
+USING (public.is_studio_admin())
+WITH CHECK (public.is_studio_admin());
+
+-- Policy D: Allow only Admin UUID to delete inquiries (DELETE)
+DROP POLICY IF EXISTS "Allow authenticated studio owner to delete inquiries" ON public.project_inquiries;
+CREATE POLICY "Allow authenticated studio owner to delete inquiries"
+ON public.project_inquiries
+FOR DELETE
+TO authenticated
+USING (public.is_studio_admin());
 
 
 -- -------------------------------------------------------------------------
@@ -102,14 +116,14 @@ FOR SELECT
 TO anon, authenticated
 USING (true);
 
--- Allow authenticated studio owner to modify portfolio items
+-- Allow only Admin UUID to modify portfolio items
 DROP POLICY IF EXISTS "Allow studio owner full access to portfolio items" ON public.dynamic_portfolio_projects;
 CREATE POLICY "Allow studio owner full access to portfolio items"
 ON public.dynamic_portfolio_projects
 FOR ALL
 TO authenticated
-USING (true)
-WITH CHECK (true);
+USING (public.is_studio_admin())
+WITH CHECK (public.is_studio_admin());
 
 -- =========================================================================
 -- Success Confirmation

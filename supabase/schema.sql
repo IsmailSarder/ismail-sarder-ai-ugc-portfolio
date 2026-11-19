@@ -45,30 +45,36 @@ CREATE POLICY "Public can view portfolio projects"
     FOR SELECT
     USING (true);
 
--- Policy B: Only authenticated admin users can insert new projects
+-- Admin UUID verification helper (replace with your Supabase Auth User UUID)
+CREATE OR REPLACE FUNCTION public.is_studio_admin()
+RETURNS BOOLEAN AS $$
+  SELECT auth.uid() = '00000000-0000-0000-0000-000000000000'::uuid;
+$$ LANGUAGE sql STABLE SECURITY DEFINER;
+
+-- Policy B: Only Admin UUID can insert new projects
 DROP POLICY IF EXISTS "Authenticated admin can insert projects" ON public.portfolio_projects;
 CREATE POLICY "Authenticated admin can insert projects"
     ON public.portfolio_projects
     FOR INSERT
     TO authenticated
-    WITH CHECK (auth.role() = 'authenticated');
+    WITH CHECK (public.is_studio_admin());
 
--- Policy C: Only authenticated admin users can update projects
+-- Policy C: Only Admin UUID can update projects
 DROP POLICY IF EXISTS "Authenticated admin can update projects" ON public.portfolio_projects;
 CREATE POLICY "Authenticated admin can update projects"
     ON public.portfolio_projects
     FOR UPDATE
     TO authenticated
-    USING (auth.role() = 'authenticated')
-    WITH CHECK (auth.role() = 'authenticated');
+    USING (public.is_studio_admin())
+    WITH CHECK (public.is_studio_admin());
 
--- Policy D: Only authenticated admin users can delete projects
+-- Policy D: Only Admin UUID can delete projects
 DROP POLICY IF EXISTS "Authenticated admin can delete projects" ON public.portfolio_projects;
 CREATE POLICY "Authenticated admin can delete projects"
     ON public.portfolio_projects
     FOR DELETE
     TO authenticated
-    USING (auth.role() = 'authenticated');
+    USING (public.is_studio_admin());
 
 -- 5. Storage Configuration: Create 'portfolio-media' public bucket
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
@@ -89,26 +95,27 @@ CREATE POLICY "Public can view portfolio media"
     FOR SELECT
     USING (bucket_id = 'portfolio-media');
 
--- Allow authenticated admin users to upload media files
+-- Allow only Admin UUID to upload media files
 DROP POLICY IF EXISTS "Authenticated admin can upload media" ON storage.objects;
 CREATE POLICY "Authenticated admin can upload media"
     ON storage.objects
     FOR INSERT
     TO authenticated
-    WITH CHECK (bucket_id = 'portfolio-media' AND auth.role() = 'authenticated');
+    WITH CHECK (bucket_id = 'portfolio-media' AND public.is_studio_admin());
 
--- Allow authenticated admin users to update media files
+-- Allow only Admin UUID to update media files
 DROP POLICY IF EXISTS "Authenticated admin can update media" ON storage.objects;
 CREATE POLICY "Authenticated admin can update media"
     ON storage.objects
     FOR UPDATE
     TO authenticated
-    USING (bucket_id = 'portfolio-media' AND auth.role() = 'authenticated');
+    USING (bucket_id = 'portfolio-media' AND public.is_studio_admin())
+    WITH CHECK (bucket_id = 'portfolio-media' AND public.is_studio_admin());
 
--- Allow authenticated admin users to delete media files
+-- Allow only Admin UUID to delete media files
 DROP POLICY IF EXISTS "Authenticated admin can delete media" ON storage.objects;
 CREATE POLICY "Authenticated admin can delete media"
     ON storage.objects
     FOR DELETE
     TO authenticated
-    USING (bucket_id = 'portfolio-media' AND auth.role() = 'authenticated');
+    USING (bucket_id = 'portfolio-media' AND public.is_studio_admin());

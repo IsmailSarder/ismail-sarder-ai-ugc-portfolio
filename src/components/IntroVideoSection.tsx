@@ -263,7 +263,9 @@ export const IntroVideoPlayer: React.FC<IntroVideoPlayerProps> = ({
           {thumbnailUrl ? (
             <img
               src={thumbnailUrl}
-              alt={title}
+              alt={`${title} — creator introduction video thumbnail`}
+              loading="lazy"
+              decoding="async"
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
             />
           ) : (
@@ -478,7 +480,11 @@ export const IntroVideoSection: React.FC<IntroVideoSectionProps> = ({ refreshTri
               <div className="flex items-center gap-2.5">
                 <img
                   src={effectiveProfileImage}
-                  alt="Ismail Sarder"
+                  alt="Ismail Sarder — AI UGC Video Ads Creator portrait"
+                  width={24}
+                  height={24}
+                  loading="lazy"
+                  decoding="async"
                   className="w-5 h-5 sm:w-6 sm:h-6 rounded-full object-cover object-top border border-[#C7F36B]/60"
                 />
                 <span className="text-[#F5F5F0] font-semibold">ISMAIL SARDER STUDIO</span>

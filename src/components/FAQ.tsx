@@ -9,22 +9,27 @@ export const HOMEPAGE_FAQS = [
   {
     question: 'What is an AI UGC video ad and how does it compare to traditional filming?',
     answer:
-      'AI UGC combines realistic AI-generated creators, natural speech delivery, and focused product visuals to produce relatable social media video ads. Instead of waiting 3–4 weeks to ship physical samples and book studio talent, brands can test new creative angles and spokesperson styles within 24 to 72 hours.',
+      'AI UGC combines realistic AI-generated creators, natural speech delivery, and focused product visuals to produce relatable social media video ads. Instead of waiting 3–4 weeks to ship physical samples and book studio talent, brands can test new creative angles and spokesperson styles within 1 to 4 days.',
+  },
+  {
+    question: 'What are your pricing tiers and introductory launch rates?',
+    answer:
+      'Introductory launch rates for the first 3–5 clients start at $25 for AI UGC Video Ads (Starter $25, Growth $55, Pro $99), $45 for AI CGI Product Ads (Starter $45, Growth $95, Pro $179), and $79 for AI Commercial Videos (Starter $79, Growth $149, Premium $299). Custom bundles and price negotiation are welcome.',
   },
   {
     question: 'Are the portfolio pieces Concept Projects or Client Projects?',
     answer:
-      'Each case study in the portfolio is explicitly labeled as either a Concept Project (spec demonstrations built to showcase creative strategy, hooks, and visual quality) or a Client Project. When working with active brand partners under confidentiality agreements, campaign assets remain private.',
+      'Every case study in the portfolio is explicitly labeled as either a Concept Project (spec demonstrations built to showcase creative strategy, hooks, and visual quality) or a Client Project. You can also filter directly between Concept Projects and Client Projects inside the portfolio section.',
   },
   {
     question: 'What do I need to share to get started?',
     answer:
-      'All I need to start is your product or store URL, clear high-resolution product photos, your target country (such as USA, UK, UAE, Canada, or Europe), and any key benefits or customer pain points you want highlighted.',
+      'All I need to start is your product or store URL, clear high-resolution product photos, your target country (such as USA, UK, UAE, Canada, Australia, or Europe), and any key benefits or customer pain points you want highlighted.',
   },
   {
     question: 'How fast is delivery and do you work across international timezones?',
     answer:
-      'Standard packages feature 24-hour to 72-hour turnaround depending on batch size and complexity. I collaborate smoothly with brands across EST, GMT, GST, and CET timezones via email and WhatsApp.',
+      'Realistic delivery timelines match each service complexity: 1–4 days for AI UGC Video Ads, 2–7 days for AI CGI Product Ads, and 3–8 days for multi-scene AI Commercial Videos. I collaborate directly across EST, GMT, GST, AEST, and CET timezones via email and WhatsApp.',
   },
   {
     question: 'Which video aspect ratios and file formats are delivered?',
@@ -34,7 +39,7 @@ export const HOMEPAGE_FAQS = [
   {
     question: 'Do I get full commercial rights and revisions?',
     answer:
-      'Yes. Every completed order includes revision rounds matched to your package along with full commercial usage rights so you can run ads across Meta, TikTok, Google, and your online store without ongoing licensing fees.',
+      'Yes. Every completed order includes 1 to 3 revision rounds matched to your selected tier along with full commercial usage rights so you can run ads across Meta, TikTok, Google, and your online store without ongoing licensing fees.',
   },
 ];
 

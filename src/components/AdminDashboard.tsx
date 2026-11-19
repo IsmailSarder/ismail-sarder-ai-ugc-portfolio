@@ -3,10 +3,11 @@ import {
   supabase,
   SupabaseProject,
   ProjectCategory,
-  SUPABASE_SETUP_SQL,
   BUCKET_VIDEOS,
   BUCKET_THUMBNAILS,
 } from '../lib/supabase.ts';
+import { getSupabaseSetupSql } from '../lib/schemaSql.ts';
+import { isAuthorizedAdminUser } from '../context/AuthContext.tsx';
 import {
   getAllAdminProjects,
   uploadMediaFile,
@@ -57,7 +58,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [authLoading, setAuthLoading] = useState(true);
   const [authEmail, setAuthEmail] = useState('hossenmeismail@gmail.com');
   const [authPassword, setAuthPassword] = useState('');
-  const [isSignUpMode, setIsSignUpMode] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [authSuccessMsg, setAuthSuccessMsg] = useState<string | null>(null);
 
@@ -66,6 +66,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [projects, setProjects] = useState<SupabaseProject[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(false);
   const [copiedSql, setCopiedSql] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [listError, setListError] = useState<string | null>(null);
 
   // Form state
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
@@ -103,26 +105,44 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const videoInputRef = useRef<HTMLInputElement>(null);
   const thumbInputRef = useRef<HTMLInputElement>(null);
 
-  // Listen to Supabase Auth state
+  // Listen to Supabase Auth state and verify authorized Admin UUID
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setAuthLoading(false);
-      if (session) {
-        loadProjects();
+    let mounted = true;
+    const verifySession = async (nextSession: any) => {
+      if (!mounted) return;
+      if (!nextSession?.user) {
+        setSession(null);
+        setAuthLoading(false);
+        return;
       }
-    });
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (!mounted) return;
+      if (userErr || !userData?.user || !isAuthorizedAdminUser(userData.user)) {
+        await supabase.auth.signOut().catch(() => {});
+        if (!mounted) return;
+        setAuthError('Access denied: this Supabase user UUID is not authorized for admin access.');
+        setSession(null);
+        setAuthLoading(false);
+        return;
+      }
+      setAuthError(null);
+      setSession(nextSession);
+      setAuthLoading(false);
+      loadProjects();
+    };
+
+    supabase.auth.getSession().then(({ data: { session: s } }) => verifySession(s));
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session) {
-        loadProjects();
-      }
+    } = supabase.auth.onAuthStateChange((_event, s) => {
+      verifySession(s);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Lock body scroll when open
@@ -158,28 +178,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
 
     try {
-      if (isSignUpMode) {
-        const { data, error } = await supabase.auth.signUp({
-          email: authEmail,
-          password: authPassword,
-        });
-        if (error) throw error;
-        if (data.session) {
-          setSession(data.session);
-        } else {
-          setAuthSuccessMsg(
-            'Admin account created! Check your email to confirm, or if email confirmation is disabled in Supabase, sign in immediately.'
-          );
-          setIsSignUpMode(false);
-        }
-      } else {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: authEmail,
-          password: authPassword,
-        });
-        if (error) throw error;
-        setSession(data.session);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: authEmail.trim().toLowerCase(),
+        password: authPassword,
+      });
+      if (error) throw error;
+      if (!data.user || !data.session || !isAuthorizedAdminUser(data.user)) {
+        await supabase.auth.signOut().catch(() => {});
+        throw new Error('Access denied: your account UUID is not authorized to access the studio admin dashboard.');
       }
+      setSession(data.session);
     } catch (err: any) {
       setAuthError(err.message || 'Authentication failed. Please verify credentials.');
     }
@@ -305,13 +313,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   };
 
   const handleDelete = async (p: SupabaseProject) => {
-    if (!window.confirm(`Are you sure you want to permanently delete "${p.title}"?`)) {
+    if (confirmDeleteId !== p.id) {
+      setConfirmDeleteId(p.id);
       return;
     }
-
+    setListError(null);
     const { success, error } = await deleteProject(p.id, p.video_path, p.thumbnail_path);
+    setConfirmDeleteId(null);
     if (!success) {
-      alert(`Delete failed: ${error}`);
+      setListError(`Delete failed: ${error || 'Unauthorized or network error'}`);
     } else {
       await loadProjects();
       if (onProjectsUpdated) onProjectsUpdated();
@@ -419,7 +429,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   };
 
   const copySqlScript = () => {
-    navigator.clipboard.writeText(SUPABASE_SETUP_SQL);
+    navigator.clipboard.writeText(getSupabaseSetupSql(session?.user?.id));
     setCopiedSql(true);
     setTimeout(() => setCopiedSql(false), 2500);
   };
@@ -540,24 +550,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   className="w-full py-3 px-4 text-xs font-bold font-heading uppercase tracking-wider text-[#090A0B] bg-[#C7F36B] hover:bg-[#d6ff7d] rounded-lg transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:opacity-50"
                 >
                   <Lock className="w-3.5 h-3.5" />
-                  <span>{isSignUpMode ? 'Create Initial Admin' : 'Sign In To Dashboard'}</span>
+                  <span>Sign In To Dashboard</span>
                 </button>
-
-                <div className="pt-2 text-center">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsSignUpMode(!isSignUpMode);
-                      setAuthError(null);
-                      setAuthSuccessMsg(null);
-                    }}
-                    className="text-[11px] text-[#A0A89F] hover:text-[#C7F36B] underline cursor-pointer"
-                  >
-                    {isSignUpMode
-                      ? 'Already have an admin account? Sign In'
-                      : 'First time? Create initial admin user'}
-                  </button>
-                </div>
               </form>
             </div>
           ) : (
@@ -625,6 +619,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               {/* TAB 1: PROJECTS LIST */}
               {activeTab === 'list' && (
                 <div className="space-y-4">
+                  {listError && (
+                    <div className="p-3 rounded-lg bg-rose-500/15 border border-rose-500/40 text-xs text-rose-300 flex items-center justify-between gap-2">
+                      <span>{listError}</span>
+                      <button
+                        type="button"
+                        onClick={() => setListError(null)}
+                        className="text-rose-200 underline cursor-pointer"
+                      >
+                        Dismiss
+                      </button>
+                    </div>
+                  )}
                   <div className="flex items-center justify-between text-xs text-[#A0A89F]">
                     <span>
                       Total Projects in Supabase: <strong className="text-[#F5F5F0]">{projects.length}</strong>
@@ -747,19 +753,40 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                               <div className="flex items-center gap-1.5">
                                 <button
+                                  type="button"
                                   onClick={() => handleStartEdit(p)}
                                   className="p-1.5 text-[#A0A89F] hover:text-[#C7F36B] border border-[#2A332B] rounded hover:bg-[#111514] transition-colors cursor-pointer"
                                   title="Edit Project"
                                 >
                                   <Edit2 className="w-3.5 h-3.5" />
                                 </button>
-                                <button
-                                  onClick={() => handleDelete(p)}
-                                  className="p-1.5 text-[#A0A89F] hover:text-rose-400 border border-[#2A332B] rounded hover:bg-[#111514] transition-colors cursor-pointer"
-                                  title="Delete Project"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
+                                {confirmDeleteId === p.id ? (
+                                  <div className="flex items-center gap-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDelete(p)}
+                                      className="px-2 py-1 text-[10px] font-bold bg-rose-500 text-white rounded cursor-pointer"
+                                    >
+                                      Confirm
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setConfirmDeleteId(null)}
+                                      className="px-2 py-1 text-[10px] text-[#A0A89F] border border-[#2A332B] rounded cursor-pointer"
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDelete(p)}
+                                    className="p-1.5 text-[#A0A89F] hover:text-rose-400 border border-[#2A332B] rounded hover:bg-[#111514] transition-colors cursor-pointer"
+                                    title="Delete Project"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -1182,7 +1209,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                   <div className="relative">
                     <pre className="p-4 rounded-xl bg-[#090A0B] border border-[#2A332B] text-[11px] font-mono text-[#A0A89F] overflow-x-auto max-h-[350px] leading-relaxed">
-                      {SUPABASE_SETUP_SQL}
+                      {getSupabaseSetupSql(session?.user?.id)}
                     </pre>
                   </div>
                 </div>

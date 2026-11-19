@@ -9,7 +9,7 @@ export const DEFAULT_SUPABASE_KEY =
   import.meta.env.VITE_SUPABASE_ANON_KEY ||
   'sb_publishable_EzrsAx5vS0gkTPXTNzW-NA_hFVil_pw';
 
-// Active credentials (can be overridden at runtime via admin login settings)
+// Active credentials (can be overridden at runtime via admin settings)
 export let activeSupabaseUrl: string =
   typeof window !== 'undefined' && localStorage.getItem('supabase_project_url')
     ? localStorage.getItem('supabase_project_url')!
@@ -69,7 +69,8 @@ export const BUCKET_VIDEOS = 'portfolio-videos';
 export const BUCKET_THUMBNAILS = 'portfolio-thumbnails';
 export const BUCKET_PROFILE_IMAGES = 'profile-images';
 export const TABLE_PROJECTS = 'portfolio_projects';
-export const TABLE_INQUIRIES = 'inquiries';
+export const TABLE_INQUIRIES = 'project_inquiries';
+export const TABLE_INQUIRIES_LEGACY = 'inquiries';
 export const TABLE_PROFILE_SETTINGS = 'profile_settings';
 
 export const STORAGE_BUCKETS = {
@@ -148,7 +149,8 @@ export interface StoredInquiry {
 export type Inquiry = StoredInquiry;
 
 /**
- * Submit client inquiry to Supabase with local fallback
+ * Submit client inquiry to Supabase ('project_inquiries' primary, 'inquiries' legacy fallback)
+ * Never fakes database success if Supabase rejects or fails to persist.
  */
 export async function submitProjectInquiry(inquiryData: {
   name: string;
@@ -162,20 +164,30 @@ export async function submitProjectInquiry(inquiryData: {
   timeline?: string;
   selectedServices: string[];
   message: string;
-}): Promise<{ success: boolean; syncedWithSupabase: boolean; id?: string }> {
+}): Promise<{
+  success: boolean;
+  syncedWithSupabase: boolean;
+  id?: string;
+  errorMessage?: string;
+}> {
   const structuredPrefix = [
     inquiryData.selectedPackage ? `Package: ${inquiryData.selectedPackage}` : '',
     inquiryData.videoCount ? `Videos: ${inquiryData.videoCount}` : '',
     inquiryData.timeline ? `Timeline: ${inquiryData.timeline}` : '',
     inquiryData.budget ? `Budget: ${inquiryData.budget}` : '',
-  ].filter(Boolean).join(' · ');
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   const enrichedMessage = structuredPrefix
     ? `[${structuredPrefix}]\n\n${inquiryData.message}`
     : inquiryData.message;
 
   const newInquiry: StoredInquiry = {
-    id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `inq_${Date.now()}`,
+    id:
+      typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `inq_${Date.now()}`,
     name: inquiryData.name,
     email: inquiryData.email,
     brandName: inquiryData.brandName,
@@ -193,52 +205,110 @@ export async function submitProjectInquiry(inquiryData: {
     selected_services: inquiryData.selectedServices,
     message: enrichedMessage,
     created_at: new Date().toISOString(),
+    status: 'new',
     is_read: false,
   };
 
-  // Always save to local storage as fallback
-  try {
-    const raw = localStorage.getItem('local_project_inquiries');
-    const existing = raw ? JSON.parse(raw) : [];
-    existing.unshift(newInquiry);
-    localStorage.setItem('local_project_inquiries', JSON.stringify(existing.slice(0, 50)));
-  } catch (e) {
-    console.warn('Local storage inquiry cache warning:', e);
+  if (!isSupabaseConfigured()) {
+    return {
+      success: false,
+      syncedWithSupabase: false,
+      errorMessage:
+        'Database connection is not configured. Please send your brief directly via WhatsApp or email.',
+    };
   }
 
-  // Attempt Supabase insert into live 'inquiries' table if configured
-  if (isSupabaseConfigured()) {
-    try {
-      const { error } = await supabase
-        .from(TABLE_INQUIRIES)
-        .insert([
-          {
-            name: inquiryData.name,
-            email: inquiryData.email,
-            brand_name: inquiryData.brandName,
-            website_url: inquiryData.websiteUrl || '',
-            industry: inquiryData.industry,
-            budget: inquiryData.budget,
-            selected_services: inquiryData.selectedServices,
-            message: enrichedMessage,
-            is_read: false,
-          },
-        ]);
+  try {
+    // Attempt 1: Full row in primary 'project_inquiries' table
+    const fullRow = {
+      name: inquiryData.name,
+      email: inquiryData.email,
+      brand_name: inquiryData.brandName,
+      website_url: inquiryData.websiteUrl || '',
+      industry: inquiryData.industry,
+      budget: inquiryData.budget,
+      selected_package: inquiryData.selectedPackage || '',
+      video_count: inquiryData.videoCount || '',
+      timeline: inquiryData.timeline || '',
+      selected_services: inquiryData.selectedServices,
+      message: enrichedMessage,
+      status: 'new',
+    };
 
-      if (!error) {
+    const primaryAttempt = await supabase.from(TABLE_INQUIRIES).insert([fullRow]);
+    if (!primaryAttempt.error) {
+      try {
+        const raw = localStorage.getItem('local_project_inquiries');
+        const existing = raw ? JSON.parse(raw) : [];
+        existing.unshift(newInquiry);
+        localStorage.setItem('local_project_inquiries', JSON.stringify(existing.slice(0, 50)));
+      } catch {
+        // Ignore local cache errors after successful remote insert
+      }
+      return { success: true, syncedWithSupabase: true, id: newInquiry.id };
+    }
+
+    // Attempt 2: Core columns on 'project_inquiries' in case optional columns aren't migrated yet
+    const msg = primaryAttempt.error.message || '';
+    if (msg.includes('column') || msg.includes('schema cache') || primaryAttempt.error.code === 'PGRST204') {
+      const coreAttempt = await supabase.from(TABLE_INQUIRIES).insert([
+        {
+          name: inquiryData.name,
+          email: inquiryData.email,
+          brand_name: inquiryData.brandName,
+          website_url: inquiryData.websiteUrl || '',
+          industry: inquiryData.industry,
+          budget: inquiryData.budget,
+          selected_services: inquiryData.selectedServices,
+          message: enrichedMessage,
+          status: 'new',
+        },
+      ]);
+      if (!coreAttempt.error) {
         return { success: true, syncedWithSupabase: true, id: newInquiry.id };
       }
-      console.warn('Supabase inquiry insert warning:', error?.message);
-    } catch (err) {
-      console.warn('Supabase inquiry insert exception:', err);
     }
-  }
 
-  return { success: true, syncedWithSupabase: false, id: newInquiry.id };
+    // Attempt 3: Legacy 'inquiries' table fallback (if project uses legacy schema)
+    const legacyAttempt = await supabase.from(TABLE_INQUIRIES_LEGACY).insert([
+      {
+        name: inquiryData.name,
+        email: inquiryData.email,
+        brand_name: inquiryData.brandName,
+        website_url: inquiryData.websiteUrl || '',
+        industry: inquiryData.industry,
+        budget: inquiryData.budget,
+        selected_services: inquiryData.selectedServices,
+        message: enrichedMessage,
+        is_read: false,
+      },
+    ]);
+    if (!legacyAttempt.error) {
+      return { success: true, syncedWithSupabase: true, id: newInquiry.id };
+    }
+
+    const detailedError =
+      primaryAttempt.error.message ||
+      legacyAttempt.error.message ||
+      'Unable to save your inquiry to the database.';
+    return {
+      success: false,
+      syncedWithSupabase: false,
+      errorMessage: detailedError,
+    };
+  } catch (err) {
+    const detailedError =
+      err instanceof Error ? err.message : 'Network error while submitting your inquiry.';
+    return {
+      success: false,
+      syncedWithSupabase: false,
+      errorMessage: detailedError,
+    };
+  }
 }
 
 /**
- * Fetch inquiries for admin inspection
+ * Fetch inquiries for authenticated admin inspection
  */
 export async function fetchRecentInquiries(): Promise<{
   inquiries: StoredInquiry[];
@@ -252,7 +322,7 @@ export async function fetchRecentInquiries(): Promise<{
         .order('created_at', { ascending: false })
         .limit(30);
 
-      if (!error && data && data.length > 0) {
+      if (!error && data) {
         const formatted: StoredInquiry[] = data.map((d: any) => ({
           id: d.id,
           name: d.name,
@@ -263,158 +333,26 @@ export async function fetchRecentInquiries(): Promise<{
           website_url: d.website_url || d.websiteUrl || '',
           industry: d.industry || 'Skincare & Beauty',
           budget: d.budget || '',
+          selectedPackage: d.selected_package || d.selectedPackage || '',
+          selected_package: d.selected_package || d.selectedPackage || '',
+          videoCount: d.video_count || d.videoCount || '',
+          video_count: d.video_count || d.videoCount || '',
+          timeline: d.timeline || '',
           selectedServices: d.selected_services || d.selectedServices || [],
           selected_services: d.selected_services || d.selectedServices || [],
           message: d.message || '',
           created_at: d.created_at || new Date().toISOString(),
           status: d.status || 'new',
+          is_read: typeof d.is_read === 'boolean' ? d.is_read : d.status === 'read',
         }));
         return { inquiries: formatted, source: 'supabase' };
       }
     } catch (e) {
-      console.warn('Supabase inquiry fetch failed, reading local fallback', e);
+      console.warn('Supabase inquiry fetch note:', e);
     }
   }
 
-  try {
-    const raw = localStorage.getItem('local_project_inquiries');
-    const existing: StoredInquiry[] = raw ? JSON.parse(raw) : [];
-    return { inquiries: existing, source: 'local' };
-  } catch {
-    return { inquiries: [], source: 'local' };
-  }
+  return { inquiries: [], source: 'local' };
 }
 
-// SQL Schema script for user reference in case table/buckets need setup in Supabase SQL editor
-export const SUPABASE_SETUP_SQL = `-- ==============================================================================
--- ISMAIL SARDER — AI UGC PORTFOLIO DATABASE SCHEMA & STORAGE POLICIES
--- Run this in your Supabase SQL Editor: https://supabase.com/dashboard/project/_/sql
--- ==============================================================================
-
--- 1. Create portfolio_projects table
-CREATE TABLE IF NOT EXISTS public.portfolio_projects (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now(),
-  title TEXT NOT NULL,
-  description TEXT DEFAULT '',
-  category TEXT NOT NULL,
-  brand_name TEXT DEFAULT '',
-  video_url TEXT NOT NULL,
-  video_path TEXT DEFAULT '',
-  thumbnail_url TEXT NOT NULL,
-  thumbnail_path TEXT DEFAULT '',
-  is_featured BOOLEAN DEFAULT false,
-  is_published BOOLEAN DEFAULT true,
-  display_order INTEGER DEFAULT 0,
-  duration TEXT DEFAULT '0:30',
-  format TEXT DEFAULT '9:16 Vertical Video',
-  hook TEXT DEFAULT '',
-  angle TEXT DEFAULT 'Direct Response',
-  aspect_ratio TEXT DEFAULT '9:16',
-  video_width INTEGER DEFAULT NULL,
-  video_height INTEGER DEFAULT NULL,
-  video_mime_type TEXT DEFAULT 'video/mp4'
-);
-
--- Safe migration for existing tables (Adds columns if not present without deleting data)
-ALTER TABLE public.portfolio_projects
-  ADD COLUMN IF NOT EXISTS aspect_ratio TEXT DEFAULT '9:16',
-  ADD COLUMN IF NOT EXISTS video_width INTEGER DEFAULT NULL,
-  ADD COLUMN IF NOT EXISTS video_height INTEGER DEFAULT NULL,
-  ADD COLUMN IF NOT EXISTS video_mime_type TEXT DEFAULT 'video/mp4';
-
--- 2. Create project_inquiries table
-CREATE TABLE IF NOT EXISTS public.project_inquiries (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  created_at TIMESTAMPTZ DEFAULT now(),
-  name TEXT NOT NULL,
-  email TEXT NOT NULL,
-  brand_name TEXT NOT NULL,
-  website_url TEXT DEFAULT '',
-  industry TEXT DEFAULT 'Skincare & Beauty',
-  budget TEXT DEFAULT '',
-  selected_services TEXT[] DEFAULT '{}',
-  message TEXT NOT NULL,
-  status TEXT DEFAULT 'new'
-);
-
--- 3. Enable Row Level Security (RLS)
-ALTER TABLE public.portfolio_projects ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.project_inquiries ENABLE ROW LEVEL SECURITY;
-
--- 4. Projects RLS Policies
-DROP POLICY IF EXISTS "Public can view published projects" ON public.portfolio_projects;
-CREATE POLICY "Public can view published projects"
-  ON public.portfolio_projects
-  FOR SELECT
-  USING (is_published = true);
-
-DROP POLICY IF EXISTS "Authenticated users have full access to projects" ON public.portfolio_projects;
-CREATE POLICY "Authenticated users have full access to projects"
-  ON public.portfolio_projects
-  FOR ALL
-  TO authenticated
-  USING (true)
-  WITH CHECK (true);
-
--- 5. Inquiries RLS Policies
-DROP POLICY IF EXISTS "Public can submit inquiries" ON public.project_inquiries;
-CREATE POLICY "Public can submit inquiries"
-  ON public.project_inquiries
-  FOR INSERT
-  TO anon, authenticated
-  WITH CHECK (true);
-
-DROP POLICY IF EXISTS "Authenticated users can read inquiries" ON public.project_inquiries;
-CREATE POLICY "Authenticated users can read inquiries"
-  ON public.project_inquiries
-  FOR SELECT
-  TO authenticated
-  USING (true);
-
--- 6. Storage Buckets (Create in Storage Dashboard or via SQL)
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('portfolio-videos', 'portfolio-videos', true)
-ON CONFLICT (id) DO UPDATE SET public = true;
-
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('portfolio-thumbnails', 'portfolio-thumbnails', true)
-ON CONFLICT (id) DO UPDATE SET public = true;
-
--- Storage policies for portfolio-videos
-DROP POLICY IF EXISTS "Public can read portfolio-videos" ON storage.objects;
-CREATE POLICY "Public can read portfolio-videos"
-  ON storage.objects FOR SELECT
-  USING (bucket_id = 'portfolio-videos');
-
-DROP POLICY IF EXISTS "Authenticated users can upload portfolio-videos" ON storage.objects;
-CREATE POLICY "Authenticated users can upload portfolio-videos"
-  ON storage.objects FOR INSERT
-  TO authenticated
-  WITH CHECK (bucket_id = 'portfolio-videos');
-
-DROP POLICY IF EXISTS "Authenticated users can update/delete portfolio-videos" ON storage.objects;
-CREATE POLICY "Authenticated users can update/delete portfolio-videos"
-  ON storage.objects FOR ALL
-  TO authenticated
-  USING (bucket_id = 'portfolio-videos');
-
--- Storage policies for portfolio-thumbnails
-DROP POLICY IF EXISTS "Public can read portfolio-thumbnails" ON storage.objects;
-CREATE POLICY "Public can read portfolio-thumbnails"
-  ON storage.objects FOR SELECT
-  USING (bucket_id = 'portfolio-thumbnails');
-
-DROP POLICY IF EXISTS "Authenticated users can upload portfolio-thumbnails" ON storage.objects;
-CREATE POLICY "Authenticated users can upload portfolio-thumbnails"
-  ON storage.objects FOR INSERT
-  TO authenticated
-  WITH CHECK (bucket_id = 'portfolio-thumbnails');
-
-DROP POLICY IF EXISTS "Authenticated users can update/delete portfolio-thumbnails" ON storage.objects;
-CREATE POLICY "Authenticated users can update/delete portfolio-thumbnails"
-  ON storage.objects FOR ALL
-  TO authenticated
-  USING (bucket_id = 'portfolio-thumbnails');
-`;
+export { SUPABASE_SETUP_SQL } from './schemaSql.ts';

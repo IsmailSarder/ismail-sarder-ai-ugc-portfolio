@@ -8,7 +8,7 @@ interface AdminLoginProps {
 }
 
 export const AdminLogin: React.FC<AdminLoginProps> = ({ onBackToHome }) => {
-  const { signIn, resetPassword } = useAuth();
+  const { signIn, resetPassword, authError, clearAuthError } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -21,9 +21,12 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onBackToHome }) => {
   const [resetSuccess, setResetSuccess] = useState(false);
   const [resetError, setResetError] = useState<string | null>(null);
 
+  const displayedError = errorMsg || authError;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
+    clearAuthError();
     setLoading(true);
 
     const { error } = await signIn(email.trim(), password);
@@ -60,6 +63,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onBackToHome }) => {
         {/* Top return link */}
         <div className="flex items-center justify-between mb-8">
           <button
+            type="button"
             onClick={onBackToHome}
             className="inline-flex items-center gap-2 text-xs font-semibold text-[#A0A89F] hover:text-[#C7F36B] transition-colors cursor-pointer"
           >
@@ -68,7 +72,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onBackToHome }) => {
           </button>
 
           <span className="text-[11px] font-mono text-[#A0A89F] bg-[#171C19] border border-[#2A332B] px-2.5 py-1 rounded">
-            PORTAL v2.4
+            ADMIN ACCESS
           </span>
         </div>
 
@@ -86,14 +90,14 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onBackToHome }) => {
               Studio CMS Login
             </h1>
             <p className="text-xs text-[#A0A89F] leading-relaxed">
-              Authorized admin access to manage AI UGC video portfolio, client inquiries, and media assets.
+              Sign in with your verified Supabase admin account to manage portfolio videos, client inquiries, and studio media.
             </p>
           </div>
 
-          {errorMsg && (
+          {displayedError && (
             <div className="p-3.5 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-start gap-2 animate-fade-in">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-              <span>{errorMsg}</span>
+              <span>{displayedError}</span>
             </div>
           )}
 
@@ -205,6 +209,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onBackToHome }) => {
                   <span className="text-[#C7F36B] font-semibold">{resetEmail}</span>.
                 </p>
                 <button
+                  type="button"
                   onClick={() => {
                     setShowResetModal(false);
                     setResetSuccess(false);

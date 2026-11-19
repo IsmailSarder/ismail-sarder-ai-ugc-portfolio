@@ -169,7 +169,7 @@ export const FeaturedShowcase: React.FC<FeaturedShowcaseProps> = ({
               >
                 <img
                   src={currentProject.thumbnail}
-                  alt={currentProject.title}
+                  alt={`${currentProject.title} — ${currentProject.category} featured case study thumbnail`}
                   loading="eager"
                   decoding="async"
                   referrerPolicy="no-referrer"

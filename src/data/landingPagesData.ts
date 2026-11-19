@@ -103,7 +103,7 @@ export const SERVICE_LANDING_PAGES: Record<string, ServiceLandingPageContent> = 
     ],
     ctaHeadline: 'Need High-Converting AI UGC Video Ads for Your Store?',
     ctaDescription:
-      'Start with a single $39 test concept or request a custom multi-hook testing batch tailored to your ad account goals.',
+      'Start with an introductory $25 test concept for the first 3–5 clients or request a custom multi-hook testing batch tailored to your ad account.',
     inquiryServiceKey: 'AI UGC Video Ads',
     relatedPages: [
       {
@@ -356,7 +356,7 @@ export const SERVICE_LANDING_PAGES: Record<string, ServiceLandingPageContent> = 
       {
         question: 'What package works best for testing skincare hooks?',
         answer:
-          'Our Growth ($89) and Pro / Scale ($179) packages include multiple hook options per video so you can test problem-focused vs. routine-focused openers.',
+          'Our AI UGC Growth ($55) and Pro ($99) introductory launch packages include multiple hook options per video so you can split-test problem-focused vs. routine-focused openers.',
       },
     ],
     ctaHeadline: 'Scale Your Beauty Brand With Fresh Creative Angles',
@@ -437,7 +437,7 @@ export const SERVICE_LANDING_PAGES: Record<string, ServiceLandingPageContent> = 
       {
         question: 'Can pricing be negotiated for full seasonal collection batches?',
         answer:
-          'Yes. While starter packages begin at $39, seasonal lookbooks and multi-SKU bundles are eligible for custom negotiated pricing.',
+          'Yes. While introductory AI UGC launch packages begin at $25 (and CGI product ads at $45) for the first 3–5 clients, seasonal lookbooks and multi-SKU bundles are eligible for custom negotiated pricing.',
       },
       {
         question: 'How do we share garment photos and sizing notes?',

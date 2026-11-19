@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured, TABLE_PROFILE_SETTINGS } from '../lib/supabase.ts';
+import { isAuthorizedAdminUser } from '../context/AuthContext.tsx';
 import {
   heroUgcBeauty,
   portfolioTech,
@@ -294,12 +295,19 @@ async function fetchRowPayload<T>(rowId: string): Promise<T | null> {
   try {
     const { data, error } = await supabase
       .from(TABLE_PROFILE_SETTINGS)
-      .select('title')
+      .select('*')
       .eq('id', rowId)
       .maybeSingle();
 
-    if (error || !data?.title) return null;
-    return JSON.parse(data.title) as T;
+    if (error || !data) return null;
+    const raw =
+      typeof data.title === 'string' && data.title.trim().length > 0
+        ? data.title
+        : typeof data.profile_image_path === 'string'
+        ? data.profile_image_path
+        : '';
+    if (!raw) return null;
+    return JSON.parse(raw) as T;
   } catch {
     return null;
   }
@@ -315,12 +323,47 @@ async function saveRowPayload<T>(
   }
 
   try {
-    const { error } = await supabase.from(TABLE_PROFILE_SETTINGS).upsert({
-      id: rowId,
-      full_name: label,
-      title: JSON.stringify(payload),
-      updated_at: new Date().toISOString(),
-    });
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession();
+    if (sessionError || !session || !isAuthorizedAdminUser(session.user)) {
+      return {
+        success: false,
+        syncedWithSupabase: false,
+        error: 'Unauthorized: valid Admin UUID authentication is required to save studio content.',
+      };
+    }
+
+    const serialized = JSON.stringify(payload);
+    const nowIso = new Date().toISOString();
+    let { error } = await supabase.from(TABLE_PROFILE_SETTINGS).upsert(
+      {
+        id: rowId,
+        full_name: label,
+        title: serialized,
+        updated_at: nowIso,
+      },
+      { onConflict: 'id' }
+    );
+
+    if (
+      error &&
+      (error.code === 'PGRST204' ||
+        (error.message || '').toLowerCase().includes('schema cache') ||
+        (error.message || '').toLowerCase().includes('column'))
+    ) {
+      const fallbackResult = await supabase.from(TABLE_PROFILE_SETTINGS).upsert(
+        {
+          id: rowId,
+          profile_image_url: label,
+          profile_image_path: serialized,
+          updated_at: nowIso,
+        },
+        { onConflict: 'id' }
+      );
+      error = fallbackResult.error;
+    }
 
     if (error) {
       return {

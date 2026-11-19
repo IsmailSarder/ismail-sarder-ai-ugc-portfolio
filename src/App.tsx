@@ -66,12 +66,13 @@ function MainApp() {
   const contactRef = useRef<ContactRef>(null);
   const portfolioRef = useRef<PortfolioRef>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const { user } = useAuth();
+  const { user, isAdmin, loading: authLoading } = useAuth();
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [pendingService, setPendingService] = useState<string | undefined>(undefined);
   const [currentPath, setCurrentPath] = useState<string>(() =>
     typeof window !== 'undefined' ? normalizePathname(window.location.pathname) : '/'
   );
+  const isAdminRoute = isAdminOpen || currentPath === '/admin' || currentPath.startsWith('/admin/');
 
   // Listen to browser navigation & custom SPA navigation events
   useEffect(() => {
@@ -156,16 +157,23 @@ function MainApp() {
     }
   };
 
-  const handleOpenInquiryWithPackage = (packageName: string, isNegotiation?: boolean) => {
+  const handleOpenInquiryWithPackage = (
+    packageName: string,
+    isNegotiation?: boolean,
+    serviceName?: string
+  ) => {
+    if (serviceName) {
+      setPendingService(serviceName);
+    }
     if (currentPath !== '/' && currentPath !== '/contact') {
       navigateToPath('/contact');
       setTimeout(() => {
-        contactRef.current?.setPackageInterest(packageName, isNegotiation);
+        contactRef.current?.setPackageInterest(packageName, isNegotiation, serviceName);
       }, 150);
       return;
     }
     if (contactRef.current) {
-      contactRef.current.setPackageInterest(packageName, isNegotiation);
+      contactRef.current.setPackageInterest(packageName, isNegotiation, serviceName);
     } else {
       const contactEl = document.getElementById('contact');
       if (contactEl) {
@@ -200,15 +208,26 @@ function MainApp() {
   const handleCloseAdmin = () => {
     setIsAdminOpen(false);
     if (window.location.hash === '#admin') {
-      history.pushState(null, '', window.location.pathname);
+      history.pushState(null, '', window.location.pathname === '/admin' ? '/' : window.location.pathname);
+    }
+    if (currentPath === '/admin' || currentPath.startsWith('/admin/')) {
+      navigateToPath('/');
     }
     setRefreshTrigger((prev) => prev + 1);
   };
 
-  if (isAdminOpen) {
+  if (isAdminRoute) {
+    if (authLoading) {
+      return (
+        <div className="min-h-screen bg-[#090A0B] flex items-center justify-center">
+          <div className="w-7 h-7 border-2 border-[#C7F36B] border-t-transparent rounded-full animate-spin" />
+        </div>
+      );
+    }
+
     return (
       <Suspense fallback={<RouteLoadingFallback />}>
-        {user ? (
+        {isAdmin && user ? (
           <AdminDashboard onBackToHome={handleCloseAdmin} />
         ) : (
           <AdminLogin onBackToHome={handleCloseAdmin} />

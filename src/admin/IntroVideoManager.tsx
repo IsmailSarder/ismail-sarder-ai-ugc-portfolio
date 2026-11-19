@@ -84,16 +84,32 @@ export const IntroVideoManager: React.FC = () => {
         );
       }
 
-      if (previousPath && previousPath !== path) {
-        await introVideoService.deleteStorageFile(STORAGE_BUCKETS.VIDEOS, previousPath);
-      }
-
-      setSettings((prev) => ({
-        ...prev,
+      const nextSettings: IntroVideoSettings = {
+        ...settings,
         video_url: publicUrl,
         video_path: path,
-      }));
-      setSuccessMessage('Introduction video uploaded! Preview it below and click "Save & Apply Changes" to publish.');
+      };
+      setSettings(nextSettings);
+
+      const saveResult = await introVideoService.saveIntroVideoSettings(nextSettings);
+      if (!saveResult.success) {
+        setErrorMessage(
+          saveResult.error ||
+            'Video uploaded to Storage, but database record could not be saved yet. Click "Save & Apply Changes" to retry.'
+        );
+      } else {
+        if (saveResult.settings) {
+          setSettings(saveResult.settings);
+        }
+        if (previousPath && previousPath !== path) {
+          await introVideoService.deleteStorageFile(STORAGE_BUCKETS.VIDEOS, previousPath);
+        }
+        setSuccessMessage(
+          saveResult.syncedWithSupabase
+            ? 'Introduction video uploaded & saved to database! Toggle publish status or edit details below.'
+            : 'Introduction video uploaded & saved locally.'
+        );
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to upload introduction video.';
       setErrorMessage(msg);
@@ -132,16 +148,32 @@ export const IntroVideoManager: React.FC = () => {
         );
       }
 
-      if (previousPath && previousPath !== path) {
-        await introVideoService.deleteStorageFile(STORAGE_BUCKETS.THUMBNAILS, previousPath);
-      }
-
-      setSettings((prev) => ({
-        ...prev,
+      const nextSettings: IntroVideoSettings = {
+        ...settings,
         thumbnail_url: publicUrl,
         thumbnail_path: path,
-      }));
-      setSuccessMessage('Thumbnail uploaded! Preview it below and click "Save & Apply Changes".');
+      };
+      setSettings(nextSettings);
+
+      const saveResult = await introVideoService.saveIntroVideoSettings(nextSettings);
+      if (!saveResult.success) {
+        setErrorMessage(
+          saveResult.error ||
+            'Thumbnail uploaded to Storage, but database record could not be saved yet. Click "Save & Apply Changes" to retry.'
+        );
+      } else {
+        if (saveResult.settings) {
+          setSettings(saveResult.settings);
+        }
+        if (previousPath && previousPath !== path) {
+          await introVideoService.deleteStorageFile(STORAGE_BUCKETS.THUMBNAILS, previousPath);
+        }
+        setSuccessMessage(
+          saveResult.syncedWithSupabase
+            ? 'Thumbnail uploaded & saved to database!'
+            : 'Thumbnail uploaded & saved locally.'
+        );
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to upload thumbnail.';
       setErrorMessage(msg);
@@ -152,17 +184,39 @@ export const IntroVideoManager: React.FC = () => {
   };
 
   const handleRemoveVideo = async () => {
-    if (settings.video_path) {
-      await introVideoService.deleteStorageFile(STORAGE_BUCKETS.VIDEOS, settings.video_path);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    const oldPath = settings.video_path;
+    const nextSettings: IntroVideoSettings = { ...settings, video_url: '', video_path: '' };
+    setSettings(nextSettings);
+
+    if (oldPath) {
+      await introVideoService.deleteStorageFile(STORAGE_BUCKETS.VIDEOS, oldPath);
     }
-    setSettings((prev) => ({ ...prev, video_url: '', video_path: '' }));
+    const saveResult = await introVideoService.saveIntroVideoSettings(nextSettings);
+    if (!saveResult.success && saveResult.error) {
+      setErrorMessage(saveResult.error);
+    } else {
+      setSuccessMessage('Introduction video removed.');
+    }
   };
 
   const handleRemoveThumbnail = async () => {
-    if (settings.thumbnail_path) {
-      await introVideoService.deleteStorageFile(STORAGE_BUCKETS.THUMBNAILS, settings.thumbnail_path);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    const oldPath = settings.thumbnail_path;
+    const nextSettings: IntroVideoSettings = { ...settings, thumbnail_url: '', thumbnail_path: '' };
+    setSettings(nextSettings);
+
+    if (oldPath) {
+      await introVideoService.deleteStorageFile(STORAGE_BUCKETS.THUMBNAILS, oldPath);
     }
-    setSettings((prev) => ({ ...prev, thumbnail_url: '', thumbnail_path: '' }));
+    const saveResult = await introVideoService.saveIntroVideoSettings(nextSettings);
+    if (!saveResult.success && saveResult.error) {
+      setErrorMessage(saveResult.error);
+    } else {
+      setSuccessMessage('Introduction thumbnail removed.');
+    }
   };
 
   const handleResetCopy = () => {
@@ -174,6 +228,49 @@ export const IntroVideoManager: React.FC = () => {
     }));
   };
 
+  const handleTogglePublish = async () => {
+    if (isSaving || isUploadingVideo || isUploadingThumb) return;
+
+    const nextPublished = !settings.is_published;
+    const previousSettings = settings;
+    const nextSettings: IntroVideoSettings = {
+      ...settings,
+      is_published: nextPublished,
+    };
+
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    setSettings(nextSettings);
+    setIsSaving(true);
+
+    try {
+      const result = await introVideoService.saveIntroVideoSettings(nextSettings);
+      if (!result.success) {
+        setSettings(previousSettings);
+        setErrorMessage(result.error || 'Failed to update publish status.');
+      } else {
+        if (result.settings) {
+          setSettings(result.settings);
+        }
+        setSuccessMessage(
+          result.syncedWithSupabase
+            ? nextPublished
+              ? 'Intro Video published to homepage! Existing video & thumbnail preserved.'
+              : 'Intro Video unpublished (hidden from homepage). Existing files preserved.'
+            : nextPublished
+            ? 'Intro Video published locally.'
+            : 'Intro Video unpublished locally.'
+        );
+      }
+    } catch (err: unknown) {
+      setSettings(previousSettings);
+      const msg = err instanceof Error ? err.message : 'Failed to update publish status.';
+      setErrorMessage(msg);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleSave = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setIsSaving(true);
@@ -181,10 +278,14 @@ export const IntroVideoManager: React.FC = () => {
     setSuccessMessage(null);
 
     try {
+      // Preserves existing video_url/video_path/thumbnail_url/thumbnail_path without re-uploading
       const result = await introVideoService.saveIntroVideoSettings(settings);
       if (!result.success && result.error) {
         setErrorMessage(result.error);
       } else {
+        if (result.settings) {
+          setSettings(result.settings);
+        }
         setSuccessMessage(
           result.syncedWithSupabase
             ? `Intro Video settings saved to Supabase! Section is currently ${
@@ -237,10 +338,9 @@ export const IntroVideoManager: React.FC = () => {
         <div className="flex items-center gap-3 shrink-0">
           <button
             type="button"
-            onClick={() =>
-              setSettings((prev) => ({ ...prev, is_published: !prev.is_published }))
-            }
-            className={`px-4 py-2.5 rounded-lg border text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer ${
+            disabled={isSaving || isUploadingVideo || isUploadingThumb}
+            onClick={handleTogglePublish}
+            className={`px-4 py-2.5 rounded-lg border text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer disabled:opacity-50 ${
               settings.is_published
                 ? 'bg-[#C7F36B]/15 border-[#C7F36B] text-[#C7F36B]'
                 : 'bg-[#111514] border-[#2A332B] text-[#A0A89F] hover:text-[#F5F5F0]'
@@ -249,12 +349,12 @@ export const IntroVideoManager: React.FC = () => {
             {settings.is_published ? (
               <>
                 <Eye className="w-4 h-4" />
-                <span>Section Published</span>
+                <span>{isSaving ? 'Updating...' : 'Section Published'}</span>
               </>
             ) : (
               <>
                 <EyeOff className="w-4 h-4" />
-                <span>Section Hidden</span>
+                <span>{isSaving ? 'Updating...' : 'Section Hidden'}</span>
               </>
             )}
           </button>
@@ -269,6 +369,7 @@ export const IntroVideoManager: React.FC = () => {
             <span className="font-medium">{successMessage}</span>
           </div>
           <button
+            type="button"
             onClick={() => setSuccessMessage(null)}
             className="p-1 text-emerald-400 hover:text-emerald-200 cursor-pointer"
           >
@@ -287,6 +388,7 @@ export const IntroVideoManager: React.FC = () => {
             </div>
           </div>
           <button
+            type="button"
             onClick={() => setErrorMessage(null)}
             className="p-1 text-rose-400 hover:text-rose-200 cursor-pointer"
           >
@@ -363,9 +465,17 @@ export const IntroVideoManager: React.FC = () => {
                 <input
                   type="url"
                   value={settings.video_url}
-                  onChange={(e) =>
-                    setSettings((prev) => ({ ...prev, video_url: e.target.value, video_path: '' }))
-                  }
+                  onChange={(e) => {
+                    const nextUrl = e.target.value;
+                    setSettings((prev) => ({
+                      ...prev,
+                      video_url: nextUrl,
+                      video_path:
+                        prev.video_path && nextUrl.includes(prev.video_path)
+                          ? prev.video_path
+                          : '',
+                    }));
+                  }}
                   placeholder="https://.../creator-intro.mp4"
                   className="w-full pl-8 pr-3 py-2.5 rounded-lg bg-[#171C19] border border-[#2A332B] text-xs text-[#F5F5F0] focus:outline-none focus:border-[#C7F36B]"
                 />
@@ -435,13 +545,17 @@ export const IntroVideoManager: React.FC = () => {
                 <input
                   type="url"
                   value={settings.thumbnail_url}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    const nextUrl = e.target.value;
                     setSettings((prev) => ({
                       ...prev,
-                      thumbnail_url: e.target.value,
-                      thumbnail_path: '',
-                    }))
-                  }
+                      thumbnail_url: nextUrl,
+                      thumbnail_path:
+                        prev.thumbnail_path && nextUrl.includes(prev.thumbnail_path)
+                          ? prev.thumbnail_path
+                          : '',
+                    }));
+                  }}
                   placeholder="https://.../intro-thumbnail.jpg"
                   className="w-full pl-8 pr-3 py-2.5 rounded-lg bg-[#171C19] border border-[#2A332B] text-xs text-[#F5F5F0] focus:outline-none focus:border-[#C7F36B]"
                 />

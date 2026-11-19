@@ -29,6 +29,7 @@ const PORTFOLIO_CATEGORIES = [
 export const Portfolio = forwardRef<PortfolioRef, PortfolioProps>(
   ({ onOpenInquiryWithProject, refreshTrigger }, ref) => {
     const [selectedCategory, setSelectedCategory] = useState<string>('All Work');
+    const [projectOrigin, setProjectOrigin] = useState<'all' | 'client' | 'concept'>('all');
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [activeModalItem, setActiveModalItem] = useState<PortfolioItem | null>(null);
 
@@ -47,6 +48,7 @@ export const Portfolio = forwardRef<PortfolioRef, PortfolioProps>(
         } else {
           setSelectedCategory(category);
         }
+        setProjectOrigin('all');
         setSearchQuery('');
         const el = document.getElementById('portfolio');
         if (el) {
@@ -84,7 +86,7 @@ export const Portfolio = forwardRef<PortfolioRef, PortfolioProps>(
             angle: p.angle || p.category,
             overview: p.description,
             isConcept: !p.brand_name,
-            targetMarket: 'USA, UK, UAE, Canada & Europe',
+            targetMarket: 'USA, UK, UAE, Canada, Australia & Europe',
           })
         ),
       []
@@ -131,7 +133,7 @@ export const Portfolio = forwardRef<PortfolioRef, PortfolioProps>(
               angle: p.angle || p.category,
               overview: p.description,
               isConcept: !p.brand_name,
-              targetMarket: 'USA, UK, UAE, Canada & Europe',
+              targetMarket: 'USA, UK, UAE, Canada, Australia & Europe',
             });
           });
           setProjects(mappedItems);
@@ -142,9 +144,23 @@ export const Portfolio = forwardRef<PortfolioRef, PortfolioProps>(
       };
     }, [refreshTrigger]);
 
-    // Search & Category Filtering
+    const originCounts = useMemo(() => {
+      const clientCount = projects.filter((p) => Boolean(p.brand_name || p.brandName)).length;
+      const conceptCount = projects.length - clientCount;
+      return {
+        all: projects.length,
+        client: clientCount,
+        concept: conceptCount,
+      };
+    }, [projects]);
+
+    // Origin, Category & Search Filtering
     const filteredProjects = useMemo(() => {
       return projects.filter((project) => {
+        const isClient = Boolean(project.brand_name || project.brandName);
+        if (projectOrigin === 'client' && !isClient) return false;
+        if (projectOrigin === 'concept' && isClient) return false;
+
         let matchesCategory = false;
         const cat = project.category;
 
@@ -200,7 +216,7 @@ export const Portfolio = forwardRef<PortfolioRef, PortfolioProps>(
 
         return matchesCategory && matchesSearch;
       });
-    }, [projects, selectedCategory, searchQuery]);
+    }, [projects, projectOrigin, selectedCategory, searchQuery]);
 
     const handleOrderSimilar = (title: string) => {
       if (onOpenInquiryWithProject) {
@@ -215,6 +231,7 @@ export const Portfolio = forwardRef<PortfolioRef, PortfolioProps>(
 
     const handleResetFilters = () => {
       setSelectedCategory('All Work');
+      setProjectOrigin('all');
       setSearchQuery('');
     };
 
@@ -237,7 +254,7 @@ export const Portfolio = forwardRef<PortfolioRef, PortfolioProps>(
 
             <div className="max-w-md">
               <p className="text-xs sm:text-sm text-[#A0A89F] leading-relaxed">
-                Real creative work produced for e-commerce verticals across beauty, fashion, consumer tech, and CGI product commercials. Each project breaks down target audience, creative concept, hook, and deliverables.
+                Every showcase below is explicitly classified as a <strong className="text-[#F5F5F0]">Concept Project</strong> (studio demonstrations) or a <strong className="text-[#F5F5F0]">Client Project</strong> with brand attribution, breaking down target audience, hook, and deliverables.
               </p>
             </div>
           </div>
@@ -249,6 +266,39 @@ export const Portfolio = forwardRef<PortfolioRef, PortfolioProps>(
             onOrderSimilar={handleOrderSimilar}
           />
 
+          {/* Concept vs Client Origin Segmentation Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 pb-4 border-b border-[#2A332B]">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-mono uppercase tracking-wider text-[#A0A89F] mr-1">
+                Project Type:
+              </span>
+              {(
+                [
+                  { id: 'all', label: `All Showcase (${originCounts.all})` },
+                  { id: 'concept', label: `Concept Projects (${originCounts.concept})` },
+                  { id: 'client', label: `Client Projects (${originCounts.client})` },
+                ] as const
+              ).map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setProjectOrigin(tab.id)}
+                  className={`px-3 py-1.5 text-xs font-mono rounded-md transition-colors cursor-pointer min-h-[38px] ${
+                    projectOrigin === tab.id
+                      ? 'bg-[#C7F36B]/15 text-[#C7F36B] border border-[#C7F36B]/60 font-bold'
+                      : 'bg-[#171C19] text-[#A0A89F] hover:text-[#F5F5F0] border border-[#2A332B]'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            <span className="text-[11px] font-mono text-[#A0A89F]">
+              Client commissions under NDA are kept private
+            </span>
+          </div>
+
           {/* Search Bar & Category Controls Row */}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8 sm:mb-10">
             {/* Category Filter Segments */}
@@ -256,8 +306,9 @@ export const Portfolio = forwardRef<PortfolioRef, PortfolioProps>(
               {PORTFOLIO_CATEGORIES.map((cat) => (
                 <button
                   key={cat}
+                  type="button"
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-3.5 sm:px-4 py-2 text-xs font-medium font-heading rounded-md transition-all duration-200 whitespace-nowrap shrink-0 cursor-pointer min-h-[38px] flex items-center ${
+                  className={`px-3.5 sm:px-4 py-2 text-xs font-medium font-heading rounded-md transition-all duration-200 whitespace-nowrap shrink-0 cursor-pointer min-h-[42px] flex items-center ${
                     selectedCategory === cat
                       ? 'bg-[#C7F36B] text-[#090A0B] font-bold shadow-sm shadow-[#C7F36B]/20'
                       : 'bg-[#171C19] text-[#A0A89F] hover:text-[#F5F5F0] hover:bg-[#1e2521] border border-[#2A332B]'
@@ -276,10 +327,11 @@ export const Portfolio = forwardRef<PortfolioRef, PortfolioProps>(
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search case studies..."
-                className="w-full pl-9 pr-8 py-2 text-xs rounded-md bg-[#171C19] border border-[#2A332B] text-[#F5F5F0] placeholder-[#A0A89F]/60 focus:outline-none focus:border-[#C7F36B] transition-colors"
+                className="w-full pl-9 pr-8 py-2.5 text-xs rounded-md bg-[#171C19] border border-[#2A332B] text-[#F5F5F0] placeholder-[#A0A89F]/60 focus:outline-none focus:border-[#C7F36B] transition-colors min-h-[42px]"
               />
               {searchQuery && (
                 <button
+                  type="button"
                   onClick={() => setSearchQuery('')}
                   className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-[#A0A89F] hover:text-[#F5F5F0] cursor-pointer"
                   aria-label="Clear search query"
@@ -292,23 +344,30 @@ export const Portfolio = forwardRef<PortfolioRef, PortfolioProps>(
 
           {/* Zero Results State */}
           {filteredProjects.length === 0 ? (
-            <div className="p-12 text-center bg-[#171C19] border border-[#2A332B] rounded-xl space-y-4">
+            <div className="p-10 sm:p-12 text-center bg-[#171C19] border border-[#2A332B] rounded-xl space-y-4">
               <div className="w-12 h-12 rounded-full bg-[#111514] border border-[#2A332B] text-[#A0A89F] flex items-center justify-center mx-auto">
                 <Search className="w-5 h-5" />
               </div>
-              <div>
+              <div className="max-w-lg mx-auto">
                 <h3 className="text-base font-bold font-heading text-[#F5F5F0]">
-                  No projects found matching &ldquo;{searchQuery || selectedCategory}&rdquo;
+                  {projectOrigin === 'client' && originCounts.client === 0
+                    ? 'Public Client Campaigns Under NDA'
+                    : `No projects found matching "${searchQuery || selectedCategory}"`}
                 </h3>
-                <p className="text-xs text-[#A0A89F] mt-1">
-                  Try switching categories or resetting your search filters.
+                <p className="text-xs text-[#A0A89F] mt-1.5 leading-relaxed">
+                  {projectOrigin === 'client' && originCounts.client === 0
+                    ? 'Active commercial client deliverables are omitted from public listing under confidentiality agreements or pending client showcase approval. Browse Concept Projects to inspect production quality or inquire for private client samples.'
+                    : 'Try switching categories, toggling project types, or resetting your search filters.'}
                 </p>
               </div>
               <button
+                type="button"
                 onClick={handleResetFilters}
-                className="px-4 py-2 text-xs font-semibold text-[#090A0B] bg-[#C7F36B] hover:bg-[#d6ff7d] rounded-md transition-colors cursor-pointer"
+                className="px-4 py-2.5 text-xs font-semibold text-[#090A0B] bg-[#C7F36B] hover:bg-[#d6ff7d] rounded-md transition-colors cursor-pointer min-h-[42px]"
               >
-                Reset Filters
+                {projectOrigin === 'client' && originCounts.client === 0
+                  ? 'View Concept Showcase'
+                  : 'Reset Filters'}
               </button>
             </div>
           ) : (

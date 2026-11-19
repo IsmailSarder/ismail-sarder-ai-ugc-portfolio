@@ -5,6 +5,17 @@ import {
   BUCKET_THUMBNAILS,
   SupabaseProject,
 } from './supabase.ts';
+import { isAuthorizedAdminUser } from '../context/AuthContext.tsx';
+
+async function requireAdminSession(): Promise<void> {
+  const {
+    data: { session },
+    error,
+  } = await supabase.auth.getSession();
+  if (error || !session || !isAuthorizedAdminUser(session.user)) {
+    throw new Error('Unauthorized: Admin UUID authentication required.');
+  }
+}
 
 export interface UploadProgress {
   status: 'idle' | 'uploading-thumbnail' | 'uploading-video' | 'saving' | 'success' | 'error';
@@ -48,6 +59,7 @@ export async function getAllAdminProjects(): Promise<{
   error: string | null;
 }> {
   try {
+    await requireAdminSession();
     const { data, error } = await supabase
       .from(TABLE_PROJECTS)
       .select('*')
@@ -70,6 +82,7 @@ export async function uploadMediaFile(
   file: File,
   bucket: typeof BUCKET_VIDEOS | typeof BUCKET_THUMBNAILS
 ): Promise<{ url: string; path: string }> {
+  await requireAdminSession();
   // Sanitize filename
   const cleanName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
   const filePath = `${Date.now()}_${cleanName}`;
@@ -103,6 +116,7 @@ export async function saveProject(
   projectId?: string
 ): Promise<{ data: SupabaseProject | null; error: string | null }> {
   try {
+    await requireAdminSession();
     if (projectId) {
       // Update
       const { data, error } = await supabase
@@ -148,6 +162,7 @@ export async function deleteProject(
   thumbnailPath?: string
 ): Promise<{ success: boolean; error: string | null }> {
   try {
+    await requireAdminSession();
     // 1. Delete row from table
     const { error: dbError } = await supabase
       .from(TABLE_PROJECTS)

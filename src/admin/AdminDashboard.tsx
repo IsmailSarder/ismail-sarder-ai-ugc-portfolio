@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.tsx';
-import { PortfolioProject, Inquiry } from '../lib/supabase.ts';
+import { PortfolioProject, Inquiry, activeSupabaseUrl } from '../lib/supabase.ts';
 import { portfolioService } from '../lib/portfolioService.ts';
 import { ProjectFormModal } from './ProjectFormModal.tsx';
-import { SUPABASE_SETUP_SQL } from '../lib/schemaSql.ts';
+import { getSupabaseSetupSql } from '../lib/schemaSql.ts';
 import { Logo } from '../components/Logo.tsx';
 import { ProfilePictureManager } from './ProfilePictureManager.tsx';
 import { IntroVideoManager } from './IntroVideoManager.tsx';
@@ -56,7 +56,14 @@ type TabType =
   | 'settings';
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToHome }) => {
-  const { user, signOut } = useAuth();
+  const {
+    user,
+    isAdmin,
+    loading: authLoading,
+    adminUuidConfigured,
+    configuredAdminUuid,
+    signOut,
+  } = useAuth();
   const { effectiveProfileImage } = useProfile();
 
   const [activeTab, setActiveTab] = useState<TabType>('overview');
@@ -74,15 +81,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToHome }) 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<PortfolioProject | null>(null);
   const [deletingProjectId, setDeletingProjectId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [previewingVideoProject, setPreviewingVideoProject] = useState<PortfolioProject | null>(null);
 
-  // Copy SQL State
+  // Copy SQL & UUID State
   const [copiedSql, setCopiedSql] = useState(false);
+  const [copiedUuid, setCopiedUuid] = useState(false);
 
   // Inquiries Search
   const [inquirySearch, setInquirySearch] = useState('');
 
+  const dynamicSetupSql = getSupabaseSetupSql(configuredAdminUuid || user?.id);
+
   const loadData = async () => {
+    if (!isAdmin) return;
     setLoading(true);
     setErrorNotice(null);
 
@@ -111,8 +123,37 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToHome }) 
   };
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (isAdmin) {
+      loadData();
+    }
+  }, [isAdmin]);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[#090A0B] flex items-center justify-center">
+        <div className="w-7 h-7 border-2 border-[#C7F36B] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!isAdmin || !user) {
+    return (
+      <div className="min-h-screen bg-[#090A0B] text-[#F5F5F0] flex flex-col items-center justify-center p-6 text-center space-y-4">
+        <AlertCircle className="w-10 h-10 text-rose-400" />
+        <h1 className="text-xl font-bold font-heading">Unauthorized Access</h1>
+        <p className="text-xs text-[#A0A89F] max-w-sm">
+          Access to the Studio Admin Dashboard is restricted exclusively to the authorized Supabase Admin UUID.
+        </p>
+        <button
+          type="button"
+          onClick={onBackToHome}
+          className="px-4 py-2 text-xs font-bold text-[#090A0B] bg-[#C7F36B] rounded-lg cursor-pointer"
+        >
+          Return to Public Portfolio
+        </button>
+      </div>
+    );
+  }
 
   // Project Actions
   const handleTogglePublish = async (project: PortfolioProject) => {
@@ -139,10 +180,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToHome }) 
   };
 
   const handleDeleteProject = async (project: PortfolioProject) => {
-    if (!window.confirm(`Are you sure you want to permanently delete "${project.title}"? This will also remove the video and thumbnail from Supabase Storage.`)) {
+    if (confirmDeleteId !== project.id) {
+      setConfirmDeleteId(project.id);
       return;
     }
-
+    setConfirmDeleteId(null);
     setDeletingProjectId(project.id);
     const { error } = await portfolioService.deleteProject(
       project.id,
@@ -152,7 +194,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToHome }) 
     setDeletingProjectId(null);
 
     if (error) {
-      alert(`Failed to delete: ${error.message}`);
+      setErrorNotice(`Failed to delete "${project.title}": ${error.message}`);
     } else {
       setProjects((prev) => prev.filter((p) => p.id !== project.id));
     }
@@ -161,22 +203,41 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToHome }) 
   // Inquiry Actions
   const handleToggleInquiryRead = async (inquiry: Inquiry) => {
     const newStatus = !inquiry.is_read;
-    await portfolioService.toggleInquiryRead(inquiry.id, newStatus);
+    const { error } = await portfolioService.toggleInquiryRead(inquiry.id, newStatus);
+    if (error) {
+      setErrorNotice(`Could not update inquiry status: ${error.message}`);
+      return;
+    }
     setInquiries((prev) =>
       prev.map((i) => (i.id === inquiry.id ? { ...i, is_read: newStatus } : i))
     );
   };
 
   const handleDeleteInquiry = async (id: string) => {
-    if (!window.confirm('Delete this client inquiry permanently?')) return;
-    await portfolioService.deleteInquiry(id);
+    if (confirmDeleteId !== id) {
+      setConfirmDeleteId(id);
+      return;
+    }
+    setConfirmDeleteId(null);
+    const { error } = await portfolioService.deleteInquiry(id);
+    if (error) {
+      setErrorNotice(`Failed to delete inquiry: ${error.message}`);
+      return;
+    }
     setInquiries((prev) => prev.filter((i) => i.id !== id));
   };
 
   const handleCopySql = () => {
-    navigator.clipboard.writeText(SUPABASE_SETUP_SQL);
+    navigator.clipboard.writeText(dynamicSetupSql);
     setCopiedSql(true);
     setTimeout(() => setCopiedSql(false), 2500);
+  };
+
+  const handleCopyUuid = () => {
+    if (!user?.id) return;
+    navigator.clipboard.writeText(user.id);
+    setCopiedUuid(true);
+    setTimeout(() => setCopiedUuid(false), 2500);
   };
 
   // Calculations for Overview Stats
@@ -902,15 +963,36 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToHome }) 
                           <Edit className="w-3.5 h-3.5" />
                         </button>
 
-                        {/* Delete */}
-                        <button
-                          onClick={() => handleDeleteProject(p)}
-                          disabled={deletingProjectId === p.id}
-                          className="p-1.5 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded border border-[#2A332B] cursor-pointer"
-                          title="Delete project"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        {/* Delete with inline confirmation */}
+                        {confirmDeleteId === p.id ? (
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteProject(p)}
+                              disabled={deletingProjectId === p.id}
+                              className="px-2 py-1 text-[10px] font-bold bg-rose-500 text-white rounded cursor-pointer"
+                            >
+                              Confirm
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setConfirmDeleteId(null)}
+                              className="px-2 py-1 text-[10px] text-[#A0A89F] hover:text-[#F5F5F0] border border-[#2A332B] rounded cursor-pointer"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteProject(p)}
+                            disabled={deletingProjectId === p.id}
+                            className="p-1.5 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded border border-[#2A332B] cursor-pointer"
+                            title="Delete project"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -1025,12 +1107,33 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToHome }) 
                             >
                               {inq.is_read ? 'Mark Unread' : 'Mark Read'}
                             </button>
-                            <button
-                              onClick={() => handleDeleteInquiry(inq.id)}
-                              className="p-1.5 text-rose-400 hover:text-rose-300 rounded bg-[#171C19] border border-[#2A332B] cursor-pointer"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                            {confirmDeleteId === inq.id ? (
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteInquiry(inq.id)}
+                                  className="px-2 py-1 text-[10px] font-bold bg-rose-500 text-white rounded cursor-pointer"
+                                >
+                                  Confirm
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setConfirmDeleteId(null)}
+                                  className="px-2 py-1 text-[10px] text-[#A0A89F] border border-[#2A332B] rounded cursor-pointer"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteInquiry(inq.id)}
+                                className="p-1.5 text-rose-400 hover:text-rose-300 rounded bg-[#171C19] border border-[#2A332B] cursor-pointer"
+                                title="Delete inquiry"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
                           </div>
                         </div>
 
@@ -1107,10 +1210,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToHome }) 
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <h3 className="text-base font-bold font-heading text-[#F5F5F0]">
-                    Supabase SQL Schema & Storage Setup
+                    Supabase SQL Schema &amp; Admin UUID RLS Setup
                   </h3>
                   <p className="text-xs text-[#A0A89F] mt-1 leading-relaxed">
-                    Execute this script in your Supabase SQL Editor to provision the <code className="text-[#C7F36B]">portfolio_projects</code> and <code className="text-[#C7F36B]">inquiries</code> tables, RLS security policies, and storage buckets.
+                    Execute this non-destructive script in your Supabase SQL Editor to lock all database writes, inquiry reads, and storage uploads strictly to your Admin UUID (<code className="text-[#C7F36B]">{configuredAdminUuid || user.id}</code>).
                   </p>
                 </div>
 
@@ -1138,15 +1241,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToHome }) 
                 <ol className="list-decimal pl-4 space-y-1 text-[#A0A89F]">
                   <li>Open the <a href="https://supabase.com/dashboard/project/ogzrhiwvgahjnazeuxmg/sql" target="_blank" rel="noopener noreferrer" className="text-[#C7F36B] hover:underline">Supabase SQL Editor</a>.</li>
                   <li>Click <strong>&ldquo;New query&rdquo;</strong>.</li>
-                  <li>Paste the SQL script below and click <strong>&ldquo;Run&rdquo;</strong>.</li>
-                  <li>All tables, storage buckets (<code className="text-[#F5F5F0]">portfolio-videos</code> & <code className="text-[#F5F5F0]">portfolio-thumbnails</code>), and RLS security rules will be configured automatically!</li>
+                  <li>Paste the SQL script below (pre-configured with your Admin UUID) and click <strong>&ldquo;Run&rdquo;</strong>.</li>
+                  <li>Tables, storage buckets (<code className="text-[#F5F5F0]">portfolio-videos</code>, <code className="text-[#F5F5F0]">portfolio-thumbnails</code>, <code className="text-[#F5F5F0]">profile-images</code>), and <code className="text-[#F5F5F0]">auth.uid()</code> RLS security rules will be enforced cleanly.</li>
                 </ol>
               </div>
 
               {/* Code viewer */}
               <div className="relative">
                 <pre className="p-4 rounded-xl bg-[#090A0B] border border-[#2A332B] text-[11px] font-mono text-[#A0A89F] overflow-x-auto max-h-[380px] leading-relaxed">
-                  {SUPABASE_SETUP_SQL}
+                  {dynamicSetupSql}
                 </pre>
               </div>
             </div>
@@ -1156,30 +1259,51 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToHome }) 
           {activeTab === 'settings' && (
             <div className="bg-[#111514] border border-[#2A332B] rounded-xl p-6 space-y-6 text-xs">
               <h3 className="text-base font-bold font-heading text-[#F5F5F0]">
-                Supabase Connection & Project Settings
+                Supabase Connection &amp; Admin UUID Security
               </h3>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="p-4 rounded-lg bg-[#171C19] border border-[#2A332B] space-y-1">
-                  <span className="text-[10px] font-mono uppercase text-[#A0A89F]">Project URL</span>
+                  <span className="text-[10px] font-mono uppercase text-[#A0A89F]">Connected Supabase URL</span>
                   <p className="text-xs font-mono text-[#F5F5F0] truncate">
-                    https://ogzrhiwvgahjnazeuxmg.supabase.co
+                    {activeSupabaseUrl}
                   </p>
                 </div>
 
                 <div className="p-4 rounded-lg bg-[#171C19] border border-[#2A332B] space-y-1">
-                  <span className="text-[10px] font-mono uppercase text-[#A0A89F]">Publishable Key</span>
-                  <p className="text-xs font-mono text-[#F5F5F0] truncate">
-                    sb_publishable_EzrsAx5vS0gkTPXTNzW-NA_hFVil_pw
+                  <span className="text-[10px] font-mono uppercase text-[#A0A89F]">Authorized Admin Email</span>
+                  <p className="text-xs font-mono text-[#C7F36B] truncate">
+                    {user.email}
                   </p>
+                </div>
+
+                <div className="p-4 rounded-lg bg-[#171C19] border border-[#2A332B] space-y-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[10px] font-mono uppercase text-[#A0A89F]">Admin User UUID</span>
+                    <button
+                      type="button"
+                      onClick={handleCopyUuid}
+                      className="text-[10px] font-mono text-[#C7F36B] hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      {copiedUuid ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                      <span>{copiedUuid ? 'Copied' : 'Copy UUID'}</span>
+                    </button>
+                  </div>
+                  <p className="text-xs font-mono text-[#F5F5F0] truncate" title={user.id}>
+                    {user.id}
+                  </p>
+                  <span className="block text-[10px] font-mono text-[#A0A89F]">
+                    {adminUuidConfigured
+                      ? 'VITE_ADMIN_UUID env check active'
+                      : 'Tip: Set VITE_ADMIN_UUID in .env to lock frontend to this UUID'}
+                  </span>
                 </div>
               </div>
 
               <div className="pt-4 border-t border-[#2A332B] space-y-3">
-                <h4 className="font-bold text-[#F5F5F0]">Security & Admin Management</h4>
+                <h4 className="font-bold text-[#F5F5F0]">Security &amp; RLS Enforcement</h4>
                 <p className="text-[#A0A89F] leading-relaxed">
-                  Only authenticated users can upload media, edit projects, or read client inquiries.
-                  Public visitors only have read-only access to published projects via Row Level Security (RLS).
+                  Studio writes, storage uploads, and client inquiry reads are protected by Supabase <code className="text-[#F5F5F0]">signInWithPassword</code> JWT verification combined with PostgreSQL Row Level Security enforcing <code className="text-[#C7F36B]">auth.uid()</code> against your Admin UUID. Public visitors only have read-only access to published projects and insert-only access for valid inquiries.
                 </p>
               </div>
             </div>

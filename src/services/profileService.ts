@@ -1,4 +1,17 @@
 import { supabase, isSupabaseConfigured, BUCKET_PROFILE_IMAGES, TABLE_PROFILE_SETTINGS } from '../lib/supabase.ts';
+import { isAuthorizedAdminUser } from '../context/AuthContext.tsx';
+
+async function requireAdminSession(): Promise<Error | null> {
+  if (!supabase || !isSupabaseConfigured()) return null;
+  const {
+    data: { session },
+    error,
+  } = await supabase.auth.getSession();
+  if (error || !session || !isAuthorizedAdminUser(session.user)) {
+    return new Error('Unauthorized: Admin UUID authentication is required to modify profile media.');
+  }
+  return null;
+}
 
 export interface ProfileSettings {
   id: string;
@@ -83,6 +96,10 @@ export const profileService = {
     let uploadedPath = filePath;
 
     if (supabase && isSupabaseConfigured()) {
+      const authError = await requireAdminSession();
+      if (authError) {
+        return { publicUrl: '', path: '', error: authError };
+      }
       try {
         if (onProgress) onProgress(45);
 
@@ -109,20 +126,42 @@ export const profileService = {
         uploadedUrl = publicUrlData.publicUrl;
         uploadedPath = uploadData?.path || filePath;
 
-        // Upsert into profile_settings table
-        const { error: dbError } = await supabase
+        // Upsert into profile_settings table (with schema-cache fallback if full_name/title columns aren't migrated yet)
+        const nowIso = new Date().toISOString();
+        let { error: dbError } = await supabase
           .from(TABLE_PROFILE_SETTINGS)
-          .upsert({
-            id: 'primary_profile',
-            full_name: 'Ismail Sarder',
-            title: 'AI UGC Ad Creator & Creative Strategist',
-            profile_image_url: uploadedUrl,
-            profile_image_path: uploadedPath,
-            updated_at: new Date().toISOString(),
-          });
+          .upsert(
+            {
+              id: 'primary_profile',
+              full_name: 'Ismail Sarder',
+              title: 'AI UGC Ad Creator & Creative Strategist',
+              profile_image_url: uploadedUrl,
+              profile_image_path: uploadedPath,
+              updated_at: nowIso,
+            },
+            { onConflict: 'id' }
+          );
+
+        if (
+          dbError &&
+          (dbError.code === 'PGRST204' ||
+            (dbError.message || '').toLowerCase().includes('schema cache') ||
+            (dbError.message || '').toLowerCase().includes('column'))
+        ) {
+          const minimalResult = await supabase.from(TABLE_PROFILE_SETTINGS).upsert(
+            {
+              id: 'primary_profile',
+              profile_image_url: uploadedUrl,
+              profile_image_path: uploadedPath,
+              updated_at: nowIso,
+            },
+            { onConflict: 'id' }
+          );
+          dbError = minimalResult.error;
+        }
 
         if (dbError) {
-          console.warn('Supabase profile_settings db update warning (table may need creation):', dbError);
+          console.warn('Supabase profile_settings db update warning:', dbError);
         }
 
         if (onProgress) onProgress(100);
@@ -160,22 +199,47 @@ export const profileService = {
    */
   async deleteProfileImage(currentPath?: string | null): Promise<{ success: boolean; error: Error | null }> {
     if (supabase && isSupabaseConfigured()) {
+      const authError = await requireAdminSession();
+      if (authError) {
+        return { success: false, error: authError };
+      }
       try {
         if (currentPath) {
           await supabase.storage.from(BUCKET_PROFILE_IMAGES).remove([currentPath]);
         }
 
-        // Reset profile_settings record
-        await supabase
+        // Reset profile_settings record (with schema-cache fallback)
+        const nowIso = new Date().toISOString();
+        const { error: resetError } = await supabase
           .from(TABLE_PROFILE_SETTINGS)
-          .upsert({
-            id: 'primary_profile',
-            full_name: 'Ismail Sarder',
-            title: 'AI UGC Ad Creator & Creative Strategist',
-            profile_image_url: null,
-            profile_image_path: null,
-            updated_at: new Date().toISOString(),
-          });
+          .upsert(
+            {
+              id: 'primary_profile',
+              full_name: 'Ismail Sarder',
+              title: 'AI UGC Ad Creator & Creative Strategist',
+              profile_image_url: null,
+              profile_image_path: null,
+              updated_at: nowIso,
+            },
+            { onConflict: 'id' }
+          );
+
+        if (
+          resetError &&
+          (resetError.code === 'PGRST204' ||
+            (resetError.message || '').toLowerCase().includes('schema cache') ||
+            (resetError.message || '').toLowerCase().includes('column'))
+        ) {
+          await supabase.from(TABLE_PROFILE_SETTINGS).upsert(
+            {
+              id: 'primary_profile',
+              profile_image_url: null,
+              profile_image_path: null,
+              updated_at: nowIso,
+            },
+            { onConflict: 'id' }
+          );
+        }
       } catch (err: unknown) {
         console.warn('Failed to delete profile picture in Supabase:', err);
       }

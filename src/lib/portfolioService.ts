@@ -1,4 +1,15 @@
 import { supabase, PortfolioProject, Inquiry, STORAGE_BUCKETS } from './supabase.ts';
+import { isAuthorizedAdminUser } from '../context/AuthContext.tsx';
+
+async function requireAdminSession(): Promise<void> {
+  const {
+    data: { session },
+    error,
+  } = await supabase.auth.getSession();
+  if (error || !session || !isAuthorizedAdminUser(session.user)) {
+    throw new Error('Unauthorized: valid Admin UUID authentication is required.');
+  }
+}
 
 // Initial default projects to show only if Supabase table is temporarily unreachable
 export const DEFAULT_INITIAL_PROJECTS: PortfolioProject[] = [
@@ -180,6 +191,7 @@ export const portfolioService = {
   // Admin: Fetch all projects including drafts
   async getAllProjectsAdmin(): Promise<{ data: PortfolioProject[]; error: Error | null }> {
     try {
+      await requireAdminSession();
       const { data, error } = await supabase
         .from('portfolio_projects')
         .select('*')
@@ -199,6 +211,7 @@ export const portfolioService = {
     folder: string = 'media'
   ): Promise<{ path: string; publicUrl: string; error: Error | null }> {
     try {
+      await requireAdminSession();
       const fileExt = file.name.split('.').pop()?.toLowerCase() || 'bin';
       const cleanName = file.name
         .substring(0, file.name.lastIndexOf('.'))
@@ -228,6 +241,7 @@ export const portfolioService = {
   async deleteFile(bucket: string, path: string): Promise<void> {
     if (!path) return;
     try {
+      await requireAdminSession();
       await supabase.storage.from(bucket).remove([path]);
     } catch (err) {
       console.warn(`Failed to delete storage file from ${bucket}:`, err);
@@ -244,6 +258,7 @@ export const portfolioService = {
     };
 
     try {
+      await requireAdminSession();
       const { data, error } = await supabase
         .from('portfolio_projects')
         .insert([normalizedPayload])
@@ -298,6 +313,7 @@ export const portfolioService = {
     };
 
     try {
+      await requireAdminSession();
       const { data, error } = await supabase
         .from('portfolio_projects')
         .update(normalizedPayload)
@@ -356,6 +372,7 @@ export const portfolioService = {
     thumbnailPath?: string
   ): Promise<{ error: Error | null }> {
     try {
+      await requireAdminSession();
       // Clean up storage objects
       if (videoPath) {
         await this.deleteFile(STORAGE_BUCKETS.VIDEOS, videoPath);
@@ -392,9 +409,10 @@ export const portfolioService = {
     return this.updateProject(id, { display_order: newOrder });
   },
 
-  // Inquiries (Synced with project_inquiries table + local fallback)
+  // Inquiries (Admin-only read, synced with project_inquiries table + local fallback)
   async getInquiries(): Promise<{ data: Inquiry[]; error: Error | null }> {
     try {
+      await requireAdminSession();
       const primary = await supabase
         .from('project_inquiries')
         .select('*')
@@ -447,6 +465,7 @@ export const portfolioService = {
 
   async toggleInquiryRead(id: string, isRead: boolean): Promise<{ error: Error | null }> {
     try {
+      await requireAdminSession();
       // Update local fallback cache if present
       if (typeof window !== 'undefined') {
         try {
@@ -483,6 +502,7 @@ export const portfolioService = {
 
   async deleteInquiry(id: string): Promise<{ error: Error | null }> {
     try {
+      await requireAdminSession();
       if (typeof window !== 'undefined') {
         try {
           const raw = localStorage.getItem('local_project_inquiries');
