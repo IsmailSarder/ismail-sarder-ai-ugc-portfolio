@@ -264,6 +264,12 @@ const ROW_IDS = {
   TESTIMONIALS: 'testimonials_config',
 } as const;
 
+const ROW_UUID_FALLBACKS: Record<string, string> = {
+  [ROW_IDS.SERVICES]: '00000000-0000-4000-8000-000000000003',
+  [ROW_IDS.CASE_STUDIES]: '00000000-0000-4000-8000-000000000004',
+  [ROW_IDS.TESTIMONIALS]: '00000000-0000-4000-8000-000000000005',
+};
+
 const LOCAL_KEYS = {
   SERVICES: 'ismail_studio_services_v1',
   CASE_STUDIES: 'ismail_studio_case_studies_v1',
@@ -293,18 +299,20 @@ function writeLocalJson<T>(key: string, data: T): void {
 async function fetchRowPayload<T>(rowId: string): Promise<T | null> {
   if (!supabase || !isSupabaseConfigured()) return null;
   try {
+    const uuidFallback = ROW_UUID_FALLBACKS[rowId];
     const { data, error } = await supabase
       .from(TABLE_PROFILE_SETTINGS)
       .select('*')
-      .eq('id', rowId)
-      .maybeSingle();
+      .limit(20);
 
-    if (error || !data) return null;
+    if (error || !Array.isArray(data)) return null;
+    const matched = data.find((r) => r.id === rowId || (uuidFallback && r.id === uuidFallback));
+    if (!matched) return null;
     const raw =
-      typeof data.title === 'string' && data.title.trim().length > 0
-        ? data.title
-        : typeof data.profile_image_path === 'string'
-        ? data.profile_image_path
+      typeof matched.title === 'string' && matched.title.trim().length > 0
+        ? matched.title
+        : typeof matched.profile_image_path === 'string'
+        ? matched.profile_image_path
         : '';
     if (!raw) return null;
     return JSON.parse(raw) as T;
@@ -337,32 +345,45 @@ async function saveRowPayload<T>(
 
     const serialized = JSON.stringify(payload);
     const nowIso = new Date().toISOString();
-    let { error } = await supabase.from(TABLE_PROFILE_SETTINGS).upsert(
-      {
-        id: rowId,
-        full_name: label,
-        title: serialized,
-        updated_at: nowIso,
-      },
-      { onConflict: 'id' }
-    );
 
-    if (
-      error &&
-      (error.code === 'PGRST204' ||
-        (error.message || '').toLowerCase().includes('schema cache') ||
-        (error.message || '').toLowerCase().includes('column'))
-    ) {
-      const fallbackResult = await supabase.from(TABLE_PROFILE_SETTINGS).upsert(
+    const tryUpsert = async (targetId: string) => {
+      let { error } = await supabase.from(TABLE_PROFILE_SETTINGS).upsert(
         {
-          id: rowId,
-          profile_image_url: label,
-          profile_image_path: serialized,
+          id: targetId,
+          full_name: label,
+          title: serialized,
           updated_at: nowIso,
         },
         { onConflict: 'id' }
       );
-      error = fallbackResult.error;
+
+      if (
+        error &&
+        (error.code === 'PGRST204' ||
+          (error.message || '').toLowerCase().includes('schema cache') ||
+          (error.message || '').toLowerCase().includes('column'))
+      ) {
+        const fallbackResult = await supabase.from(TABLE_PROFILE_SETTINGS).upsert(
+          {
+            id: targetId,
+            profile_image_url: label,
+            profile_image_path: serialized,
+            updated_at: nowIso,
+          },
+          { onConflict: 'id' }
+        );
+        error = fallbackResult.error;
+      }
+      return error;
+    };
+
+    let error = await tryUpsert(rowId);
+    if (
+      error &&
+      (error.code === '22P02' || (error.message || '').toLowerCase().includes('invalid input syntax for type uuid')) &&
+      ROW_UUID_FALLBACKS[rowId]
+    ) {
+      error = await tryUpsert(ROW_UUID_FALLBACKS[rowId]);
     }
 
     if (error) {

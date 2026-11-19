@@ -125,8 +125,14 @@ export const VideoModal: React.FC<VideoModalProps> = ({
     onClose();
   }, [onClose]);
 
-  // Lock body scroll and cleanup on unmount
+  // Lock body scroll, configure mobile inline playback attributes, and cleanup on unmount
   useEffect(() => {
+    const vid = videoRef.current;
+    if (vid) {
+      vid.setAttribute('webkit-playsinline', 'true');
+      vid.setAttribute('x5-playsinline', 'true');
+    }
+
     if (item) {
       const originalOverflow = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
@@ -179,9 +185,18 @@ export const VideoModal: React.FC<VideoModalProps> = ({
       videoRef.current
         .play()
         .then(() => setIsPlaying(true))
-        .catch((err) => {
-          console.warn('Playback error:', err);
-          setIsPlaying(false);
+        .catch(() => {
+          // Strict mobile browsers (iOS/Android) may block unmuted play outside direct gesture timing
+          if (!videoRef.current) return;
+          videoRef.current.muted = true;
+          setIsMuted(true);
+          videoRef.current
+            .play()
+            .then(() => setIsPlaying(true))
+            .catch((retryErr) => {
+              console.warn('Playback error:', retryErr);
+              setIsPlaying(false);
+            });
         });
     } else {
       videoRef.current.pause();
@@ -349,15 +364,16 @@ export const VideoModal: React.FC<VideoModalProps> = ({
             <div
               ref={playerContainerRef}
               onMouseMove={handleMouseMovePlayer}
+              onTouchStart={handleMouseMovePlayer}
               onMouseLeave={() => isPlaying && setShowControls(false)}
-              className={`relative w-full ${containerMaxWidthClass} rounded-2xl overflow-hidden border border-[#2A332B] shadow-2xl bg-black flex items-center justify-center group select-none`}
+              className={`relative w-full ${containerMaxWidthClass} min-h-[200px] mx-auto rounded-2xl overflow-hidden border border-[#2A332B] shadow-2xl bg-black flex items-center justify-center group select-none`}
               style={{
                 aspectRatio: getPresentationAspectRatio(
                   effectiveAspectRatio,
                   videoWidth,
                   videoHeight
                 ),
-                maxHeight: '70vh',
+                maxHeight: '68vh',
               }}
             >
               {videoSrc && !hasError ? (
@@ -368,6 +384,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
                     src={videoSrc}
                     poster={item.thumbnail}
                     playsInline
+                    muted={isMuted}
                     preload="metadata"
                     onTimeUpdate={handleTimeUpdate}
                     onLoadedMetadata={handleLoadedMetadata}

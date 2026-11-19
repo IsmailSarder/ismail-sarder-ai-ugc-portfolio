@@ -222,9 +222,9 @@ export const CgiPortfolio: React.FC<CgiPortfolioProps> = ({
               return (
                 <motion.article
                   key={project.id}
-                  initial={{ opacity: 0, y: 24 }}
+                  initial={false}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: '-40px' }}
+                  viewport={{ once: true, amount: 0.05 }}
                   transition={{ duration: 0.45, delay: (idx % 3) * 0.08 }}
                   onClick={() => setActiveModalItem(project)}
                   className="group bg-[#111514] border border-[#2A332B] hover:border-[#C7F36B]/70 rounded-2xl overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 shadow-xl hover:shadow-[0_24px_50px_-15px_rgba(0,0,0,0.85),0_0_30px_-8px_rgba(199,243,107,0.18)]"
@@ -235,7 +235,7 @@ export const CgiPortfolio: React.FC<CgiPortfolioProps> = ({
                       src={project.thumbnail}
                       alt=""
                       aria-hidden="true"
-                      loading="lazy"
+                      loading="eager"
                       decoding="async"
                       referrerPolicy="no-referrer"
                       className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-30 scale-110 pointer-events-none"
@@ -254,7 +254,7 @@ export const CgiPortfolio: React.FC<CgiPortfolioProps> = ({
                       <img
                         src={project.thumbnail}
                         alt={`${project.title} — ${project.category} video commercial thumbnail`}
-                        loading="lazy"
+                        loading="eager"
                         decoding="async"
                         referrerPolicy="no-referrer"
                         className="w-full h-full object-contain transition-transform duration-500 ease-out group-hover:scale-105"

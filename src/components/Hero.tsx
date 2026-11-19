@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'motion/react';
 import { Play, Pause, Volume2, VolumeX, ArrowRight, Film } from 'lucide-react';
 import { useProfile } from '../context/ProfileContext.tsx';
+import { aboutIsmail } from '../assets/images.ts';
 import { VideoModal, PortfolioItem } from './VideoModal.tsx';
 import { portfolioService, DEFAULT_INITIAL_PROJECTS } from '../lib/portfolioService.ts';
 import { enrichPortfolioItem } from '../lib/caseStudyEnrichment.ts';
@@ -101,6 +102,11 @@ export const Hero: React.FC<HeroProps> = ({ onOpenInquiry }) => {
 
   useEffect(() => {
     setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
+    const vid = videoRef.current;
+    if (vid) {
+      vid.setAttribute('webkit-playsinline', 'true');
+      vid.setAttribute('x5-playsinline', 'true');
+    }
   }, []);
 
   const handlePhoneMouseMove = useCallback(
@@ -206,7 +212,12 @@ export const Hero: React.FC<HeroProps> = ({ onOpenInquiry }) => {
                 height={32}
                 loading="eager"
                 decoding="async"
-                className="w-8 h-8 rounded-full object-cover object-top border border-[#C7F36B]/60 shrink-0"
+                onError={(e) => {
+                  if (e.currentTarget.src !== aboutIsmail) {
+                    e.currentTarget.src = aboutIsmail;
+                  }
+                }}
+                className="block w-8 h-8 rounded-full object-cover object-top border border-[#C7F36B]/60 shrink-0"
               />
               <span className="text-[#F5F5F0] font-bold">Ismail Sarder</span>
               <span aria-hidden="true" className="text-[#2A332B]">/</span>
@@ -368,7 +379,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenInquiry }) => {
                       <button
                         type="button"
                         onClick={handleTogglePlay}
-                        className="p-1.5 bg-black/70 hover:bg-black text-white rounded-full border border-white/20 transition-colors cursor-pointer"
+                        className="min-w-[36px] min-h-[36px] p-2 flex items-center justify-center bg-black/70 hover:bg-black text-white rounded-full border border-white/20 transition-colors cursor-pointer"
                         aria-label={isPlaying ? 'Pause video preview' : 'Play video preview'}
                       >
                         {isPlaying ? (
@@ -381,7 +392,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenInquiry }) => {
                       <button
                         type="button"
                         onClick={handleToggleMute}
-                        className="p-1.5 bg-black/70 hover:bg-black text-white rounded-full border border-white/20 transition-colors cursor-pointer"
+                        className="min-w-[36px] min-h-[36px] p-2 flex items-center justify-center bg-black/70 hover:bg-black text-white rounded-full border border-white/20 transition-colors cursor-pointer"
                         aria-label={isMuted ? 'Unmute video preview' : 'Mute video preview'}
                       >
                         {isMuted ? (

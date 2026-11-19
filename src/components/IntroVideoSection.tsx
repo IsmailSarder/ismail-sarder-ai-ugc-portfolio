@@ -16,6 +16,7 @@ import {
   DEFAULT_INTRO_VIDEO_SETTINGS,
 } from '../services/introVideoService.ts';
 import { useProfile } from '../context/ProfileContext.tsx';
+import { aboutIsmail } from '../assets/images.ts';
 
 interface IntroVideoPlayerProps {
   videoUrl: string;
@@ -48,6 +49,16 @@ export const IntroVideoPlayer: React.FC<IntroVideoPlayerProps> = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [videoError, setVideoError] = useState(false);
+  const [thumbError, setThumbError] = useState(false);
+
+  // Set iOS/Android inline attributes for older mobile WebViews
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video) {
+      video.setAttribute('webkit-playsinline', 'true');
+      video.setAttribute('x5-playsinline', 'true');
+    }
+  }, [videoUrl]);
 
   // Reset state if videoUrl changes (e.g., live preview inside Admin Dashboard)
   useEffect(() => {
@@ -56,7 +67,8 @@ export const IntroVideoPlayer: React.FC<IntroVideoPlayerProps> = ({
     setCurrentTime(0);
     setDuration(0);
     setVideoError(false);
-  }, [videoUrl]);
+    setThumbError(false);
+  }, [videoUrl, thumbnailUrl]);
 
   // Listen to browser fullscreen change events
   useEffect(() => {
@@ -101,7 +113,16 @@ export const IntroVideoPlayer: React.FC<IntroVideoPlayerProps> = ({
         setIsPlaying(true);
         scheduleHideControls();
       } catch (err) {
-        console.warn('Video playback failed:', err);
+        // Fallback for strict iOS/Android browsers that block unmuted programmatic playback
+        try {
+          video.muted = true;
+          setIsMuted(true);
+          await video.play();
+          setIsPlaying(true);
+          scheduleHideControls();
+        } catch (retryErr) {
+          console.warn('Video playback failed:', retryErr || err);
+        }
       }
     } else {
       video.pause();
@@ -223,17 +244,19 @@ export const IntroVideoPlayer: React.FC<IntroVideoPlayerProps> = ({
     <div
       ref={containerRef}
       onMouseMove={scheduleHideControls}
+      onTouchStart={scheduleHideControls}
       onMouseLeave={() => {
         if (isPlaying) setShowControls(false);
       }}
-      className="relative w-full aspect-video rounded-2xl overflow-hidden bg-black border border-[#2A332B] hover:border-[#C7F36B]/50 transition-colors shadow-2xl select-none group"
+      className="relative w-full aspect-video min-h-[180px] rounded-2xl overflow-hidden bg-black border border-[#2A332B] hover:border-[#C7F36B]/50 transition-colors shadow-2xl select-none group"
     >
-      {/* Video Element (No autoplay; clean contain scaling) */}
+      {/* Video Element (playsInline, muted toggle support, clean contain scaling) */}
       <video
         ref={videoRef}
         src={videoUrl}
-        poster={thumbnailUrl || undefined}
+        poster={!thumbError && thumbnailUrl ? thumbnailUrl : undefined}
         playsInline
+        muted={isMuted}
         preload="metadata"
         onClick={handleTogglePlay}
         onLoadedMetadata={(e) => {
@@ -251,7 +274,7 @@ export const IntroVideoPlayer: React.FC<IntroVideoPlayerProps> = ({
           setShowControls(true);
         }}
         onError={() => setVideoError(true)}
-        className="w-full h-full object-contain bg-black cursor-pointer"
+        className="block w-full h-full object-contain bg-black cursor-pointer"
       />
 
       {/* Thumbnail Poster Overlay with Centered Play Button (until user initiates play) */}
@@ -260,13 +283,14 @@ export const IntroVideoPlayer: React.FC<IntroVideoPlayerProps> = ({
           onClick={handleTogglePlay}
           className="absolute inset-0 z-20 cursor-pointer flex items-center justify-center bg-[#090A0B]"
         >
-          {thumbnailUrl ? (
+          {thumbnailUrl && !thumbError ? (
             <img
               src={thumbnailUrl}
               alt={`${title} — creator introduction video thumbnail`}
-              loading="lazy"
+              loading="eager"
               decoding="async"
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+              onError={() => setThumbError(true)}
+              className="block w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
             />
           ) : (
             <div
@@ -289,12 +313,12 @@ export const IntroVideoPlayer: React.FC<IntroVideoPlayerProps> = ({
               handleTogglePlay();
             }}
             aria-label="Play introduction video"
-            className="relative z-10 flex flex-col items-center gap-3 focus:outline-none cursor-pointer group/play"
+            className="relative z-10 flex flex-col items-center gap-2.5 sm:gap-3 focus:outline-none cursor-pointer group/play"
           >
-            <span className="relative flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#C7F36B] text-[#090A0B] shadow-2xl shadow-[#C7F36B]/30 transition-all duration-300 group-hover/play:scale-110 group-hover/play:bg-[#d6ff7d]">
-              <Play className="w-7 h-7 sm:w-8 sm:h-8 ml-1 fill-current" />
+            <span className="relative flex items-center justify-center w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-[#C7F36B] text-[#090A0B] shadow-2xl shadow-[#C7F36B]/30 transition-all duration-300 group-hover/play:scale-110 group-hover/play:bg-[#d6ff7d]">
+              <Play className="w-6 h-6 sm:w-8 sm:h-8 ml-1 fill-current" />
             </span>
-            <span className="px-3.5 py-1 rounded-full bg-black/75 backdrop-blur-md border border-white/15 text-[11px] font-mono uppercase tracking-wider text-[#F5F5F0]">
+            <span className="px-3.5 py-1 rounded-full bg-black/75 backdrop-blur-md border border-white/15 text-[10px] sm:text-[11px] font-mono uppercase tracking-wider text-[#F5F5F0]">
               Watch Introduction
             </span>
           </button>
@@ -303,10 +327,21 @@ export const IntroVideoPlayer: React.FC<IntroVideoPlayerProps> = ({
 
       {/* Video Load Fallback Message */}
       {videoError && (
-        <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/90 p-6 text-center">
+        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-3 bg-black/90 p-6 text-center">
           <p className="text-xs sm:text-sm text-rose-400">
-            Unable to load video stream. Please verify the video file or URL.
+            Unable to load video stream. Please check your connection and try again.
           </p>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setVideoError(false);
+              videoRef.current?.load();
+            }}
+            className="px-4 py-2 text-xs font-bold font-heading uppercase bg-[#C7F36B] text-[#090A0B] rounded-md cursor-pointer"
+          >
+            Retry Video
+          </button>
         </div>
       )}
 
@@ -444,11 +479,11 @@ export const IntroVideoSection: React.FC<IntroVideoSectionProps> = ({ refreshTri
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Centered Editorial Header */}
         <motion.div
-          initial={{ opacity: 0, y: 18 }}
+          initial={false}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-40px' }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="max-w-3xl mx-auto text-center mb-10 sm:mb-12"
+          viewport={{ once: true, amount: 0.05 }}
+          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+          className="max-w-3xl mx-auto text-center mb-8 sm:mb-12"
         >
           <div className="text-xs font-semibold tracking-widest text-[#C7F36B] uppercase font-mono mb-3">
             {settings.heading || DEFAULT_INTRO_VIDEO_SETTINGS.heading}
@@ -465,10 +500,10 @@ export const IntroVideoSection: React.FC<IntroVideoSectionProps> = ({ refreshTri
 
         {/* Large Premium 16:9 Video Player Showcase Frame */}
         <motion.div
-          initial={{ opacity: 0, y: 24, scale: 0.985 }}
+          initial={false}
           whileInView={{ opacity: 1, y: 0, scale: 1 }}
-          viewport={{ once: true, margin: '-40px' }}
-          transition={{ duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+          viewport={{ once: true, amount: 0.05 }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           className="max-w-5xl mx-auto"
         >
           <div className="relative bg-[#111514] border border-[#2A332B] rounded-2xl sm:rounded-3xl p-2.5 sm:p-4 shadow-2xl">
@@ -476,20 +511,25 @@ export const IntroVideoSection: React.FC<IntroVideoSectionProps> = ({ refreshTri
             <div className="absolute -inset-1 bg-gradient-to-b from-[#C7F36B]/15 via-[#2A332B]/25 to-transparent rounded-3xl blur-md -z-10 pointer-events-none" />
 
             {/* Top Studio Frame Bar */}
-            <div className="flex items-center justify-between px-2 pb-2.5 text-[10px] sm:text-xs font-mono text-[#A0A89F]">
-              <div className="flex items-center gap-2.5">
+            <div className="flex items-center justify-between gap-2 px-1.5 sm:px-2 pb-2.5 text-[10px] sm:text-xs font-mono text-[#A0A89F]">
+              <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
                 <img
                   src={effectiveProfileImage}
                   alt="Ismail Sarder — AI UGC Video Ads Creator portrait"
                   width={24}
                   height={24}
-                  loading="lazy"
+                  loading="eager"
                   decoding="async"
-                  className="w-5 h-5 sm:w-6 sm:h-6 rounded-full object-cover object-top border border-[#C7F36B]/60"
+                  onError={(e) => {
+                    if (e.currentTarget.src !== aboutIsmail) {
+                      e.currentTarget.src = aboutIsmail;
+                    }
+                  }}
+                  className="block shrink-0 w-6 h-6 rounded-full object-cover object-top border border-[#C7F36B]/60"
                 />
-                <span className="text-[#F5F5F0] font-semibold">ISMAIL SARDER STUDIO</span>
+                <span className="text-[#F5F5F0] font-semibold truncate">ISMAIL SARDER STUDIO</span>
               </div>
-              <span className="text-[#C7F36B]">16:9 CREATOR INTRO</span>
+              <span className="text-[#C7F36B] shrink-0">16:9 CREATOR INTRO</span>
             </div>
 
             {/* 16:9 Responsive Video Player */}

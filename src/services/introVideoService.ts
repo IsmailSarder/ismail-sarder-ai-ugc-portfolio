@@ -31,6 +31,7 @@ export const DEFAULT_INTRO_VIDEO_SETTINGS: IntroVideoSettings = {
 };
 
 const INTRO_CONFIG_ROW_ID = 'intro_video_config';
+const INTRO_CONFIG_UUID = '00000000-0000-4000-8000-000000000002';
 const LOCAL_INTRO_STORAGE_KEY = 'ismail_intro_video_settings';
 
 interface SerializedIntroMeta {
@@ -70,6 +71,13 @@ function isSchemaCacheColumnError(error: PostgrestLikeError | null | undefined):
     msg.includes('could not find the') ||
     (msg.includes('column') && msg.includes('does not exist'))
   );
+}
+
+function isUuidSyntaxError(error: PostgrestLikeError | null | undefined): boolean {
+  if (!error) return false;
+  if (error.code === '22P02') return true;
+  const msg = (error.message || '').toLowerCase();
+  return msg.includes('invalid input syntax for type uuid');
 }
 
 function isRlsOrAuthError(error: PostgrestLikeError | null | undefined): boolean {
@@ -219,20 +227,119 @@ function parseRowToSettings(row: Record<string, any>): IntroVideoSettings {
   };
 }
 
+function isIntroConfigRow(row: Record<string, any>): boolean {
+  if (!row) return false;
+  if (row.id === INTRO_CONFIG_ROW_ID || row.id === INTRO_CONFIG_UUID) return true;
+  if (typeof row.intro_video_url === 'string' && row.intro_video_url.length > 0) return true;
+  if (typeof row.profile_image_path === 'string' && row.profile_image_path.includes('"__intro_v2"')) {
+    return true;
+  }
+  if (typeof row.title === 'string' && row.title.includes('"video_url"')) return true;
+  return false;
+}
+
+async function discoverStorageIntroMedia(): Promise<{
+  video_url: string;
+  video_path: string;
+  thumbnail_url: string;
+  thumbnail_path: string;
+} | null> {
+  if (!supabase || !isSupabaseConfigured()) return null;
+
+  try {
+    const [vidListRes, thumbListRes] = await Promise.all([
+      supabase.storage
+        .from(STORAGE_BUCKETS.VIDEOS)
+        .list('intro', { limit: 10, sortBy: { column: 'created_at', order: 'desc' } }),
+      supabase.storage
+        .from(STORAGE_BUCKETS.THUMBNAILS)
+        .list('intro-thumbnails', { limit: 10, sortBy: { column: 'created_at', order: 'desc' } }),
+    ]);
+
+    const latestVideo = (vidListRes.data || []).find(
+      (item) => item?.name && /\.(mp4|mov|webm|m4v)$/i.test(item.name)
+    );
+    if (!latestVideo) return null;
+
+    const videoPath = `intro/${latestVideo.name}`;
+    const {
+      data: { publicUrl: videoUrl },
+    } = supabase.storage.from(STORAGE_BUCKETS.VIDEOS).getPublicUrl(videoPath);
+
+    let thumbUrl = '';
+    let thumbPath = '';
+    const latestThumb = (thumbListRes.data || []).find(
+      (item) => item?.name && /\.(jpg|jpeg|png|webp)$/i.test(item.name)
+    );
+    if (latestThumb) {
+      thumbPath = `intro-thumbnails/${latestThumb.name}`;
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from(STORAGE_BUCKETS.THUMBNAILS).getPublicUrl(thumbPath);
+      thumbUrl = publicUrl;
+    }
+
+    return {
+      video_url: videoUrl,
+      video_path: videoPath,
+      thumbnail_url: thumbUrl,
+      thumbnail_path: thumbPath,
+    };
+  } catch (err) {
+    console.warn('Storage intro media discovery note:', err);
+    return null;
+  }
+}
+
 export const introVideoService = {
   async getIntroVideoSettings(): Promise<IntroVideoSettings> {
     const cached = readLocalCache();
 
     if (supabase && isSupabaseConfigured()) {
       try {
+        // Fetch without filtering on non-UUID string ID so UUID-typed profile_settings tables never error with 22P02
         const { data, error } = await supabase
           .from(TABLE_PROFILE_SETTINGS)
           .select('*')
-          .eq('id', INTRO_CONFIG_ROW_ID)
-          .maybeSingle();
+          .limit(20);
 
-        if (!error && data) {
-          const resolved = parseRowToSettings(data as Record<string, any>);
+        if (!error && Array.isArray(data)) {
+          const matchedRow = data.find((r) => isIntroConfigRow(r as Record<string, any>));
+          if (matchedRow) {
+            const resolved = parseRowToSettings(matchedRow as Record<string, any>);
+            if (!resolved.video_url) {
+              const discovered = await discoverStorageIntroMedia();
+              if (discovered) {
+                resolved.video_url = discovered.video_url;
+                resolved.video_path = discovered.video_path;
+                if (!resolved.thumbnail_url && discovered.thumbnail_url) {
+                  resolved.thumbnail_url = discovered.thumbnail_url;
+                  resolved.thumbnail_path = discovered.thumbnail_path;
+                }
+              }
+            }
+            writeLocalCache(resolved);
+            return resolved;
+          }
+        }
+
+        // If DB table has no intro row yet (e.g. schema/id mismatch), auto-discover uploaded intro assets from Supabase Storage
+        const discovered = await discoverStorageIntroMedia();
+        if (discovered) {
+          const resolved: IntroVideoSettings = {
+            ...DEFAULT_INTRO_VIDEO_SETTINGS,
+            heading: cached?.heading || DEFAULT_INTRO_VIDEO_SETTINGS.heading,
+            subheading: cached?.subheading || DEFAULT_INTRO_VIDEO_SETTINGS.subheading,
+            description: cached?.description || DEFAULT_INTRO_VIDEO_SETTINGS.description,
+            video_url: discovered.video_url,
+            video_path: discovered.video_path,
+            thumbnail_url: discovered.thumbnail_url || cached?.thumbnail_url || '',
+            thumbnail_path: discovered.thumbnail_path || cached?.thumbnail_path || '',
+            is_published:
+              typeof cached?.is_published === 'boolean'
+                ? cached.is_published
+                : DEFAULT_INTRO_VIDEO_SETTINGS.is_published,
+          };
           writeLocalCache(resolved);
           return resolved;
         }
@@ -284,77 +391,86 @@ export const introVideoService = {
           is_published: cleanSettings.is_published,
         };
 
-        // Tier 1: Dedicated intro_* columns + standard profile_settings columns
-        const tier1Payload = {
-          id: INTRO_CONFIG_ROW_ID,
-          full_name: cleanSettings.heading,
-          title: JSON.stringify(tier1Meta),
-          profile_image_url: cleanSettings.thumbnail_url || null,
-          profile_image_path: cleanSettings.thumbnail_path || null,
-          intro_heading: cleanSettings.heading,
-          intro_subheading: cleanSettings.subheading,
-          intro_description: cleanSettings.description,
-          intro_video_url: cleanSettings.video_url,
-          intro_video_path: cleanSettings.video_path,
-          intro_thumbnail_url: cleanSettings.thumbnail_url,
-          intro_thumbnail_path: cleanSettings.thumbnail_path,
-          intro_is_published: cleanSettings.is_published,
-          updated_at: cleanSettings.updated_at,
+        const attemptUpsertWithRowId = async (rowId: string) => {
+          // Tier 1: Dedicated intro_* columns + standard profile_settings columns
+          const tier1Payload = {
+            id: rowId,
+            full_name: cleanSettings.heading,
+            title: JSON.stringify(tier1Meta),
+            profile_image_url: cleanSettings.thumbnail_url || null,
+            profile_image_path: cleanSettings.thumbnail_path || null,
+            intro_heading: cleanSettings.heading,
+            intro_subheading: cleanSettings.subheading,
+            intro_description: cleanSettings.description,
+            intro_video_url: cleanSettings.video_url,
+            intro_video_path: cleanSettings.video_path,
+            intro_thumbnail_url: cleanSettings.thumbnail_url,
+            intro_thumbnail_path: cleanSettings.thumbnail_path,
+            intro_is_published: cleanSettings.is_published,
+            updated_at: cleanSettings.updated_at,
+          };
+
+          let { error } = await supabase
+            .from(TABLE_PROFILE_SETTINGS)
+            .upsert(tier1Payload, { onConflict: 'id' });
+
+          // Tier 2: Older profile_settings table with full_name + title (without intro_* columns)
+          if (error && isSchemaCacheColumnError(error)) {
+            const tier2Meta: SerializedIntroMeta = {
+              v: 'tier2',
+              subheading: cleanSettings.subheading,
+              description: cleanSettings.description,
+              video_url: cleanSettings.video_url,
+              video_path: cleanSettings.video_path,
+              is_published: cleanSettings.is_published,
+            };
+
+            const tier2Result = await supabase.from(TABLE_PROFILE_SETTINGS).upsert(
+              {
+                id: rowId,
+                full_name: cleanSettings.heading,
+                title: JSON.stringify(tier2Meta),
+                profile_image_url: cleanSettings.thumbnail_url || null,
+                profile_image_path: cleanSettings.thumbnail_path || null,
+                updated_at: cleanSettings.updated_at,
+              },
+              { onConflict: 'id' }
+            );
+            error = tier2Result.error;
+          }
+
+          // Tier 3: Minimal legacy profile_settings table without full_name/title columns
+          if (error && isSchemaCacheColumnError(error)) {
+            const legacyPayload: LegacyIntroPathPayload = {
+              __intro_v2: true,
+              heading: cleanSettings.heading,
+              subheading: cleanSettings.subheading,
+              description: cleanSettings.description,
+              video_url: cleanSettings.video_url,
+              video_path: cleanSettings.video_path,
+              thumbnail_url: cleanSettings.thumbnail_url,
+              thumbnail_path: cleanSettings.thumbnail_path,
+              is_published: cleanSettings.is_published,
+            };
+
+            const tier3Result = await supabase.from(TABLE_PROFILE_SETTINGS).upsert(
+              {
+                id: rowId,
+                profile_image_url: cleanSettings.thumbnail_url || null,
+                profile_image_path: JSON.stringify(legacyPayload),
+                updated_at: cleanSettings.updated_at,
+              },
+              { onConflict: 'id' }
+            );
+            error = tier3Result.error;
+          }
+
+          return error;
         };
 
-        let { error } = await supabase
-          .from(TABLE_PROFILE_SETTINGS)
-          .upsert(tier1Payload, { onConflict: 'id' });
-
-        // Tier 2: Older profile_settings table with full_name + title (without intro_* columns)
-        if (error && isSchemaCacheColumnError(error)) {
-          const tier2Meta: SerializedIntroMeta = {
-            v: 'tier2',
-            subheading: cleanSettings.subheading,
-            description: cleanSettings.description,
-            video_url: cleanSettings.video_url,
-            video_path: cleanSettings.video_path,
-            is_published: cleanSettings.is_published,
-          };
-
-          const tier2Result = await supabase.from(TABLE_PROFILE_SETTINGS).upsert(
-            {
-              id: INTRO_CONFIG_ROW_ID,
-              full_name: cleanSettings.heading,
-              title: JSON.stringify(tier2Meta),
-              profile_image_url: cleanSettings.thumbnail_url || null,
-              profile_image_path: cleanSettings.thumbnail_path || null,
-              updated_at: cleanSettings.updated_at,
-            },
-            { onConflict: 'id' }
-          );
-          error = tier2Result.error;
-        }
-
-        // Tier 3: Minimal legacy profile_settings table without full_name/title columns
-        if (error && isSchemaCacheColumnError(error)) {
-          const legacyPayload: LegacyIntroPathPayload = {
-            __intro_v2: true,
-            heading: cleanSettings.heading,
-            subheading: cleanSettings.subheading,
-            description: cleanSettings.description,
-            video_url: cleanSettings.video_url,
-            video_path: cleanSettings.video_path,
-            thumbnail_url: cleanSettings.thumbnail_url,
-            thumbnail_path: cleanSettings.thumbnail_path,
-            is_published: cleanSettings.is_published,
-          };
-
-          const tier3Result = await supabase.from(TABLE_PROFILE_SETTINGS).upsert(
-            {
-              id: INTRO_CONFIG_ROW_ID,
-              profile_image_url: cleanSettings.thumbnail_url || null,
-              profile_image_path: JSON.stringify(legacyPayload),
-              updated_at: cleanSettings.updated_at,
-            },
-            { onConflict: 'id' }
-          );
-          error = tier3Result.error;
+        let error = await attemptUpsertWithRowId(INTRO_CONFIG_ROW_ID);
+        if (error && isUuidSyntaxError(error)) {
+          error = await attemptUpsertWithRowId(INTRO_CONFIG_UUID);
         }
 
         if (error) {

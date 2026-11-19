@@ -80,9 +80,9 @@ export const CombinedServiceSection: React.FC<CombinedServiceSectionProps> = ({
             return (
               <motion.div
                 key={item.title}
-                initial={{ opacity: 0, y: 20 }}
+                initial={false}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-40px' }}
+                viewport={{ once: true, amount: 0.05 }}
                 transition={{ duration: 0.45, delay: idx * 0.08 }}
                 className="bg-[#171C19] border border-[#2A332B] hover:border-[#C7F36B]/60 rounded-2xl p-6 sm:p-8 flex flex-col justify-between transition-all duration-300 group shadow-xl"
               >

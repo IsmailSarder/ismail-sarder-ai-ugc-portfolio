@@ -10,6 +10,7 @@ import {
   Linkedin,
 } from 'lucide-react';
 import { useProfile } from '../context/ProfileContext.tsx';
+import { aboutIsmail } from '../assets/images.ts';
 
 interface AboutProps {
   onOpenInquiry: () => void;
@@ -71,28 +72,32 @@ export const About: React.FC<AboutProps> = ({ onOpenInquiry }) => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-14 items-start">
           {/* Portrait & Direct Contact Column */}
           <div className="lg:col-span-5 space-y-6">
-            <div className="relative rounded-2xl overflow-hidden border border-[#2A332B] bg-[#171C19] shadow-2xl group">
+            <div className="relative w-full aspect-square rounded-2xl overflow-hidden border border-[#2A332B] bg-[#171C19] shadow-2xl group">
               <img
                 src={effectiveProfileImage}
                 alt="Ismail Sarder — AI UGC & Video Ad Specialist"
-                loading="lazy"
+                loading="eager"
                 decoding="async"
-                referrerPolicy="no-referrer"
-                className="w-full aspect-square object-cover object-top transition-transform duration-500 group-hover:scale-[1.02]"
+                onError={(e) => {
+                  if (e.currentTarget.src !== aboutIsmail) {
+                    e.currentTarget.src = aboutIsmail;
+                  }
+                }}
+                className="block w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-[1.02]"
               />
 
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-transparent pointer-events-none" />
 
-              <div className="absolute bottom-4 left-4 right-4 p-4 rounded-xl bg-[#090A0B]/85 backdrop-blur-md border border-[#2A332B] text-left">
+              <div className="absolute bottom-2.5 left-2.5 right-2.5 p-3 sm:bottom-4 sm:left-4 sm:right-4 sm:p-4 rounded-xl bg-[#090A0B]/85 backdrop-blur-md border border-[#2A332B] text-left">
                 <span className="text-xs font-bold font-heading text-[#F5F5F0] block">
                   ISMAIL SARDER
                 </span>
                 <span className="text-[11px] text-[#A0A89F] block mt-0.5">
                   AI UGC &amp; Video Ad Creative Specialist
                 </span>
-                <div className="mt-2.5 pt-2.5 border-t border-[#2A332B] flex items-center justify-between text-[10px] font-mono text-[#C7F36B]">
+                <div className="mt-2 pt-2 sm:mt-2.5 sm:pt-2.5 border-t border-[#2A332B] flex items-center justify-between gap-2 text-[10px] font-mono text-[#C7F36B]">
                   <span>INTERNATIONAL CLIENT FOCUS</span>
-                  <span>USA · UK · UAE · CA · EU</span>
+                  <span className="shrink-0">USA · UK · UAE · CA · EU</span>
                 </div>
               </div>
             </div>

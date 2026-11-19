@@ -90,9 +90,9 @@ export const ProjectCard3D: React.FC<ProjectCard3DProps> = ({ project, index, on
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 28 }}
+      initial={false}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-40px' }}
+      viewport={{ once: true, amount: 0.05 }}
       transition={{
         duration: 0.45,
         delay: (index % 3) * 0.08,
@@ -145,7 +145,7 @@ export const ProjectCard3D: React.FC<ProjectCard3DProps> = ({ project, index, on
             src={project.thumbnail}
             alt=""
             aria-hidden="true"
-            loading="lazy"
+            loading="eager"
             decoding="async"
             referrerPolicy="no-referrer"
             className="absolute inset-0 w-full h-full object-cover blur-xl opacity-35 scale-125 pointer-events-none"
@@ -159,7 +159,7 @@ export const ProjectCard3D: React.FC<ProjectCard3DProps> = ({ project, index, on
             <img
               src={project.thumbnail}
               alt={`${project.title} — ${project.category} video ad thumbnail`}
-              loading="lazy"
+              loading="eager"
               decoding="async"
               referrerPolicy="no-referrer"
               className="w-full h-full object-contain transition-transform duration-500 ease-out group-hover:scale-105"
